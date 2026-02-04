@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useTypewriter } from "@/hooks/useTypewriter";
 import { motion } from "framer-motion";
-import Heart3D from "@/components/Heart3D";
+import CoupleAnimation from "@/components/CoupleAnimation";
 
 const features = [
   { icon: Camera, title: "情侣相册", desc: "珍藏美好瞬间" },
@@ -77,7 +77,7 @@ export default function Home() {
     return (
       <div className="min-h-screen gradient-warm-rich flex items-center justify-center">
         <div className="animate-pulse flex flex-col items-center gap-4">
-          <Heart3D size="lg" animate={true} />
+          <CoupleAnimation size="md" />
           <p className="text-muted-foreground">加载中...</p>
         </div>
       </div>
@@ -94,16 +94,16 @@ export default function Home() {
 
       {/* Hero Section */}
       <div className="relative">
-        <div className="container relative py-20 md:py-28">
+        <div className="container relative py-12 md:py-16">
           <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
-            {/* 简约高级爱心 */}
+            {/* Q版情侣动画 - 三种形态切换 */}
             <motion.div 
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.6 }}
-              className="mb-6"
+              className="mb-4"
             >
-              <Heart3D size="xl" animate={true} />
+              <CoupleAnimation size="xl" />
             </motion.div>
             
             <motion.h1 
@@ -119,13 +119,13 @@ export default function Home() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-xl md:text-2xl font-medium text-foreground/80 mb-8"
+              className="text-xl md:text-2xl font-medium text-foreground/80 mb-6"
             >
               情侣空间
             </motion.h2>
             
             {/* 打字机效果区域 */}
-            <div className="min-h-[120px] md:min-h-[100px] flex flex-col items-center justify-center mb-8">
+            <div className="min-h-[120px] md:min-h-[100px] flex flex-col items-center justify-center mb-6">
               {introTexts.slice(0, currentTextIndex + 1).map((text, index) => (
                 <motion.p
                   key={index}
@@ -176,9 +176,9 @@ export default function Home() {
         initial={{ opacity: 0 }}
         animate={{ opacity: showFeatures ? 1 : 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
-        className="container py-12"
+        className="container py-10"
       >
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
           <h3 className="text-xl font-semibold mb-2">丰富的功能</h3>
           <p className="text-muted-foreground text-sm">为你们的爱情量身定制</p>
         </div>
