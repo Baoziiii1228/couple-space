@@ -4,8 +4,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Heart, Sparkles, Camera, BookOpen, Calendar, Star, MessageCircle, Smile, Gift, Clock, MapPin, Film } from "lucide-react";
 import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { useTypewriter } from "@/hooks/useTypewriter";
+import { motion } from "framer-motion";
 
 const features = [
   { icon: Heart, title: "恋爱首页", desc: "记录在一起的每一天" },
@@ -21,13 +23,44 @@ const features = [
   { icon: Film, title: "待办清单", desc: "想看的电影想吃的美食" },
 ];
 
+const introTexts = [
+  "记录恋爱中的美好瞬间",
+  "让每一天都充满甜蜜",
+  "从相识到相知",
+  "从相恋到相守",
+  "我们一起书写爱的故事",
+];
+
 export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
+  const [currentTextIndex, setCurrentTextIndex] = useState(0);
+  const [showFeatures, setShowFeatures] = useState(false);
   
+  const { displayText, isComplete } = useTypewriter(
+    introTexts[currentTextIndex], 
+    60, 
+    currentTextIndex === 0 ? 500 : 200
+  );
+
   const { data: coupleStatus } = trpc.couple.getStatus.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+
+  // 切换到下一段文字
+  useEffect(() => {
+    if (isComplete && currentTextIndex < introTexts.length - 1) {
+      const timer = setTimeout(() => {
+        setCurrentTextIndex(prev => prev + 1);
+      }, 800);
+      return () => clearTimeout(timer);
+    } else if (isComplete && currentTextIndex === introTexts.length - 1) {
+      const timer = setTimeout(() => {
+        setShowFeatures(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isComplete, currentTextIndex]);
 
   useEffect(() => {
     if (isAuthenticated && coupleStatus) {
@@ -61,23 +94,54 @@ export default function Home() {
         
         <div className="container relative py-20 md:py-32">
           <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
-            <div className="flex items-center gap-2 mb-6">
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.6 }}
+              className="flex items-center gap-2 mb-6"
+            >
               <Heart className="w-10 h-10 text-primary animate-heartbeat" fill="currentColor" />
               <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Couple Space
               </h1>
+            </motion.div>
+            
+            <motion.h2 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-2xl md:text-3xl font-semibold text-foreground mb-6"
+            >
+              情侣空间
+            </motion.h2>
+            
+            {/* 打字机效果区域 */}
+            <div className="h-32 md:h-24 flex flex-col items-center justify-center mb-8">
+              {introTexts.slice(0, currentTextIndex + 1).map((text, index) => (
+                <motion.p
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: index < currentTextIndex ? 0.6 : 1, y: 0 }}
+                  className={`text-lg ${index < currentTextIndex ? 'text-muted-foreground/60 text-base' : 'text-muted-foreground'}`}
+                >
+                  {index === currentTextIndex ? (
+                    <>
+                      {displayText}
+                      <span className="animate-pulse">|</span>
+                    </>
+                  ) : (
+                    text
+                  )}
+                </motion.p>
+              ))}
             </div>
             
-            <h2 className="text-2xl md:text-3xl font-semibold text-foreground mb-4">
-              情侣空间
-            </h2>
-            
-            <p className="text-lg text-muted-foreground mb-8 max-w-xl">
-              记录恋爱中的美好瞬间，让每一天都充满甜蜜。
-              从相识到相知，从相恋到相守，我们一起书写爱的故事。
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: showFeatures ? 1 : 0, y: showFeatures ? 0 : 20 }}
+              transition={{ duration: 0.5 }}
+              className="flex flex-col sm:flex-row gap-4"
+            >
               <Button 
                 size="lg" 
                 className="gap-2 shadow-soft"
@@ -86,13 +150,18 @@ export default function Home() {
                 <Sparkles className="w-5 h-5" />
                 开始记录我们的故事
               </Button>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
 
       {/* Features Section */}
-      <div className="container py-16">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: showFeatures ? 1 : 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+        className="container py-16"
+      >
         <div className="text-center mb-12">
           <h3 className="text-2xl font-semibold mb-2">丰富的功能</h3>
           <p className="text-muted-foreground">为你们的爱情量身定制</p>
@@ -100,26 +169,34 @@ export default function Home() {
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {features.map((feature, index) => (
-            <Card 
-              key={index} 
-              className="card-hover glass border-white/40"
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: showFeatures ? 1 : 0, y: showFeatures ? 0 : 20 }}
+              transition={{ duration: 0.4, delay: 0.1 * index }}
             >
-              <CardContent className="p-6 flex flex-col items-center text-center">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                  <feature.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h4 className="font-medium mb-1">{feature.title}</h4>
-                <p className="text-sm text-muted-foreground">{feature.desc}</p>
-              </CardContent>
-            </Card>
+              <Card className="card-hover glass border-white/40">
+                <CardContent className="p-6 flex flex-col items-center text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                    <feature.icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <h4 className="font-medium mb-1">{feature.title}</h4>
+                  <p className="text-sm text-muted-foreground">{feature.desc}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Footer */}
-      <footer className="container py-8 text-center text-sm text-muted-foreground">
+      <motion.footer 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: showFeatures ? 1 : 0 }}
+        className="container py-8 text-center text-sm text-muted-foreground"
+      >
         <p>用心记录，让爱更甜蜜 💕</p>
-      </footer>
+      </motion.footer>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { 
   Heart, Camera, BookOpen, Calendar, Star, MessageCircle, 
   Smile, Gift, Clock, MapPin, Film, LogOut, Settings
@@ -8,6 +8,7 @@ import {
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import { useEffect, useMemo } from "react";
+import ScreenLock from "@/components/ScreenLock";
 
 const navItems = [
   { icon: Camera, title: "相册", path: "/albums", color: "text-pink-500" },
@@ -34,6 +35,11 @@ export default function Dashboard() {
   const { data: anniversaries } = trpc.anniversary.list.useQuery(undefined, {
     enabled: coupleStatus?.status === "paired",
   });
+  
+  // 获取相册照片用于息屏展示
+  const { data: photos } = trpc.photo.list.useQuery({}, {
+    enabled: coupleStatus?.status === "paired",
+  });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -53,6 +59,20 @@ export default function Dashboard() {
     const diff = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     return diff;
   }, [coupleStatus]);
+
+  // 获取在一起的日期
+  const togetherDate = useMemo(() => {
+    if (coupleStatus?.status !== "paired" || !coupleStatus.couple?.togetherDate) {
+      return null;
+    }
+    return new Date(coupleStatus.couple.togetherDate);
+  }, [coupleStatus]);
+
+  // 获取照片URL列表
+  const photoUrls = useMemo(() => {
+    if (!photos || photos.length === 0) return [];
+    return photos.map(p => p.url);
+  }, [photos]);
 
   // 计算下一个纪念日
   const nextAnniversary = useMemo(() => {
@@ -92,6 +112,15 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen gradient-warm-subtle">
+      {/* 息屏锁定组件 - 只有设置了在一起日期才会启用 */}
+      {togetherDate && (
+        <ScreenLock
+          togetherDate={togetherDate}
+          photos={photoUrls}
+          idleTimeout={120000} // 2分钟无操作后锁屏
+        />
+      )}
+
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-white/20">
         <div className="container flex items-center justify-between h-16">
