@@ -17,6 +17,7 @@ import TimeCapsule from "./pages/TimeCapsule";
 import Footprints from "./pages/Footprints";
 import TodoList from "./pages/TodoList";
 import Pair from "./pages/Pair";
+import Settings from "./pages/Settings";
 
 function Router() {
   return (
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/time-capsule" component={TimeCapsule} />
       <Route path="/footprints" component={Footprints} />
       <Route path="/todo-list" component={TodoList} />
+      <Route path="/settings" component={Settings} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -43,7 +45,7 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider defaultTheme="light" switchable>
         <TooltipProvider>
           <Toaster />
           <Router />

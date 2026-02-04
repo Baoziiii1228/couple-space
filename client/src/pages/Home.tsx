@@ -1,14 +1,16 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, BookOpen, Calendar, Star, MessageCircle, Smile, Gift, Clock, MapPin, Film, ArrowRight } from "lucide-react";
+import { Camera, BookOpen, Calendar, Star, MessageCircle, Smile, Gift, Clock, MapPin, Film, ArrowRight, Sun, Moon, Settings } from "lucide-react";
 import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useTypewriter } from "@/hooks/useTypewriter";
 import { motion } from "framer-motion";
 import CoupleAnimation from "@/components/CoupleAnimation";
+import { useTheme } from "@/contexts/ThemeContext";
+import { RandomLightBackground, DarkModeBackground } from "@/components/HomeBackgrounds";
 
 const features = [
   { icon: Camera, title: "情侣相册", desc: "珍藏美好瞬间" },
@@ -35,7 +37,8 @@ export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
-  const [showFeatures, setShowFeatures] = useState(false);
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
   
   const { displayText, isComplete } = useTypewriter(
     introTexts[currentTextIndex], 
@@ -47,17 +50,15 @@ export default function Home() {
     enabled: isAuthenticated,
   });
 
+  // 检查是否是开发者（项目所有者）
+  const isOwner = user?.role === "admin";
+
   // 切换到下一段文字
   useEffect(() => {
     if (isComplete && currentTextIndex < introTexts.length - 1) {
       const timer = setTimeout(() => {
         setCurrentTextIndex(prev => prev + 1);
       }, 800);
-      return () => clearTimeout(timer);
-    } else if (isComplete && currentTextIndex === introTexts.length - 1) {
-      const timer = setTimeout(() => {
-        setShowFeatures(true);
-      }, 500);
       return () => clearTimeout(timer);
     }
   }, [isComplete, currentTextIndex]);
@@ -66,16 +67,22 @@ export default function Home() {
   const handleEnter = () => {
     if (!isAuthenticated) {
       window.location.href = getLoginUrl();
-    } else if (coupleStatus?.status === "paired") {
+    } else if (coupleStatus?.status === "paired" || isOwner) {
+      // 开发者模式：项目所有者可以直接进入
       setLocation("/dashboard");
     } else {
       setLocation("/pair");
     }
   };
 
+  // 处理开发者模式按钮 - 跳转到设置页
+  const handleDevMode = () => {
+    setLocation("/settings");
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen gradient-warm-rich flex items-center justify-center">
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-slate-900' : 'gradient-warm-rich'}`}>
         <div className="animate-pulse flex flex-col items-center gap-4">
           <CoupleAnimation size="md" />
           <p className="text-muted-foreground">加载中...</p>
@@ -85,11 +92,49 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen gradient-warm-rich relative overflow-hidden">
+    <div className={`min-h-screen relative overflow-hidden ${isDark ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'gradient-warm-rich'}`}>
+      {/* 背景效果 */}
+      {isDark ? <DarkModeBackground /> : <RandomLightBackground />}
+      
       {/* 装饰性渐变光斑 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-pink-200/30 to-orange-200/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-gradient-to-tr from-orange-200/20 to-pink-200/30 rounded-full blur-3xl" />
+        {isDark ? (
+          <>
+            <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-purple-900/20 to-blue-900/10 rounded-full blur-3xl" />
+            <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-gradient-to-tr from-blue-900/10 to-purple-900/20 rounded-full blur-3xl" />
+          </>
+        ) : (
+          <>
+            <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-pink-200/30 to-orange-200/20 rounded-full blur-3xl" />
+            <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-gradient-to-tr from-orange-200/20 to-pink-200/30 rounded-full blur-3xl" />
+          </>
+        )}
+      </div>
+
+      {/* 顶部工具栏 */}
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+        {/* 主题切换按钮 */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          className={`rounded-full ${isDark ? 'text-amber-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-white/50'}`}
+        >
+          {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </Button>
+        
+        {/* 开发者模式按钮 - 仅项目所有者可见 */}
+        {isOwner && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleDevMode}
+            className={`rounded-full ${isDark ? 'text-emerald-400 hover:bg-slate-700' : 'text-emerald-600 hover:bg-white/50'}`}
+            title="开发者模式"
+          >
+            <Settings className="w-5 h-5" />
+          </Button>
+        )}
       </div>
 
       {/* Hero Section */}
@@ -110,51 +155,29 @@ export default function Home() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-rose-500 to-orange-400 bg-clip-text text-transparent mb-2"
+              className={`text-4xl md:text-5xl font-bold bg-clip-text text-transparent mb-6 ${
+                isDark 
+                  ? 'bg-gradient-to-r from-amber-300 to-orange-300' 
+                  : 'bg-gradient-to-r from-rose-500 to-orange-400'
+              }`}
             >
               Couple Space
             </motion.h1>
             
-            <motion.h2 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-xl md:text-2xl font-medium text-foreground/80 mb-6"
-            >
-              情侣空间
-            </motion.h2>
-            
-            {/* 打字机效果区域 */}
-            <div className="min-h-[120px] md:min-h-[100px] flex flex-col items-center justify-center mb-6">
-              {introTexts.slice(0, currentTextIndex + 1).map((text, index) => (
-                <motion.p
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: index < currentTextIndex ? 0.5 : 1, y: 0 }}
-                  className={`text-lg leading-relaxed ${index < currentTextIndex ? 'text-muted-foreground/50 text-base' : 'text-muted-foreground'}`}
-                >
-                  {index === currentTextIndex ? (
-                    <>
-                      {displayText}
-                      <span className="inline-block w-0.5 h-5 bg-primary/60 ml-0.5 align-middle animate-blink" />
-                    </>
-                  ) : (
-                    text
-                  )}
-                </motion.p>
-              ))}
-            </div>
-            
-            {/* 进入按钮 - 携手一起，白头到老 */}
+            {/* 进入按钮 - 立即显示 */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: showFeatures ? 1 : 0, y: showFeatures ? 0 : 20 }}
-              transition={{ duration: 0.5 }}
-              className="flex flex-col items-center gap-4"
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="flex flex-col items-center gap-4 mb-8"
             >
               <Button 
                 size="lg" 
-                className="h-14 px-10 text-lg rounded-2xl bg-gradient-to-r from-rose-500 to-orange-400 hover:from-rose-600 hover:to-orange-500 shadow-lg shadow-rose-500/25 transition-all duration-300 gap-3"
+                className={`h-14 px-10 text-lg rounded-2xl shadow-lg transition-all duration-300 gap-3 ${
+                  isDark 
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/25' 
+                    : 'bg-gradient-to-r from-rose-500 to-orange-400 hover:from-rose-600 hover:to-orange-500 shadow-rose-500/25'
+                }`}
                 onClick={handleEnter}
               >
                 携手一起，白头到老
@@ -162,11 +185,37 @@ export default function Home() {
               </Button>
               
               {isAuthenticated && (
-                <p className="text-sm text-muted-foreground">
+                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>
                   欢迎回来，{user?.name || "亲爱的"}
+                  {isOwner && <span className="ml-2 text-emerald-500">(开发者模式)</span>}
                 </p>
               )}
             </motion.div>
+            
+            {/* 打字机效果区域 */}
+            <div className="min-h-[120px] md:min-h-[100px] flex flex-col items-center justify-center">
+              {introTexts.slice(0, currentTextIndex + 1).map((text, index) => (
+                <motion.p
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: index < currentTextIndex ? 0.5 : 1, y: 0 }}
+                  className={`text-lg leading-relaxed ${
+                    index < currentTextIndex 
+                      ? (isDark ? 'text-slate-500 text-base' : 'text-muted-foreground/50 text-base')
+                      : (isDark ? 'text-slate-300' : 'text-muted-foreground')
+                  }`}
+                >
+                  {index === currentTextIndex ? (
+                    <>
+                      {displayText}
+                      <span className={`inline-block w-0.5 h-5 ml-0.5 align-middle animate-blink ${isDark ? 'bg-amber-400/60' : 'bg-primary/60'}`} />
+                    </>
+                  ) : (
+                    text
+                  )}
+                </motion.p>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -174,13 +223,13 @@ export default function Home() {
       {/* Features Section */}
       <motion.div 
         initial={{ opacity: 0 }}
-        animate={{ opacity: showFeatures ? 1 : 0 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8, delay: 0.6 }}
         className="container py-10"
       >
         <div className="text-center mb-8">
-          <h3 className="text-xl font-semibold mb-2">丰富的功能</h3>
-          <p className="text-muted-foreground text-sm">为你们的爱情量身定制</p>
+          <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-slate-200' : ''}`}>丰富的功能</h3>
+          <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>为你们的爱情量身定制</p>
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -188,16 +237,24 @@ export default function Home() {
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: showFeatures ? 1 : 0, y: showFeatures ? 0 : 20 }}
-              transition={{ duration: 0.4, delay: 0.05 * index }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.6 + 0.05 * index }}
             >
-              <Card className="card-ios-hover glass-ios rounded-2xl border-0">
+              <Card className={`card-ios-hover rounded-2xl border-0 ${
+                isDark 
+                  ? 'bg-slate-800/50 backdrop-blur-sm' 
+                  : 'glass-ios'
+              }`}>
                 <CardContent className="p-4 flex flex-col items-center text-center">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-100 to-orange-100 flex items-center justify-center mb-3">
-                    <feature.icon className="w-5 h-5 text-rose-500" />
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
+                    isDark 
+                      ? 'bg-gradient-to-br from-amber-900/50 to-orange-900/50' 
+                      : 'bg-gradient-to-br from-rose-100 to-orange-100'
+                  }`}>
+                    <feature.icon className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-rose-500'}`} />
                   </div>
-                  <h4 className="font-medium text-sm mb-0.5">{feature.title}</h4>
-                  <p className="text-xs text-muted-foreground">{feature.desc}</p>
+                  <h4 className={`font-medium text-sm mb-0.5 ${isDark ? 'text-slate-200' : ''}`}>{feature.title}</h4>
+                  <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-muted-foreground'}`}>{feature.desc}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -208,8 +265,9 @@ export default function Home() {
       {/* Footer */}
       <motion.footer 
         initial={{ opacity: 0 }}
-        animate={{ opacity: showFeatures ? 1 : 0 }}
-        className="container py-6 text-center text-sm text-muted-foreground"
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+        className={`container py-6 text-center text-sm ${isDark ? 'text-slate-500' : 'text-muted-foreground'}`}
       >
         <p>用心记录，让爱更甜蜜</p>
       </motion.footer>
