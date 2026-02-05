@@ -297,6 +297,8 @@ export const appRouter = router({
         repeatType: z.enum(["none", "yearly", "monthly"]).optional(),
         reminderDays: z.number().optional(),
         emoji: z.string().optional(),
+        bgImage: z.string().optional(),
+        bgColor: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const couple = await getUserCouple(ctx.user.id);
@@ -308,6 +310,8 @@ export const appRouter = router({
           repeatType: input.repeatType ?? "yearly",
           reminderDays: input.reminderDays ?? 3,
           emoji: input.emoji ?? null,
+          bgImage: input.bgImage ?? null,
+          bgColor: input.bgColor ?? null,
         });
         return { id };
       }),
@@ -321,6 +325,8 @@ export const appRouter = router({
         repeatType: z.enum(["none", "yearly", "monthly"]).optional(),
         reminderDays: z.number().optional(),
         emoji: z.string().optional(),
+        bgImage: z.string().nullable().optional(),
+        bgColor: z.string().nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const { id, date, ...rest } = input;

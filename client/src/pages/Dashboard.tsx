@@ -152,15 +152,20 @@ export default function Dashboard() {
             transition={{ duration: 0.5 }}
           >
             <Link href="/anniversary">
-              <Card className="glass-ios border-0 overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
-                <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-orange-500/10 to-amber-500/10" />
-                <CardContent className="relative p-6">
+              <Card className={`border-0 overflow-hidden cursor-pointer hover:shadow-xl transition-shadow ${!nextAnniversary.bgImage && !nextAnniversary.bgColor ? 'glass-ios' : ''}`}>
+                {!nextAnniversary.bgImage && !nextAnniversary.bgColor && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-orange-500/10 to-amber-500/10" />
+                )}
+                <CardContent className="relative p-0">
                   <Countdown
                     targetDate={nextAnniversary.nextDate}
                     title={nextAnniversary.title}
                     emoji={nextAnniversary.emoji || undefined}
+                    bgImage={nextAnniversary.bgImage}
+                    bgColor={nextAnniversary.bgColor}
+                    className="p-6"
                   />
-                  <p className="text-center text-xs text-muted-foreground mt-4">
+                  <p className={`text-center text-xs pb-4 ${nextAnniversary.bgImage || nextAnniversary.bgColor ? 'text-white/70' : 'text-muted-foreground'}`}>
                     点击查看所有纪念日
                   </p>
                 </CardContent>

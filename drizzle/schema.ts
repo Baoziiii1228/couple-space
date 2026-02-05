@@ -104,6 +104,8 @@ export const anniversaries = mysqlTable("anniversaries", {
   repeatType: mysqlEnum("repeatType", ["none", "yearly", "monthly"]).default("yearly").notNull(),
   reminderDays: int("reminderDays").default(3),
   emoji: varchar("emoji", { length: 10 }),
+  bgImage: text("bgImage"), // 背景图片URL
+  bgColor: varchar("bgColor", { length: 100 }), // 背景颜色或渐变
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
