@@ -9,6 +9,8 @@ import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import { useEffect, useMemo } from "react";
 import ScreenLock from "@/components/ScreenLock";
+import Countdown from "@/components/Countdown";
+import { motion } from "framer-motion";
 
 const navItems = [
   { icon: Camera, title: "相册", path: "/albums", color: "text-pink-500" },
@@ -74,7 +76,7 @@ export default function Dashboard() {
     return photos.map(p => p.url);
   }, [photos]);
 
-  // 计算下一个纪念日
+  // 计算下一个纪念日（带完整日期信息）
   const nextAnniversary = useMemo(() => {
     if (!anniversaries || anniversaries.length === 0) return null;
     
@@ -129,9 +131,11 @@ export default function Dashboard() {
             <span className="font-semibold">Couple Space</span>
           </Link>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon">
-              <Settings className="w-5 h-5" />
-            </Button>
+            <Link href="/settings">
+              <Button variant="ghost" size="icon">
+                <Settings className="w-5 h-5" />
+              </Button>
+            </Link>
             <Button variant="ghost" size="icon" onClick={() => logout()}>
               <LogOut className="w-5 h-5" />
             </Button>
@@ -140,13 +144,38 @@ export default function Dashboard() {
       </header>
 
       <main className="container py-6 space-y-6">
+        {/* 纪念日倒计时卡片 - 突出显示 */}
+        {nextAnniversary && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Link href="/anniversary">
+              <Card className="glass-ios border-0 overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
+                <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-orange-500/10 to-amber-500/10" />
+                <CardContent className="relative p-6">
+                  <Countdown
+                    targetDate={nextAnniversary.nextDate}
+                    title={nextAnniversary.title}
+                    emoji={nextAnniversary.emoji || undefined}
+                  />
+                  <p className="text-center text-xs text-muted-foreground mt-4">
+                    点击查看所有纪念日
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+          </motion.div>
+        )}
+
         {/* 恋爱统计卡片 */}
         <Card className="glass border-white/40 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/10" />
           <CardContent className="relative p-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
               {/* 在一起天数 */}
-              <div className="text-center">
+              <div className="text-center flex-1">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <Heart className="w-8 h-8 text-primary animate-heartbeat" fill="currentColor" />
                 </div>
@@ -172,16 +201,16 @@ export default function Dashboard() {
               {/* 分隔线 */}
               <div className="hidden md:block w-px h-24 bg-border" />
 
-              {/* 下一个纪念日 */}
-              <div className="text-center">
+              {/* 下一个纪念日简要信息 */}
+              <div className="text-center flex-1">
                 {nextAnniversary ? (
                   <>
-                    <p className="text-sm text-muted-foreground mb-1">距离</p>
+                    <p className="text-sm text-muted-foreground mb-1">下一个纪念日</p>
                     <p className="font-medium mb-1">{nextAnniversary.emoji} {nextAnniversary.title}</p>
                     <div className="text-3xl font-bold text-accent mb-1">
                       {nextAnniversary.daysLeft}
                     </div>
-                    <p className="text-muted-foreground">天</p>
+                    <p className="text-muted-foreground">天后</p>
                   </>
                 ) : (
                   <p className="text-muted-foreground">
@@ -196,7 +225,7 @@ export default function Dashboard() {
               <div className="hidden md:block w-px h-24 bg-border" />
 
               {/* 伴侣信息 */}
-              <div className="text-center">
+              <div className="text-center flex-1">
                 <p className="text-sm text-muted-foreground mb-2">我的另一半</p>
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
                   <Heart className="w-8 h-8 text-primary" />
