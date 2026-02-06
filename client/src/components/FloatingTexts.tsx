@@ -45,21 +45,21 @@ interface FloatingItem {
 // 预定义的位置区域（避开中心区域）
 const positionZones = [
   // 左上
-  { xMin: 3, xMax: 18, yMin: 8, yMax: 22 },
+  { xMin: 3, xMax: 18, yMin: 8, yMax: 25 },
   // 右上
-  { xMin: 72, xMax: 92, yMin: 8, yMax: 22 },
+  { xMin: 72, xMax: 92, yMin: 8, yMax: 25 },
   // 左中偏上
-  { xMin: 2, xMax: 15, yMin: 28, yMax: 42 },
+  { xMin: 2, xMax: 15, yMin: 28, yMax: 38 },
   // 右中偏上
-  { xMin: 78, xMax: 95, yMin: 28, yMax: 42 },
+  { xMin: 78, xMax: 95, yMin: 28, yMax: 38 },
   // 左中偏下
-  { xMin: 4, xMax: 16, yMin: 48, yMax: 60 },
+  { xMin: 4, xMax: 16, yMin: 62, yMax: 72 },
   // 右中偏下
-  { xMin: 76, xMax: 93, yMin: 48, yMax: 60 },
+  { xMin: 76, xMax: 93, yMin: 62, yMax: 72 },
   // 左下
-  { xMin: 6, xMax: 20, yMin: 65, yMax: 78 },
+  { xMin: 6, xMax: 20, yMin: 75, yMax: 88 },
   // 右下
-  { xMin: 70, xMax: 90, yMin: 65, yMax: 78 },
+  { xMin: 70, xMax: 90, yMin: 75, yMax: 88 },
 ];
 
 interface FloatingTextsProps {
