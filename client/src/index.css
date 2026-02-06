@@ -121,9 +121,20 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  .font-tech {
+    font-family: 'Orbitron', 'Rajdhani', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  .font-tech-light {
+    font-family: 'Rajdhani', 'Orbitron', monospace;
+    letter-spacing: 0.02em;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
