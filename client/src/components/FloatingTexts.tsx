@@ -104,7 +104,7 @@ export default function FloatingTexts({ isDark = false }: FloatingTextsProps) {
       text: getRandomText(),
       x: pos.x,
       y: pos.y,
-      duration: 5 + Math.random() * 2,
+      duration: 3 + Math.random() * 1.5,
     };
     setItems((prev) => {
       const next = prev.length >= 5 ? prev.slice(1) : prev;
@@ -114,14 +114,14 @@ export default function FloatingTexts({ isDark = false }: FloatingTextsProps) {
 
   useEffect(() => {
     // 初始延迟后开始
-    const t1 = setTimeout(() => spawnItem(), 800);
-    const t2 = setTimeout(() => spawnItem(), 2500);
-    const t3 = setTimeout(() => spawnItem(), 4200);
+    const t1 = setTimeout(() => spawnItem(), 500);
+    const t2 = setTimeout(() => spawnItem(), 1500);
+    const t3 = setTimeout(() => spawnItem(), 2500);
 
-    // 每3.5秒产生新句子（在上一个渐隐到约90%时）
+    // 每2.5秒产生新句子（在上一个渐隐到约90%时）
     const interval = setInterval(() => {
       spawnItem();
-    }, 3500);
+    }, 2500);
 
     return () => {
       clearTimeout(t1);
