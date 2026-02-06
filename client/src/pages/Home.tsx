@@ -30,10 +30,10 @@ const timelineStages = [
     id: "meet",
     label: "相识",
     sublabel: "初遇的心动",
-    emoji: "👫",
+    emoji: "🌸",
     color: "from-pink-400 to-rose-400",
     darkColor: "from-pink-800/60 to-rose-800/60",
-    icons: ["💌", "☕"],
+    icons: ["💌", "🎵"],
   },
   {
     id: "love",

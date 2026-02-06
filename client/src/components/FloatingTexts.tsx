@@ -152,8 +152,8 @@ export default function FloatingTexts({ isDark = false }: FloatingTextsProps) {
             }}
           >
             <p
-              className={`font-tech-light text-xs md:text-sm whitespace-nowrap select-none ${
-                isDark ? "text-amber-300/50" : "text-rose-400/40"
+              className={`font-tech-light text-base md:text-xl whitespace-nowrap select-none ${
+                isDark ? "text-amber-300/60" : "text-rose-400/50"
               }`}
               style={{
                 textShadow: isDark

@@ -291,12 +291,11 @@ export function LightModeA() {
   );
 }
 
-// 浅色模式B：装饰插画 + 时间线
+// 浅色模式B：装饰插画
 export function LightModeB() {
   return (
     <>
       <DecorativeIllustrations />
-      <Timeline />
     </>
   );
 }
