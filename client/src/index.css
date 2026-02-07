@@ -150,9 +150,13 @@
 }
 
 @layer components {
-  /* Mac风格毛玻璃效果 */
+  /* Mac风格毛玻璃效果 - 自动适配深浅模式 */
   .glass {
     @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-lg;
+  }
+  
+  .dark .glass {
+    @apply bg-white/8 backdrop-blur-xl border border-white/10 shadow-lg;
   }
   
   .glass-dark {
@@ -175,6 +179,21 @@
       0 2px 8px rgba(0, 0, 0, 0.04),
       inset 0 1px 0 rgba(255, 255, 255, 0.8),
       inset 0 -1px 0 rgba(255, 255, 255, 0.2);
+  }
+  
+  .dark .glass-ios {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.06) 50%,
+      rgba(255, 255, 255, 0.08) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 2px 8px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.05);
   }
   
   /* 玻璃反光效果 */
@@ -205,8 +224,16 @@
     box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08), 0 2px 8px -2px rgba(0, 0, 0, 0.04);
   }
   
+  .dark .shadow-soft {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3), 0 2px 8px -2px rgba(0, 0, 0, 0.2);
+  }
+  
   .shadow-soft-lg {
     box-shadow: 0 8px 40px -4px rgba(0, 0, 0, 0.1), 0 4px 16px -4px rgba(0, 0, 0, 0.06);
+  }
+  
+  .dark .shadow-soft-lg {
+    box-shadow: 0 8px 40px -4px rgba(0, 0, 0, 0.4), 0 4px 16px -4px rgba(0, 0, 0, 0.25);
   }
   
   /* 立体阴影 */
@@ -217,7 +244,7 @@
       0 2px 4px rgba(0, 0, 0, 0.05);
   }
   
-  /* 暖色渐变背景 - 更丰富的层次 */
+  /* 暖色渐变背景 - 自动适配深浅模式 */
   .gradient-warm {
     background: linear-gradient(135deg, 
       oklch(0.95 0.04 50) 0%, 
@@ -226,10 +253,25 @@
     );
   }
   
+  .dark .gradient-warm {
+    background: linear-gradient(135deg, 
+      oklch(0.2 0.03 30) 0%, 
+      oklch(0.18 0.04 25) 50%, 
+      oklch(0.16 0.05 20) 100%
+    );
+  }
+  
   .gradient-warm-subtle {
     background: linear-gradient(180deg, 
       oklch(0.985 0.008 60) 0%, 
       oklch(0.97 0.02 50) 100%
+    );
+  }
+  
+  .dark .gradient-warm-subtle {
+    background: linear-gradient(180deg, 
+      oklch(0.18 0.02 30) 0%, 
+      oklch(0.15 0.025 25) 100%
     );
   }
   
@@ -243,6 +285,18 @@
         oklch(0.985 0.012 55) 0%, 
         oklch(0.975 0.02 45) 50%,
         oklch(0.97 0.025 40) 100%
+      );
+  }
+  
+  .dark .gradient-warm-rich {
+    background: 
+      radial-gradient(ellipse at 20% 0%, rgba(200, 120, 80, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(180, 80, 80, 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(160, 100, 60, 0.1) 0%, transparent 70%),
+      linear-gradient(180deg, 
+        oklch(0.18 0.02 30) 0%, 
+        oklch(0.16 0.025 25) 50%,
+        oklch(0.14 0.03 20) 100%
       );
   }
   
@@ -322,12 +376,28 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.6);
   }
   
+  .dark .tab-ios {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      0 2px 8px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  
   .tab-ios-active {
     background: rgba(255, 255, 255, 0.95);
     box-shadow: 
       0 4px 12px rgba(0, 0, 0, 0.1),
       0 2px 4px rgba(0, 0, 0, 0.06),
       inset 0 1px 0 rgba(255, 255, 255, 1);
+  }
+  
+  .dark .tab-ios-active {
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.3),
+      0 2px 4px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 }
 

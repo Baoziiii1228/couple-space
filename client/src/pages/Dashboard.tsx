@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   Heart, Camera, BookOpen, Calendar, Star, MessageCircle, 
-  Smile, Gift, Clock, MapPin, Film, LogOut, Settings
+  Smile, Gift, Clock, MapPin, Film, LogOut, Settings, Moon, Sun
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
@@ -11,6 +11,7 @@ import { useEffect, useMemo } from "react";
 import ScreenLock from "@/components/ScreenLock";
 import Countdown from "@/components/Countdown";
 import { motion } from "framer-motion";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const navItems = [
   { icon: Camera, title: "相册", path: "/albums", color: "text-pink-500" },
@@ -27,6 +28,7 @@ const navItems = [
 
 export default function Dashboard() {
   const { user, logout, isAuthenticated } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [, setLocation] = useLocation();
 
   const { data: coupleStatus } = trpc.couple.getStatus.useQuery(undefined, {
@@ -131,6 +133,9 @@ export default function Dashboard() {
             <span className="font-semibold">Couple Space</span>
           </Link>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={toggleTheme}>
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </Button>
             <Link href="/settings">
               <Button variant="ghost" size="icon">
                 <Settings className="w-5 h-5" />
@@ -175,7 +180,7 @@ export default function Dashboard() {
         )}
 
         {/* 恋爱统计卡片 */}
-        <Card className="glass border-white/40 overflow-hidden">
+        <Card className="glass overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/10" />
           <CardContent className="relative p-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -243,7 +248,7 @@ export default function Dashboard() {
 
         {/* 每日情话 */}
         {dailyQuote && (
-          <Card className="glass border-white/40">
+          <Card className="glass">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
@@ -267,9 +272,9 @@ export default function Dashboard() {
           <div className="grid grid-cols-5 gap-3">
             {navItems.map((item) => (
               <Link key={item.path} href={item.path}>
-                <Card className="card-hover glass border-white/40 cursor-pointer">
+                <Card className="card-hover glass cursor-pointer">
                   <CardContent className="p-4 flex flex-col items-center text-center">
-                    <div className={`w-10 h-10 rounded-xl bg-white/50 flex items-center justify-center mb-2 ${item.color}`}>
+                    <div className={`w-10 h-10 rounded-xl bg-white/50 dark:bg-white/10 flex items-center justify-center mb-2 ${item.color}`}>
                       <item.icon className="w-5 h-5" />
                     </div>
                     <span className="text-sm font-medium">{item.title}</span>
