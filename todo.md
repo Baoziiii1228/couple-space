@@ -158,7 +158,6 @@
 ## 邮箱认证功能完成
 - [x] 后端邮箱认证端点（sendCode、loginWithCode、register、loginWithPassword）
 - [x] 前端邮箱认证 UI（验证码登录、密码登录、注册三个 Tab）
-- [x] 邮件发送配置（nodemailer 集成，开发模式下打印到控制台）
-- [x] QQ 邮箱 SMTP 配置（SMTP_HOST、SMTP_PORT、SMTP_USER、SMTP_PASS、SMTP_FROM）
-- [x] 邮箱认证单元测试（24 个测试用例全部通过）
-- [x] 邮件发送功能测试（验证码已成功发送到 QQ 邮箱）
+- [x] Resend 邮件服务配置（RESEND_API_KEY）
+- [x] Resend 域名验证（couple.space.biz 已添加，等待验证完成）
+- [x] 邮箱认证单元测试（24 个测试用例）
