@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -12,9 +13,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 const priorityConfig = {
-  high: { label: "高", color: "text-red-500", bg: "bg-red-100" },
-  medium: { label: "中", color: "text-yellow-500", bg: "bg-yellow-100" },
-  low: { label: "低", color: "text-green-500", bg: "bg-green-100" },
+  high: { label: "高", color: "text-red-500 dark:text-red-400", bg: "bg-red-100 dark:bg-red-900/30" },
+  medium: { label: "中", color: "text-yellow-500 dark:text-yellow-400", bg: "bg-yellow-100 dark:bg-yellow-900/30" },
+  low: { label: "低", color: "text-green-500 dark:text-green-400", bg: "bg-green-100 dark:bg-green-900/30" },
 };
 
 export default function Wishes() {
@@ -66,7 +67,7 @@ export default function Wishes() {
 
   return (
     <div className="min-h-screen gradient-warm-subtle">
-      <header className="sticky top-0 z-50 glass border-b border-white/20">
+      <header className="sticky top-0 z-50 glass border-b border-white/20 dark:border-white/10">
         <div className="container flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
@@ -138,7 +139,7 @@ export default function Wishes() {
               {pendingWishes.map((wish) => {
                 const priority = priorityConfig[wish.priority];
                 return (
-                  <Card key={wish.id} className="glass border-white/40">
+                  <Card key={wish.id} className="glass border-white/40 dark:border-white/10">
                     <CardContent className="p-4 flex items-start gap-4">
                       <button
                         className="w-6 h-6 rounded-full border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors mt-0.5"
@@ -179,7 +180,7 @@ export default function Wishes() {
             <h2 className="text-lg font-semibold mb-4">已实现 🎉</h2>
             <div className="space-y-3">
               {completedWishes.map((wish) => (
-                <Card key={wish.id} className="glass border-white/40 opacity-70">
+                <Card key={wish.id} className="glass border-white/40 dark:border-white/10 opacity-70">
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
                       <Check className="w-4 h-4 text-primary-foreground" />
@@ -196,7 +197,7 @@ export default function Wishes() {
 
         {/* 空状态 */}
         {(!wishes || wishes.length === 0) && (
-          <Card className="glass border-white/40">
+          <Card className="glass border-white/40 dark:border-white/10">
             <CardContent className="p-12 text-center">
               <Gift className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">还没有愿望，许下你们的第一个愿望吧</p>
@@ -211,3 +212,4 @@ export default function Wishes() {
     </div>
   );
 }
+

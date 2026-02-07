@@ -73,8 +73,8 @@ export default function Tasks() {
   const completedTasks = tasks?.filter(t => t.isCompleted) || [];
 
   return (
-    <div className="min-h-screen gradient-warm-subtle">
-      <header className="sticky top-0 z-50 glass border-b border-white/20">
+    <div className="min-h-screen gradient-warm-subtle dark:bg-slate-900">
+      <header className="sticky top-0 z-50 glass border-b border-white/20 dark:border-white/10">
         <div className="container flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
@@ -82,7 +82,7 @@ export default function Tasks() {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
-            <h1 className="font-semibold">情侣任务</h1>
+            <h1 className="font-semibold text-foreground">情侣任务</h1>
           </div>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
@@ -138,11 +138,11 @@ export default function Tasks() {
 
       <main className="container py-6 space-y-6">
         {/* 进度统计 */}
-        <Card className="glass border-white/40">
+        <Card className="glass border-white/40 dark:border-white/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-lg font-semibold">完成进度</h2>
+                <h2 className="text-lg font-semibold text-foreground">完成进度</h2>
                 <p className="text-sm text-muted-foreground">
                   已完成 {stats.completed} / {stats.total} 个任务
                 </p>
@@ -158,19 +158,19 @@ export default function Tasks() {
         {/* 待完成任务 */}
         {pendingTasks.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold mb-4">待完成</h2>
+            <h2 className="text-lg font-semibold mb-4 text-foreground">待完成</h2>
             <div className="space-y-3">
               {pendingTasks.map((task) => (
-                <Card key={task.id} className="glass border-white/40">
+                <Card key={task.id} className="glass border-white/40 dark:border-white/20">
                   <CardContent className="p-4 flex items-center gap-4">
                     <button
-                      className="w-6 h-6 rounded-full border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors"
+                      className="w-6 h-6 rounded-full border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors dark:hover:bg-primary/20"
                       onClick={() => completeTask.mutate({ id: task.id })}
                     >
                       <Check className="w-4 h-4 text-primary opacity-0 hover:opacity-100" />
                     </button>
                     <div className="flex-1">
-                      <h3 className="font-medium">{task.title}</h3>
+                      <h3 className="font-medium text-foreground">{task.title}</h3>
                       {task.description && (
                         <p className="text-sm text-muted-foreground">{task.description}</p>
                       )}
@@ -193,10 +193,10 @@ export default function Tasks() {
         {/* 已完成任务 */}
         {completedTasks.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold mb-4">已完成 ✨</h2>
+            <h2 className="text-lg font-semibold mb-4 text-foreground">已完成 ✨</h2>
             <div className="space-y-3">
               {completedTasks.map((task) => (
-                <Card key={task.id} className="glass border-white/40 opacity-70">
+                <Card key={task.id} className="glass border-white/40 dark:border-white/20 opacity-70">
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
                       <Check className="w-4 h-4 text-primary-foreground" />
@@ -213,7 +213,7 @@ export default function Tasks() {
 
         {/* 空状态 */}
         {(!tasks || tasks.length === 0) && (
-          <Card className="glass border-white/40">
+          <Card className="glass border-white/40 dark:border-white/20">
             <CardContent className="p-12 text-center">
               <Star className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">还没有任务，添加你们想一起完成的事吧</p>
@@ -240,3 +240,4 @@ export default function Tasks() {
     </div>
   );
 }
+

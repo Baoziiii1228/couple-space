@@ -217,7 +217,7 @@ export default function Anniversary() {
               <button
                 key={gradient.name}
                 type="button"
-                className={`h-12 rounded-lg transition-all ${
+                className={`h-12 rounded-lg transition-all dark:ring-offset-slate-900 ${
                   formData.bgColor === gradient.value 
                     ? 'ring-2 ring-primary ring-offset-2' 
                     : 'hover:scale-105'
@@ -236,7 +236,7 @@ export default function Anniversary() {
               <button
                 key={color.name}
                 type="button"
-                className={`h-12 rounded-lg transition-all ${
+                className={`h-12 rounded-lg transition-all dark:ring-offset-slate-900 ${
                   formData.bgColor === color.value 
                     ? 'ring-2 ring-primary ring-offset-2' 
                     : 'hover:scale-105'
@@ -252,7 +252,7 @@ export default function Anniversary() {
             <div className="flex gap-2 mt-1">
               <Input
                 type="color"
-                className="w-12 h-10 p-1 cursor-pointer"
+                className="w-12 h-10 p-1 cursor-pointer bg-white dark:bg-slate-800"
                 value={formData.bgColor.startsWith("#") ? formData.bgColor : "#ff6b6b"}
                 onChange={(e) => selectBgColor(e.target.value)}
               />
@@ -312,10 +312,10 @@ export default function Anniversary() {
             <button
               key={emoji}
               type="button"
-              className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center transition-all ${
+              className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center transition-all dark:ring-offset-slate-900 ${
                 formData.emoji === emoji 
                   ? 'bg-primary/20 ring-2 ring-primary' 
-                  : 'bg-secondary hover:bg-secondary/80'
+                  : 'bg-secondary hover:bg-secondary/80 dark:bg-slate-700 dark:hover:bg-slate-600'
               }`}
               onClick={() => setFormData({ ...formData, emoji })}
             >
@@ -349,7 +349,7 @@ export default function Anniversary() {
 
   return (
     <div className="min-h-screen gradient-warm-subtle">
-      <header className="sticky top-0 z-50 glass border-b border-white/20">
+      <header className="sticky top-0 z-50 glass border-b border-white/20 dark:border-white/10">
         <div className="container flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
@@ -401,7 +401,7 @@ export default function Anniversary() {
             {anniversariesWithCountdown.map((anniversary) => (
               <Card 
                 key={anniversary.id} 
-                className={`overflow-hidden ${!anniversary.bgImage && !anniversary.bgColor ? 'glass border-white/40' : 'border-0'}`}
+                className={`overflow-hidden ${!anniversary.bgImage && !anniversary.bgColor ? 'glass border-white/40 dark:border-white/10' : 'border-0'}`}
                 style={
                   anniversary.bgImage 
                     ? { backgroundImage: `url(${anniversary.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
@@ -419,7 +419,7 @@ export default function Anniversary() {
                     <div className={`w-20 h-20 flex items-center justify-center text-3xl ${
                       anniversary.bgImage || anniversary.bgColor 
                         ? 'bg-white/10' 
-                        : 'bg-primary/5'
+                        : 'bg-primary/5 dark:bg-primary/10'
                     }`}>
                       {anniversary.emoji}
                     </div>
@@ -464,7 +464,7 @@ export default function Anniversary() {
             ))}
           </div>
         ) : (
-          <Card className="glass border-white/40 max-w-md mx-auto">
+          <Card className="glass border-white/40 dark:border-white/10 max-w-md mx-auto">
             <CardContent className="p-12 text-center">
               <Calendar className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">还没有纪念日，添加第一个吧</p>

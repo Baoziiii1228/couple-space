@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,16 +15,16 @@ import { motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
 
 const navItems = [
-  { icon: Camera, title: "相册", path: "/albums", color: "text-pink-500" },
-  { icon: BookOpen, title: "日记", path: "/diary", color: "text-orange-500" },
-  { icon: Calendar, title: "纪念日", path: "/anniversary", color: "text-red-500" },
-  { icon: Star, title: "任务", path: "/tasks", color: "text-yellow-500" },
-  { icon: MessageCircle, title: "留言", path: "/messages", color: "text-green-500" },
-  { icon: Smile, title: "心情", path: "/mood", color: "text-blue-500" },
-  { icon: Gift, title: "愿望", path: "/wishes", color: "text-purple-500" },
-  { icon: Clock, title: "胶囊", path: "/time-capsule", color: "text-indigo-500" },
-  { icon: MapPin, title: "足迹", path: "/footprints", color: "text-teal-500" },
-  { icon: Film, title: "清单", path: "/todo-list", color: "text-rose-500" },
+  { icon: Camera, title: "相册", path: "/albums", color: "text-pink-500 dark:text-pink-400" },
+  { icon: BookOpen, title: "日记", path: "/diary", color: "text-orange-500 dark:text-orange-400" },
+  { icon: Calendar, title: "纪念日", path: "/anniversary", color: "text-red-500 dark:text-red-400" },
+  { icon: Star, title: "任务", path: "/tasks", color: "text-yellow-500 dark:text-yellow-400" },
+  { icon: MessageCircle, title: "留言", path: "/messages", color: "text-green-500 dark:text-green-400" },
+  { icon: Smile, title: "心情", path: "/mood", color: "text-blue-500 dark:text-blue-400" },
+  { icon: Gift, title: "愿望", path: "/wishes", color: "text-purple-500 dark:text-purple-400" },
+  { icon: Clock, title: "胶囊", path: "/time-capsule", color: "text-indigo-500 dark:text-indigo-400" },
+  { icon: MapPin, title: "足迹", path: "/footprints", color: "text-teal-500 dark:text-teal-400" },
+  { icon: Film, title: "清单", path: "/todo-list", color: "text-rose-500 dark:text-rose-400" },
 ];
 
 export default function Dashboard() {
@@ -126,7 +127,7 @@ export default function Dashboard() {
       )}
 
       {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-white/20">
+      <header className="sticky top-0 z-50 glass border-b border-white/20 dark:border-white/10">
         <div className="container flex items-center justify-between h-16">
           <Link href="/dashboard" className="flex items-center gap-2">
             <Heart className="w-6 h-6 text-primary" fill="currentColor" />
@@ -159,7 +160,7 @@ export default function Dashboard() {
             <Link href="/anniversary">
               <Card className={`border-0 overflow-hidden cursor-pointer hover:shadow-xl transition-shadow ${!nextAnniversary.bgImage && !nextAnniversary.bgColor ? 'glass-ios' : ''}`}>
                 {!nextAnniversary.bgImage && !nextAnniversary.bgColor && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-orange-500/10 to-amber-500/10" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-orange-500/10 to-amber-500/10 dark:from-rose-500/20 dark:via-orange-500/20 dark:to-amber-500/20" />
                 )}
                 <CardContent className="relative p-0">
                   <Countdown
@@ -170,7 +171,7 @@ export default function Dashboard() {
                     bgColor={nextAnniversary.bgColor}
                     className="p-6"
                   />
-                  <p className={`text-center text-xs pb-4 ${nextAnniversary.bgImage || nextAnniversary.bgColor ? 'text-white/70' : 'text-muted-foreground'}`}>
+                  <p className={`text-center text-xs pb-4 ${nextAnniversary.bgImage || nextAnniversary.bgColor ? 'text-white/70 dark:text-white/80' : 'text-muted-foreground'}`}>
                     点击查看所有纪念日
                   </p>
                 </CardContent>

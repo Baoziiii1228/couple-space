@@ -77,7 +77,7 @@ export default function TodoList() {
 
   return (
     <div className="min-h-screen gradient-warm-subtle">
-      <header className="sticky top-0 z-50 glass border-b border-white/20">
+      <header className="sticky top-0 z-50 glass border-b border-white/20 dark:border-white/10">
         <div className="container flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
@@ -181,7 +181,7 @@ function ListContent({ type, pendingItems, completedItems, onComplete, onDelete,
 
   if (pendingItems.length === 0 && completedItems.length === 0) {
     return (
-      <Card className="glass border-white/40">
+      <Card className="glass border-white/40 dark:border-white/10">
         <CardContent className="p-12 text-center">
           <Icon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
           <p className="text-muted-foreground mb-4">还没有{emptyText}</p>
@@ -201,7 +201,7 @@ function ListContent({ type, pendingItems, completedItems, onComplete, onDelete,
           <h2 className="text-lg font-semibold mb-4">想{type === "movie" ? "看" : "吃"}</h2>
           <div className="space-y-3">
             {pendingItems.map((item) => (
-              <Card key={item.id} className="glass border-white/40">
+              <Card key={item.id} className="glass border-white/40 dark:border-white/10">
                 <CardContent className="p-4 flex items-start gap-4">
                   <button
                     className="w-6 h-6 rounded-full border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors mt-0.5"
@@ -235,7 +235,7 @@ function ListContent({ type, pendingItems, completedItems, onComplete, onDelete,
           <h2 className="text-lg font-semibold mb-4">已{type === "movie" ? "看" : "吃"} ✨</h2>
           <div className="space-y-3">
             {completedItems.map((item) => (
-              <Card key={item.id} className="glass border-white/40 opacity-70">
+              <Card key={item.id} className="glass border-white/40 dark:border-white/10 opacity-70">
                 <CardContent className="p-4 flex items-center gap-4">
                   <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
                     <Check className="w-4 h-4 text-primary-foreground" />
@@ -244,7 +244,7 @@ function ListContent({ type, pendingItems, completedItems, onComplete, onDelete,
                     <h3 className="font-medium line-through text-muted-foreground">{item.title}</h3>
                   </div>
                   {item.rating && (
-                    <div className="flex items-center gap-1 text-yellow-500">
+                    <div className="flex items-center gap-1 text-yellow-500 dark:text-yellow-400">
                       <Star className="w-4 h-4 fill-current" />
                       <span className="text-sm">{item.rating}</span>
                     </div>

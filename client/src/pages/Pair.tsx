@@ -71,9 +71,9 @@ export default function Pair() {
     <div className="min-h-screen gradient-warm-rich relative overflow-hidden">
       {/* 装饰性渐变光斑 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-pink-200/40 to-orange-200/30 rounded-full blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-gradient-to-tr from-orange-200/30 to-pink-200/40 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-radial from-white/20 to-transparent rounded-full blur-2xl" />
+        <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-pink-200/40 to-orange-200/30 dark:from-pink-900/30 dark:to-orange-900/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-gradient-to-tr from-orange-200/30 to-pink-200/40 dark:from-orange-900/20 dark:to-pink-900/30 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-radial from-white/20 to-transparent dark:from-white/5 rounded-full blur-2xl" />
       </div>
 
       <div className="container relative py-8">
@@ -101,7 +101,7 @@ export default function Pair() {
               <Heart3D size="xl" animate={true} />
             </div>
             
-            <h1 className="text-2xl font-bold mb-3 bg-gradient-to-r from-rose-600 to-orange-500 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold mb-3 bg-gradient-to-r from-rose-600 to-orange-500 bg-clip-text text-transparent dark:from-rose-500 dark:to-orange-400">
               情侣配对
             </h1>
             
@@ -125,7 +125,7 @@ export default function Pair() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 p-4 bg-white/60 backdrop-blur-sm rounded-2xl text-center border border-white/40 shadow-inner">
+                    <div className="flex-1 p-4 bg-white/60 dark:bg-white/10 backdrop-blur-sm rounded-2xl text-center border border-white/40 dark:border-white/20 shadow-inner">
                       <span className="text-2xl font-mono font-bold tracking-widest text-primary">
                         {coupleStatus.inviteCode}
                       </span>
@@ -133,7 +133,7 @@ export default function Pair() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="rounded-xl bg-white/60 backdrop-blur-sm border-white/40 hover:bg-white/80"
+                      className="rounded-xl bg-white/60 dark:bg-white/10 backdrop-blur-sm border-white/40 dark:border-white/20 hover:bg-white/80 dark:hover:bg-white/20"
                       onClick={() => handleCopy(coupleStatus.inviteCode!)}
                     >
                       {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
@@ -153,16 +153,16 @@ export default function Pair() {
             >
               <Tabs defaultValue="create" className="w-full">
                 {/* iOS风格Tab栏 */}
-                <TabsList className="grid w-full grid-cols-2 p-1 bg-white/50 backdrop-blur-md border border-white/40 rounded-2xl shadow-sm mb-4">
+                <TabsList className="grid w-full grid-cols-2 p-1 bg-white/50 dark:bg-black/20 backdrop-blur-md border border-white/40 dark:border-white/10 rounded-2xl shadow-sm mb-4">
                   <TabsTrigger 
                     value="create" 
-                    className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-200"
+                    className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-md transition-all duration-200"
                   >
                     创建邀请
                   </TabsTrigger>
                   <TabsTrigger 
                     value="join"
-                    className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-200"
+                    className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-md transition-all duration-200"
                   >
                     输入邀请码
                   </TabsTrigger>
@@ -182,7 +182,7 @@ export default function Pair() {
                           type="date"
                           value={togetherDate}
                           onChange={(e) => setTogetherDate(e.target.value)}
-                          className="rounded-xl bg-white/60 backdrop-blur-sm border-white/40 focus:bg-white/80 transition-colors"
+                          className="rounded-xl bg-white/60 dark:bg-white/10 backdrop-blur-sm border-white/40 dark:border-white/20 focus:bg-white/80 dark:focus:bg-white/20 transition-colors"
                         />
                         <p className="text-xs text-muted-foreground">
                           设置后可以在首页看到在一起的天数
@@ -214,7 +214,7 @@ export default function Pair() {
                           value={inviteCode}
                           onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                           maxLength={8}
-                          className="text-center text-lg tracking-widest rounded-xl bg-white/60 backdrop-blur-sm border-white/40 focus:bg-white/80 transition-colors font-mono"
+                          className="text-center text-lg tracking-widest rounded-xl bg-white/60 dark:bg-white/10 backdrop-blur-sm border-white/40 dark:border-white/20 focus:bg-white/80 dark:focus:bg-white/20 transition-colors font-mono"
                         />
                       </div>
                       <Button 

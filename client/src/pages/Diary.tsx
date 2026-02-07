@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -65,7 +66,7 @@ export default function Diary() {
 
   return (
     <div className="min-h-screen gradient-warm-subtle">
-      <header className="sticky top-0 z-50 glass border-b border-white/20">
+      <header className="sticky top-0 z-50 glass border-b border-white/20 dark:border-white/10">
         <div className="container flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
@@ -145,7 +146,7 @@ export default function Diary() {
         {diaries && diaries.length > 0 ? (
           <div className="space-y-4 max-w-2xl mx-auto">
             {diaries.map((diary) => (
-              <Card key={diary.id} className="glass border-white/40">
+              <Card key={diary.id} className="glass border-white/40 dark:border-white/20">
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -189,7 +190,7 @@ export default function Diary() {
             ))}
           </div>
         ) : (
-          <Card className="glass border-white/40 max-w-md mx-auto">
+          <Card className="glass border-white/40 dark:border-white/20 max-w-md mx-auto">
             <CardContent className="p-12 text-center">
               <BookOpen className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">还没有日记，写下第一篇吧</p>

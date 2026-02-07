@@ -10,14 +10,14 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from "
 import { zhCN } from "date-fns/locale";
 
 const moodOptions = [
-  { value: "happy", emoji: "😊", label: "开心", color: "bg-yellow-100" },
-  { value: "excited", emoji: "🤩", label: "兴奋", color: "bg-orange-100" },
-  { value: "peaceful", emoji: "😌", label: "平静", color: "bg-green-100" },
-  { value: "loving", emoji: "🥰", label: "甜蜜", color: "bg-pink-100" },
-  { value: "sad", emoji: "😢", label: "难过", color: "bg-blue-100" },
-  { value: "angry", emoji: "😠", label: "生气", color: "bg-red-100" },
-  { value: "anxious", emoji: "😰", label: "焦虑", color: "bg-purple-100" },
-  { value: "tired", emoji: "😴", label: "疲惫", color: "bg-gray-100" },
+  { value: "happy", emoji: "😊", label: "开心", color: "bg-yellow-100 dark:bg-yellow-900/30" },
+  { value: "excited", emoji: "🤩", label: "兴奋", color: "bg-orange-100 dark:bg-orange-900/30" },
+  { value: "peaceful", emoji: "😌", label: "平静", color: "bg-green-100 dark:bg-green-900/30" },
+  { value: "loving", emoji: "🥰", label: "甜蜜", color: "bg-pink-100 dark:bg-pink-900/30" },
+  { value: "sad", emoji: "😢", label: "难过", color: "bg-blue-100 dark:bg-blue-900/30" },
+  { value: "angry", emoji: "😠", label: "生气", color: "bg-red-100 dark:bg-red-900/30" },
+  { value: "anxious", emoji: "😰", label: "焦虑", color: "bg-purple-100 dark:bg-purple-900/30" },
+  { value: "tired", emoji: "😴", label: "疲惫", color: "bg-gray-100 dark:bg-gray-700/30" },
 ] as const;
 
 type MoodValue = typeof moodOptions[number]["value"];
@@ -77,7 +77,7 @@ export default function Mood() {
 
   return (
     <div className="min-h-screen gradient-warm-subtle">
-      <header className="sticky top-0 z-50 glass border-b border-white/20">
+      <header className="sticky top-0 z-50 glass border-b border-white/20 dark:border-white/10">
         <div className="container flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
@@ -92,7 +92,7 @@ export default function Mood() {
 
       <main className="container py-6 space-y-6">
         {/* 今日心情 */}
-        <Card className="glass border-white/40">
+        <Card className="glass border-white/40 dark:border-white/10">
           <CardContent className="p-6">
             {todayMoodOption ? (
               <div className="text-center">
@@ -142,7 +142,7 @@ export default function Mood() {
         </Card>
 
         {/* 心情日历 */}
-        <Card className="glass border-white/40">
+        <Card className="glass border-white/40 dark:border-white/10">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <Button
@@ -201,7 +201,7 @@ export default function Mood() {
 
         {/* 心情统计 */}
         {moodRecords && moodRecords.length > 0 && (
-          <Card className="glass border-white/40">
+          <Card className="glass border-white/40 dark:border-white/10">
             <CardContent className="p-6">
               <h2 className="font-semibold mb-4">本月心情统计</h2>
               <div className="flex flex-wrap gap-4">

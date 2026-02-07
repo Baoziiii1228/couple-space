@@ -1,5 +1,6 @@
+
 import { Button } from "@/components/ui/button";
-import { Heart, ArrowLeft, Moon, Sun, LogOut, Settings } from "lucide-react";
+import { Heart, ArrowLeft, Moon, Sun } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -17,9 +18,9 @@ export default function PageLayout({ title, children, showBack = true, backPath 
   const [, setLocation] = useLocation();
 
   return (
-    <div className="min-h-screen gradient-warm-subtle">
+    <div className="min-h-screen bg-background gradient-warm-subtle">
       {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-white/20 dark:border-white/5">
+      <header className="sticky top-0 z-50 glass border-b border-white/20 dark:border-white/10">
         <div className="container flex items-center justify-between h-14">
           <div className="flex items-center gap-2">
             {showBack && (

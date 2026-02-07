@@ -88,7 +88,7 @@ export default function Footprints() {
 
   return (
     <div className="min-h-screen gradient-warm-subtle">
-      <header className="sticky top-0 z-50 glass border-b border-white/20">
+      <header className="sticky top-0 z-50 glass border-b border-white/20 dark:border-white/10">
         <div className="container flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
@@ -175,7 +175,7 @@ export default function Footprints() {
       <main className="container py-6 space-y-6">
         {/* 统计 */}
         {footprints && footprints.length > 0 && (
-          <Card className="glass border-white/40">
+          <Card className="glass border-white/40 dark:border-white/20">
             <CardContent className="p-6 text-center">
               <div className="text-4xl font-bold text-primary mb-2">{footprints.length}</div>
               <p className="text-muted-foreground">个共同足迹</p>
@@ -187,7 +187,7 @@ export default function Footprints() {
         {footprints && footprints.length > 0 ? (
           <div className="space-y-4">
             {footprints.map((footprint, index) => (
-              <Card key={footprint.id} className="glass border-white/40 overflow-hidden">
+              <Card key={footprint.id} className="glass border-white/40 dark:border-white/20 overflow-hidden">
                 <CardContent className="p-0">
                   <div className="flex">
                     {/* 时间线 */}
@@ -232,9 +232,9 @@ export default function Footprints() {
             ))}
           </div>
         ) : (
-          <Card className="glass border-white/40">
+          <Card className="glass border-white/40 dark:border-white/20">
             <CardContent className="p-12 text-center">
-              <MapPin className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+              <MapPin className="w-16 h-16 text-muted-foreground/30 dark:text-muted-foreground/50 mx-auto mb-4" />
               <p className="text-muted-foreground mb-2">还没有足迹</p>
               <p className="text-sm text-muted-foreground mb-4">记录你们一起去过的地方</p>
               <Button onClick={() => setIsCreateOpen(true)} className="gap-2">

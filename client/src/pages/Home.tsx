@@ -70,7 +70,7 @@ export default function Home() {
 
   const handleEnter = () => {
     if (!isAuthenticated) {
-      window.location.href = getLoginUrl();
+      setLocation("/login");
     } else if (coupleStatus?.status === "paired" || isOwner) {
       setLocation("/dashboard");
     } else {

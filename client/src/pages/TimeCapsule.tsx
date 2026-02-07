@@ -66,7 +66,7 @@ export default function TimeCapsule() {
 
   return (
     <div className="min-h-screen gradient-warm-subtle">
-      <header className="sticky top-0 z-50 glass border-b border-white/20">
+      <header className="sticky top-0 z-50 glass border-b border-white/20 dark:border-white/10">
         <div className="container flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
@@ -74,7 +74,7 @@ export default function TimeCapsule() {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
-            <h1 className="font-semibold">时光胶囊</h1>
+            <h1 className="font-semibold text-foreground">时光胶囊</h1>
           </div>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
@@ -130,17 +130,17 @@ export default function TimeCapsule() {
         {/* 可以开启的胶囊 */}
         {openableCapsules.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground">
               <Unlock className="w-5 h-5 text-primary" />
               可以开启了！
             </h2>
             <div className="space-y-3">
               {openableCapsules.map((capsule) => (
-                <Card key={capsule.id} className="glass border-white/40 border-primary/50">
+                <Card key={capsule.id} className="glass border-white/40 dark:border-white/20 border-primary/50">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-medium">{capsule.title}</h3>
+                        <h3 className="font-medium text-foreground">{capsule.title}</h3>
                         <p className="text-sm text-muted-foreground">
                           封存于 {format(new Date(capsule.createdAt), "yyyy年MM月dd日", { locale: zhCN })}
                         </p>
@@ -159,7 +159,7 @@ export default function TimeCapsule() {
         {/* 未到期的胶囊 */}
         {lockedCapsules.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground">
               <Lock className="w-5 h-5" />
               等待开启
             </h2>
@@ -167,7 +167,7 @@ export default function TimeCapsule() {
               {lockedCapsules.map((capsule) => {
                 const daysLeft = differenceInDays(new Date(capsule.openDate), new Date());
                 return (
-                  <Card key={capsule.id} className="glass border-white/40">
+                  <Card key={capsule.id} className="glass border-white/40 dark:border-white/20">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -175,7 +175,7 @@ export default function TimeCapsule() {
                             <Mail className="w-6 h-6 text-muted-foreground" />
                           </div>
                           <div>
-                            <h3 className="font-medium">{capsule.title}</h3>
+                            <h3 className="font-medium text-foreground">{capsule.title}</h3>
                             <p className="text-sm text-muted-foreground">
                               {format(new Date(capsule.openDate), "yyyy年MM月dd日", { locale: zhCN })} 可开启
                             </p>
@@ -197,12 +197,12 @@ export default function TimeCapsule() {
         {/* 已开启的胶囊 */}
         {openedCapsules.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold mb-4">已开启的信件</h2>
+            <h2 className="text-lg font-semibold mb-4 text-foreground">已开启的信件</h2>
             <div className="space-y-3">
               {openedCapsules.map((capsule) => (
                 <Card 
                   key={capsule.id} 
-                  className="glass border-white/40 cursor-pointer hover:shadow-md transition-shadow"
+                  className="glass border-white/40 dark:border-white/20 cursor-pointer hover:shadow-md transition-shadow"
                   onClick={() => setSelectedCapsule(capsule.id)}
                 >
                   <CardContent className="p-4">
@@ -211,7 +211,7 @@ export default function TimeCapsule() {
                         <Mail className="w-6 h-6 text-primary" />
                       </div>
                       <div>
-                        <h3 className="font-medium">{capsule.title}</h3>
+                        <h3 className="font-medium text-foreground">{capsule.title}</h3>
                         <p className="text-sm text-muted-foreground">
                           {capsule.isOwn ? "我" : "TA"}写于 {format(new Date(capsule.createdAt), "yyyy年MM月dd日", { locale: zhCN })}
                         </p>
@@ -226,7 +226,7 @@ export default function TimeCapsule() {
 
         {/* 空状态 */}
         {(!capsules || capsules.length === 0) && (
-          <Card className="glass border-white/40">
+          <Card className="glass border-white/40 dark:border-white/20">
             <CardContent className="p-12 text-center">
               <Clock className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
               <p className="text-muted-foreground mb-2">还没有时光胶囊</p>
@@ -251,7 +251,7 @@ export default function TimeCapsule() {
               {viewingCapsule?.isOwn ? "我" : "TA"}写于 {viewingCapsule && format(new Date(viewingCapsule.createdAt), "yyyy年MM月dd日", { locale: zhCN })}
             </p>
             <div className="p-4 bg-secondary/30 rounded-lg">
-              <p className="whitespace-pre-wrap">{viewingCapsule?.content}</p>
+              <p className="whitespace-pre-wrap text-foreground">{viewingCapsule?.content}</p>
             </div>
           </div>
         </DialogContent>

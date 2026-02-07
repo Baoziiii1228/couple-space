@@ -42,7 +42,7 @@ export default function Messages() {
 
   return (
     <div className="min-h-screen gradient-warm-subtle flex flex-col">
-      <header className="sticky top-0 z-50 glass border-b border-white/20">
+      <header className="sticky top-0 z-50 glass border-b border-white/20 dark:border-white/10">
         <div className="container flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
@@ -58,13 +58,13 @@ export default function Messages() {
       <main className="flex-1 container py-4 flex flex-col">
         {/* 每日情话 */}
         {dailyQuote && (
-          <Card className="glass border-white/40 mb-4">
+          <Card className="glass border-white/40 dark:border-white/10 mb-4">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                 <Heart className="w-4 h-4 text-primary" />
                 今日情话
               </div>
-              <p className="text-foreground italic">"{dailyQuote.content}"</p>
+              <p className="text-foreground italic">\"{dailyQuote.content}\"</p>
             </CardContent>
           </Card>
         )}
@@ -82,7 +82,7 @@ export default function Messages() {
                     className={`rounded-2xl px-4 py-3 ${
                       message.isOwn
                         ? "bg-primary text-primary-foreground rounded-br-md"
-                        : "glass border-white/40 rounded-bl-md"
+                        : "glass border-white/40 dark:border-white/10 rounded-bl-md"
                     }`}
                   >
                     <p className="whitespace-pre-wrap">{message.content}</p>
@@ -104,7 +104,7 @@ export default function Messages() {
         </div>
 
         {/* 输入框 */}
-        <div className="sticky bottom-0 glass border-t border-white/20 -mx-4 px-4 py-3">
+        <div className="sticky bottom-0 glass border-t border-white/20 dark:border-white/10 -mx-4 px-4 py-3">
           <div className="flex items-center gap-2">
             <Input
               placeholder="写下你想说的话..."

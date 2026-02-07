@@ -1,4 +1,4 @@
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
@@ -6,6 +6,10 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import * as db from "./db";
 import { TRPCError } from "@trpc/server";
+import bcrypt from "bcryptjs";
+import { authService } from "./_core/auth";
+import { sendVerificationCode } from "./_core/email";
+import { uploadFile, getStorageInfo } from "./cloudStorage";
 
 // 生成邀请码
 function generateInviteCode(): string {
@@ -32,11 +36,186 @@ export const appRouter = router({
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
+
+    // 发送验证码
+    sendCode: publicProcedure
+      .input(z.object({
+        email: z.string().email("请输入有效的邮箱地址"),
+        type: z.enum(["login", "register", "reset"]),
+      }))
+      .mutation(async ({ input }) => {
+        const { email, type } = input;
+        
+        // 检查邮箱是否已注册
+        const existingUser = await db.getUserByEmail(email);
+        if (type === "register" && existingUser) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "该邮箱已注册，请直接登录" });
+        }
+        if (type === "login" && !existingUser) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "该邮箱未注册，请先注册" });
+        }
+        
+        // 生成 6 位验证码
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        await db.createVerificationCode(email, code, type);
+        
+        // 发送邮件
+        const sent = await sendVerificationCode(email, code);
+        if (!sent) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "验证码发送失败，请稍后重试" });
+        }
+        
+        return { success: true, message: "验证码已发送" };
+      }),
+
+    // 邮箱验证码登录
+    loginWithCode: publicProcedure
+      .input(z.object({
+        email: z.string().email(),
+        code: z.string().length(6),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { email, code } = input;
+        
+        const isValid = await db.verifyCode(email, code);
+        if (!isValid) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "验证码无效或已过期" });
+        }
+        
+        // 查找或创建用户
+        let user = await db.getUserByEmail(email);
+        if (!user) {
+          // 自动注册
+          const openId = `email_${email}`;
+          await db.upsertUser({
+            openId,
+            email,
+            name: email.split("@")[0],
+            loginMethod: "email",
+            lastSignedIn: new Date(),
+          });
+          user = await db.getUserByOpenId(openId);
+        }
+        
+        if (!user) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "用户创建失败" });
+        }
+        
+        // 创建 session
+        const sessionToken = await authService.createSessionToken(user.openId, {
+          name: user.name || "",
+          expiresInMs: ONE_YEAR_MS,
+        });
+        
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+        
+        return { success: true, user: { id: user.id, name: user.name, email: user.email } };
+      }),
+
+    // 邮箱 + 密码注册
+    register: publicProcedure
+      .input(z.object({
+        email: z.string().email("请输入有效的邮箱地址"),
+        password: z.string().min(6, "密码至少 6 位"),
+        name: z.string().min(1, "请输入昵称").optional(),
+        code: z.string().length(6, "请输入 6 位验证码"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { email, password, name, code } = input;
+        
+        // 验证码校验
+        const isValid = await db.verifyCode(email, code);
+        if (!isValid) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "验证码无效或已过期" });
+        }
+        
+        // 检查邮箱是否已注册
+        const existingUser = await db.getUserByEmail(email);
+        if (existingUser) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "该邮箱已注册" });
+        }
+        
+        // 加密密码
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const openId = `email_${email}`;
+        
+        await db.upsertUser({
+          openId,
+          email,
+          name: name || email.split("@")[0],
+          loginMethod: "email",
+          lastSignedIn: new Date(),
+        });
+        
+        // 更新密码字段
+        const user = await db.getUserByOpenId(openId);
+        if (user) {
+          await db.updateUserPassword(user.id, hashedPassword);
+        }
+        
+        if (!user) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "注册失败" });
+        }
+        
+        // 创建 session
+        const sessionToken = await authService.createSessionToken(openId, {
+          name: name || email.split("@")[0],
+          expiresInMs: ONE_YEAR_MS,
+        });
+        
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+        
+        return { success: true, user: { id: user.id, name: user.name, email: user.email } };
+      }),
+
+    // 邮箱 + 密码登录
+    loginWithPassword: publicProcedure
+      .input(z.object({
+        email: z.string().email(),
+        password: z.string().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { email, password } = input;
+        
+        const user = await db.getUserByEmail(email);
+        if (!user) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "邮箱或密码错误" });
+        }
+        
+        if (!user.password) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "该账号未设置密码，请使用验证码登录" });
+        }
+        
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "邮箱或密码错误" });
+        }
+        
+        // 更新登录时间
+        await db.upsertUser({
+          openId: user.openId,
+          lastSignedIn: new Date(),
+        });
+        
+        // 创建 session
+        const sessionToken = await authService.createSessionToken(user.openId, {
+          name: user.name || "",
+          expiresInMs: ONE_YEAR_MS,
+        });
+        
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+        
+        return { success: true, user: { id: user.id, name: user.name, email: user.email } };
+      }),
   }),
 
   // ==================== 情侣配对 ====================
@@ -170,6 +349,42 @@ export const appRouter = router({
       .query(async ({ ctx, input }) => {
         const couple = await getUserCouple(ctx.user.id);
         return await db.getPhotosByCoupleId(couple.id, input.albumId);
+      }),
+
+    // 上传照片（base64）
+    upload: protectedProcedure
+      .input(z.object({
+        albumId: z.number().optional(),
+        fileName: z.string(),
+        fileData: z.string(), // base64 encoded
+        contentType: z.string(),
+        caption: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        
+        // 解码 base64
+        const buffer = Buffer.from(input.fileData, 'base64');
+        
+        // 生成唯一文件名
+        const ext = input.fileName.split('.').pop() || 'jpg';
+        const fileKey = `photos/${couple.id}/${Date.now()}_${nanoid(8)}.${ext}`;
+        
+        // 上传到云存储
+        const result = await uploadFile(fileKey, buffer, input.contentType);
+        
+        // 保存到数据库
+        const id = await db.createPhoto({
+          coupleId: couple.id,
+          uploaderId: ctx.user.id,
+          albumId: input.albumId ?? null,
+          url: result.url,
+          fileKey: result.key,
+          caption: input.caption ?? null,
+          takenAt: null,
+        });
+        
+        return { id, url: result.url, fileKey: result.key };
       }),
 
     create: protectedProcedure

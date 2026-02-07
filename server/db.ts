@@ -15,7 +15,8 @@ import {
   wishes, InsertWish,
   timeCapsules, InsertTimeCapsule,
   footprints, InsertFootprint,
-  todoLists, InsertTodoList
+  todoLists, InsertTodoList,
+  verificationCodes
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -494,4 +495,61 @@ export async function deleteTodoList(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(todoLists).where(eq(todoLists.id, id));
+}
+
+// ==================== 验证码相关 ====================
+
+export async function createVerificationCode(email: string, code: string, type: "login" | "register" | "reset") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // 使旧的验证码失效
+  await db.update(verificationCodes)
+    .set({ used: true })
+    .where(and(eq(verificationCodes.email, email), eq(verificationCodes.used, false)));
+  
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10分钟过期
+  await db.insert(verificationCodes).values({
+    email,
+    code,
+    type,
+    expiresAt,
+  });
+}
+
+export async function verifyCode(email: string, code: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  const now = new Date();
+  const result = await db.select().from(verificationCodes)
+    .where(and(
+      eq(verificationCodes.email, email),
+      eq(verificationCodes.code, code),
+      eq(verificationCodes.used, false),
+      gte(verificationCodes.expiresAt, now)
+    ))
+    .limit(1);
+  
+  if (result.length === 0) return false;
+  
+  // 标记为已使用
+  await db.update(verificationCodes)
+    .set({ used: true })
+    .where(eq(verificationCodes.id, result[0].id));
+  
+  return true;
+}
+
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateUserPassword(userId: number, hashedPassword: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({ password: hashedPassword }).where(eq(users.id, userId));
 }
