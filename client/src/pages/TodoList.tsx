@@ -75,7 +75,7 @@ export default function TodoList() {
     onSuccess: () => {
       toast.success("已删除");
       setDeleteId(null);
-      refetch();
+      refetchCurrent();
     },
     onError: (err) => toast.error(err.message),
   });

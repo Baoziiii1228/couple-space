@@ -61,15 +61,28 @@ export const appRouter = router({
           throw new TRPCError({ code: "BAD_REQUEST", message: "该邮箱未注册，请先注册" });
         }
         
-        // 生成 6 位验证码（开发模式使用固定验证码 123456）
-        const code = process.env.NODE_ENV === 'production' 
-          ? Math.floor(100000 + Math.random() * 900000).toString()
-          : '123456';
+        // 生成 6 位随机验证码
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // 开发模式下打印验证码到控制台方便调试
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`\n========================================`);
+          console.log(`📧 验证码 [${type}]`);
+          console.log(`收件人: ${email}`);
+          console.log(`验证码: ${code}`);
+          console.log(`========================================\n`);
+        }
+        
         await db.createVerificationCode(email, code, type);
         
         // 发送邮件
         const sent = await sendVerificationCode(email, code);
         if (!sent) {
+          // 开发模式下邮件发送失败不阻塞，因为验证码已打印到控制台
+          if (process.env.NODE_ENV !== 'production') {
+            console.warn('[Email] 邮件发送失败，但开发模式下验证码已打印到控制台');
+            return { success: true, message: "验证码已生成（开发模式：请查看服务器控制台）" };
+          }
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "验证码发送失败，请稍后重试" });
         }
         

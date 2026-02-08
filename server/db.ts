@@ -489,7 +489,7 @@ export async function createTodoList(data: InsertTodoList) {
   return result[0].insertId;
 }
 
-export async function getTodoListsByCoupleId(coupleId: number, type?: "movie" | "restaurant" | "other") {
+export async function getTodoListsByCoupleId(coupleId: number, type?: "movie" | "restaurant" | "music" | "book" | "other") {
   const db = await getDb();
   if (!db) return [];
   const conditions = [eq(todoLists.coupleId, coupleId)];

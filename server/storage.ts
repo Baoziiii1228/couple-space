@@ -1,9 +1,19 @@
 // Preconfigured storage helpers for Manus WebDev templates
 // Uses the Biz-provided storage proxy (Authorization: Bearer <token>)
+// Falls back to local file storage when Forge API is not available
 
 import { ENV } from './_core/env';
+import path from 'path';
+import fs from 'fs';
 
 type StorageConfig = { baseUrl: string; apiKey: string };
+
+// 本地存储目录
+const LOCAL_UPLOAD_DIR = path.resolve(process.cwd(), 'uploads');
+
+function isForgeConfigured(): boolean {
+  return !!(ENV.forgeApiUrl && ENV.forgeApiKey);
+}
 
 function getStorageConfig(): StorageConfig {
   const baseUrl = ENV.forgeApiUrl;
@@ -67,11 +77,51 @@ function buildAuthHeaders(apiKey: string): HeadersInit {
   return { Authorization: `Bearer ${apiKey}` };
 }
 
+// ==================== 本地文件存储 ====================
+
+function ensureLocalDir(filePath: string): void {
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
+async function localPut(
+  relKey: string,
+  data: Buffer | Uint8Array | string,
+  _contentType: string
+): Promise<{ key: string; url: string }> {
+  const key = normalizeKey(relKey);
+  const filePath = path.join(LOCAL_UPLOAD_DIR, key);
+  ensureLocalDir(filePath);
+
+  const buffer = typeof data === 'string' ? Buffer.from(data) : Buffer.from(data);
+  fs.writeFileSync(filePath, buffer);
+
+  // 返回相对 URL，通过 Express 静态文件服务访问
+  const url = `/uploads/${key}`;
+  console.log(`[LocalStorage] File saved: ${filePath} -> ${url}`);
+  return { key, url };
+}
+
+async function localGet(relKey: string): Promise<{ key: string; url: string }> {
+  const key = normalizeKey(relKey);
+  return { key, url: `/uploads/${key}` };
+}
+
+// ==================== Forge API 存储 ====================
+
 export async function storagePut(
   relKey: string,
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
+  // 如果 Forge API 未配置，使用本地存储
+  if (!isForgeConfigured()) {
+    console.log('[Storage] Forge API not configured, using local file storage');
+    return localPut(relKey, data, contentType);
+  }
+
   const { baseUrl, apiKey } = getStorageConfig();
   const key = normalizeKey(relKey);
   const uploadUrl = buildUploadUrl(baseUrl, key);
@@ -84,19 +134,29 @@ export async function storagePut(
 
   if (!response.ok) {
     const message = await response.text().catch(() => response.statusText);
-    throw new Error(
-      `Storage upload failed (${response.status} ${response.statusText}): ${message}`
-    );
+    // 如果 Forge API 失败，fallback 到本地存储
+    console.warn(`[Storage] Forge API upload failed (${response.status}): ${message}, falling back to local storage`);
+    return localPut(relKey, data, contentType);
   }
   const url = (await response.json()).url;
   return { key, url };
 }
 
 export async function storageGet(relKey: string): Promise<{ key: string; url: string; }> {
-  const { baseUrl, apiKey } = getStorageConfig();
-  const key = normalizeKey(relKey);
-  return {
-    key,
-    url: await buildDownloadUrl(baseUrl, key, apiKey),
-  };
+  // 如果 Forge API 未配置，使用本地存储
+  if (!isForgeConfigured()) {
+    return localGet(relKey);
+  }
+
+  try {
+    const { baseUrl, apiKey } = getStorageConfig();
+    const key = normalizeKey(relKey);
+    return {
+      key,
+      url: await buildDownloadUrl(baseUrl, key, apiKey),
+    };
+  } catch (error) {
+    console.warn('[Storage] Forge API download URL failed, falling back to local URL');
+    return localGet(relKey);
+  }
 }
