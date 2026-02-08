@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, email, name, role FROM users WHERE email = 'yejunchao@1228.com';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user tfy1HPj4oBSqMiA.root --database B3pbHeGzcLSL2xC6J6Sk9a --execute SELECT id, email, name, role FROM users WHERE email = 'yejunchao@1228.com';",
+  "rows": [
+    {
+      "id": "570002",
+      "email": "yejunchao@1228.com",
+      "name": "开发者",
+      "role": "user"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\trole\n570002\tyejunchao@1228.com\t开发者\tuser\n",
+  "stderr": "",
+  "execution_time_ms": 349
+}

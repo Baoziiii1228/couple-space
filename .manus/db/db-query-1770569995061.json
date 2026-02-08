@@ -1,0 +1,19 @@
+{
+  "query": "SELECT u.id, u.email, c.id as couple_id, c.user1Id, c.user2Id, c.status, c.togetherDate FROM users u LEFT JOIN couples c ON u.id = c.user1Id OR u.id = c.user2Id WHERE u.email IN ('yejunchao@1228.com', 'zoujiafei@0219.com') ORDER BY u.email;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user tfy1HPj4oBSqMiA.root --database B3pbHeGzcLSL2xC6J6Sk9a --execute SELECT u.id, u.email, c.id as couple_id, c.user1Id, c.user2Id, c.status, c.togetherDate FROM users u LEFT JOIN couples c ON u.id = c.user1Id OR u.id = c.user2Id WHERE u.email IN ('yejunchao@1228.com', 'zoujiafei@0219.com') ORDER BY u.email;",
+  "rows": [
+    {
+      "id": "570016",
+      "email": "yejunchao@1228.com",
+      "couple_id": "NULL",
+      "user1Id": "NULL",
+      "user2Id": "NULL",
+      "status": "NULL",
+      "togetherDate": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tcouple_id\tuser1Id\tuser2Id\tstatus\ttogetherDate\n570016\tyejunchao@1228.com\tNULL\tNULL\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 348
+}

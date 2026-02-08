@@ -91,7 +91,7 @@ export default function Ledger() {
       toast.success("已删除");
       setDeleteId(null);
       refetch();
-      statsRefetch();
+      refetchStats();
     },
     onError: (err) => toast.error(err.message),
   });

@@ -1,0 +1,8 @@
+{
+  "query": "SELECT u.id, u.email, u.coupleId, c.id as couple_id, c.user1Id, c.user2Id, c.status FROM users u LEFT JOIN couples c ON u.coupleId = c.id WHERE u.email = 'yejunchao@1228.com';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user tfy1HPj4oBSqMiA.root --database B3pbHeGzcLSL2xC6J6Sk9a --execute SELECT u.id, u.email, u.coupleId, c.id as couple_id, c.user1Id, c.user2Id, c.status FROM users u LEFT JOIN couples c ON u.coupleId = c.id WHERE u.email = 'yejunchao@1228.com';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'u.coupleid' in 'on clause'"
+  ]
+}
