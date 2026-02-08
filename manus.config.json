@@ -1,0 +1,23 @@
+{
+  "name": "couple-space",
+  "version": "1.0.0",
+  "description": "情侣互动空间 - Couple Space",
+  "build": {
+    "command": "pnpm install && pnpm build",
+    "outputDir": "dist"
+  },
+  "start": {
+    "command": "pnpm start",
+    "port": 3000
+  },
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "database": {
+    "type": "mysql",
+    "required": true
+  },
+  "domains": [
+    "www.couple.space.biz"
+  ]
+}
