@@ -4,16 +4,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Plus, MapPin, Trash2, Navigation } from "lucide-react";
+import { ArrowLeft, Plus, MapPin, Trash2, Navigation, CalendarDays } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
 export default function Footprints() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [filterYear, setFilterYear] = useState<string>("all");
   const [newFootprint, setNewFootprint] = useState({
     title: "",
     description: "",
@@ -42,9 +44,11 @@ export default function Footprints() {
     onError: (err) => toast.error(err.message),
   });
 
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const deleteFootprint = trpc.footprint.delete.useMutation({
     onSuccess: () => {
       toast.success("已删除");
+      setDeleteId(null);
       refetch();
     },
     onError: (err) => toast.error(err.message),
@@ -70,7 +74,6 @@ export default function Footprints() {
       toast.error("您的浏览器不支持定位功能");
       return;
     }
-    
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setNewFootprint({
@@ -80,11 +83,67 @@ export default function Footprints() {
         });
         toast.success("已获取当前位置");
       },
-      (error) => {
+      () => {
         toast.error("获取位置失败，请手动输入");
       }
     );
   };
+
+  // 统计数据
+  const stats = useMemo(() => {
+    if (!footprints || footprints.length === 0) return null;
+    
+    const cities = new Set<string>();
+    const years = new Set<string>();
+    const months = new Set<string>();
+    
+    footprints.forEach(f => {
+      if (f.address) {
+        // 简单提取城市名（取地址第一个词或前几个字）
+        const city = f.address.split(/[,，\s]/)[0];
+        if (city) cities.add(city);
+      }
+      const date = new Date(f.visitedAt);
+      years.add(date.getFullYear().toString());
+      months.add(`${date.getFullYear()}-${date.getMonth()}`);
+    });
+
+    // 计算最早和最晚足迹的时间跨度
+    const dates = footprints.map(f => new Date(f.visitedAt).getTime());
+    const earliest = new Date(Math.min(...dates));
+    const latest = new Date(Math.max(...dates));
+    const spanDays = Math.ceil((latest.getTime() - earliest.getTime()) / (1000 * 60 * 60 * 24));
+
+    return {
+      total: footprints.length,
+      cities: cities.size,
+      years: Array.from(years).sort().reverse(),
+      spanDays: spanDays || 0,
+      earliestDate: earliest,
+      latestDate: latest,
+    };
+  }, [footprints]);
+
+  // 按年份筛选
+  const filteredFootprints = useMemo(() => {
+    if (!footprints) return [];
+    if (filterYear === "all") return footprints;
+    return footprints.filter(f => {
+      const year = new Date(f.visitedAt).getFullYear().toString();
+      return year === filterYear;
+    });
+  }, [footprints, filterYear]);
+
+  // 按年份分组
+  const groupedFootprints = useMemo(() => {
+    const groups: Record<string, typeof filteredFootprints> = {};
+    filteredFootprints.forEach(f => {
+      const year = new Date(f.visitedAt).getFullYear().toString();
+      if (!groups[year]) groups[year] = [];
+      groups[year].push(f);
+    });
+    return Object.entries(groups).sort(([a], [b]) => Number(b) - Number(a));
+  }, [filteredFootprints]);
 
   return (
     <div className="min-h-screen gradient-warm-subtle">
@@ -164,7 +223,7 @@ export default function Footprints() {
                   />
                 </div>
                 <Button className="w-full" onClick={handleCreate} disabled={createFootprint.isPending}>
-                  {createFootprint.isPending ? "添加中..." : "添加足迹 📍"}
+                  {createFootprint.isPending ? "添加中..." : "添加足迹"}
                 </Button>
               </div>
             </DialogContent>
@@ -173,64 +232,126 @@ export default function Footprints() {
       </header>
 
       <main className="container py-6 space-y-6">
-        {/* 统计 */}
-        {footprints && footprints.length > 0 && (
-          <Card className="glass border-white/40 dark:border-white/20">
-            <CardContent className="p-6 text-center">
-              <div className="text-4xl font-bold text-primary mb-2">{footprints.length}</div>
-              <p className="text-muted-foreground">个共同足迹</p>
-            </CardContent>
-          </Card>
+        {/* 统计卡片 */}
+        {stats && (
+          <div className="grid grid-cols-3 gap-3">
+            <Card className="glass border-white/40 dark:border-white/20">
+              <CardContent className="p-4 text-center">
+                <MapPin className="w-5 h-5 text-primary mx-auto mb-1" />
+                <p className="text-2xl font-bold text-primary">{stats.total}</p>
+                <p className="text-xs text-muted-foreground">共同足迹</p>
+              </CardContent>
+            </Card>
+            <Card className="glass border-white/40 dark:border-white/20">
+              <CardContent className="p-4 text-center">
+                <Navigation className="w-5 h-5 text-teal-500 mx-auto mb-1" />
+                <p className="text-2xl font-bold text-teal-500">{stats.cities}</p>
+                <p className="text-xs text-muted-foreground">不同城市</p>
+              </CardContent>
+            </Card>
+            <Card className="glass border-white/40 dark:border-white/20">
+              <CardContent className="p-4 text-center">
+                <CalendarDays className="w-5 h-5 text-orange-500 mx-auto mb-1" />
+                <p className="text-2xl font-bold text-orange-500">{stats.spanDays}</p>
+                <p className="text-xs text-muted-foreground">天跨度</p>
+              </CardContent>
+            </Card>
+          </div>
         )}
 
-        {/* 足迹列表 */}
-        {footprints && footprints.length > 0 ? (
-          <div className="space-y-4">
-            {footprints.map((footprint, index) => (
-              <Card key={footprint.id} className="glass border-white/40 dark:border-white/20 overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="flex">
-                    {/* 时间线 */}
-                    <div className="w-16 flex flex-col items-center py-4">
-                      <div className="w-3 h-3 rounded-full bg-primary" />
-                      {index < footprints.length - 1 && (
-                        <div className="flex-1 w-0.5 bg-primary/20 mt-2" />
-                      )}
-                    </div>
-                    
-                    {/* 内容 */}
-                    <div className="flex-1 py-4 pr-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-primary" />
-                            {footprint.title}
-                          </h3>
-                          {footprint.address && (
-                            <p className="text-sm text-muted-foreground mt-1">{footprint.address}</p>
-                          )}
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {format(new Date(footprint.visitedAt), "yyyy年MM月dd日", { locale: zhCN })}
-                          </p>
-                          {footprint.description && (
-                            <p className="text-sm mt-2">{footprint.description}</p>
-                          )}
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-muted-foreground hover:text-destructive"
-                          onClick={() => deleteFootprint.mutate({ id: footprint.id })}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+        {/* 年份筛选 */}
+        {stats && stats.years.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            <button
+              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all ${
+                filterYear === "all"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary/50 hover:bg-secondary"
+              }`}
+              onClick={() => setFilterYear("all")}
+            >
+              全部
+            </button>
+            {stats.years.map(year => (
+              <button
+                key={year}
+                className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all ${
+                  filterYear === year
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary/50 hover:bg-secondary"
+                }`}
+                onClick={() => setFilterYear(year)}
+              >
+                {year}年
+              </button>
             ))}
           </div>
+        )}
+
+        {/* 足迹列表（按年份分组） */}
+        {groupedFootprints.length > 0 ? (
+          groupedFootprints.map(([year, yearFootprints]) => (
+            <div key={year}>
+              {filterYear === "all" && (
+                <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <span>{year}年</span>
+                  <span className="text-sm font-normal text-muted-foreground">({yearFootprints.length}个足迹)</span>
+                </h2>
+              )}
+              <div className="space-y-4">
+                {yearFootprints.map((footprint, index) => (
+                  <Card key={footprint.id} className="glass border-white/40 dark:border-white/20 overflow-hidden">
+                    <CardContent className="p-0">
+                      <div className="flex">
+                        <div className="w-16 flex flex-col items-center py-4">
+                          <div className="w-3 h-3 rounded-full bg-primary" />
+                          {index < yearFootprints.length - 1 && (
+                            <div className="flex-1 w-0.5 bg-primary/20 mt-2" />
+                          )}
+                        </div>
+                        <div className="flex-1 py-4 pr-4">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="font-semibold flex items-center gap-2">
+                                <MapPin className="w-4 h-4 text-primary" />
+                                {footprint.title}
+                              </h3>
+                              {footprint.address && (
+                                <p className="text-sm text-muted-foreground mt-1">{footprint.address}</p>
+                              )}
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {format(new Date(footprint.visitedAt), "yyyy年MM月dd日", { locale: zhCN })}
+                              </p>
+                              {footprint.description && (
+                                <p className="text-sm mt-2">{footprint.description}</p>
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-muted-foreground hover:text-destructive"
+                              onClick={() => setDeleteId(footprint.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          ))
+        ) : footprints && footprints.length > 0 ? (
+          <Card className="glass border-white/40 dark:border-white/20">
+            <CardContent className="p-8 text-center">
+              <p className="text-muted-foreground">该年份暂无足迹</p>
+              <Button variant="link" className="mt-2" onClick={() => setFilterYear("all")}>
+                查看全部足迹
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           <Card className="glass border-white/40 dark:border-white/20">
             <CardContent className="p-12 text-center">
@@ -245,6 +366,15 @@ export default function Footprints() {
           </Card>
         )}
       </main>
+
+      <ConfirmDeleteDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={() => deleteId && deleteFootprint.mutate({ id: deleteId })}
+        title="删除足迹"
+        description="确定要删除这个足迹吗？删除后无法恢复。"
+        isPending={deleteFootprint.isPending}
+      />
     </div>
   );
 }

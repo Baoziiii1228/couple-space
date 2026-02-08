@@ -8,6 +8,7 @@ import { ArrowLeft, Plus, Image, X, Upload, Loader2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState, useRef } from "react";
+import { compressImage, validateFileType, validateFileSize, formatFileSize } from "@/lib/imageCompression";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
 
@@ -63,23 +64,36 @@ export default function Albums() {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       
+      // 检查文件类型
+      if (!validateFileType(file)) {
+        toast.error(`${file.name} 不是支持的图片格式`);
+        failCount++;
+        continue;
+      }
+
       // 检查文件大小（限制 10MB）
-      if (file.size > 10 * 1024 * 1024) {
+      if (!validateFileSize(file, 10)) {
         toast.error(`${file.name} 超过 10MB 限制`);
         failCount++;
         continue;
       }
 
-      // 检查文件类型
-      if (!file.type.startsWith('image/')) {
-        toast.error(`${file.name} 不是图片文件`);
-        failCount++;
-        continue;
-      }
-
       try {
+        // 压缩图片
+        const originalSize = formatFileSize(file.size);
+        const compressedFile = await compressImage(file, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1920,
+        });
+        const compressedSize = formatFileSize(compressedFile.size);
+        
+        if (compressedFile.size < file.size) {
+          const ratio = ((1 - compressedFile.size / file.size) * 100).toFixed(1);
+          console.log(`${file.name}: ${originalSize} → ${compressedSize} (减少 ${ratio}%)`);
+        }
+        
         // 转换为 base64
-        const base64 = await fileToBase64(file);
+        const base64 = await fileToBase64(compressedFile);
         
         await uploadPhoto.mutateAsync({
           fileName: file.name,

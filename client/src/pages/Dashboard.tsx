@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   Heart, Camera, BookOpen, Calendar, Star, MessageCircle, 
-  Smile, Gift, Clock, MapPin, Film, LogOut, Settings, Moon, Sun
+  Smile, Gift, Clock, MapPin, Film, LogOut, Settings, Moon, Sun,
+  Trophy, Milestone, ListChecks, Wallet
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
@@ -25,6 +26,10 @@ const navItems = [
   { icon: Clock, title: "胶囊", path: "/time-capsule", color: "text-indigo-500 dark:text-indigo-400" },
   { icon: MapPin, title: "足迹", path: "/footprints", color: "text-teal-500 dark:text-teal-400" },
   { icon: Film, title: "清单", path: "/todo-list", color: "text-rose-500 dark:text-rose-400" },
+  { icon: Milestone, title: "大事记", path: "/timeline", color: "text-cyan-500 dark:text-cyan-400" },
+  { icon: Trophy, title: "成就", path: "/achievements", color: "text-amber-500 dark:text-amber-400" },
+  { icon: ListChecks, title: "100件事", path: "/hundred-things", color: "text-emerald-500 dark:text-emerald-400" },
+  { icon: Wallet, title: "账本", path: "/ledger", color: "text-lime-500 dark:text-lime-400" },
 ];
 
 export default function Dashboard() {
@@ -149,7 +154,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="container py-6 space-y-6">
+      <main className="container max-w-7xl mx-auto py-6 space-y-6">
         {/* 纪念日倒计时卡片 - 突出显示 */}
         {nextAnniversary && (
           <motion.div
@@ -270,7 +275,7 @@ export default function Dashboard() {
         {/* 功能导航 */}
         <div>
           <h2 className="text-lg font-semibold mb-4">功能</h2>
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-3">
             {navItems.map((item) => (
               <Link key={item.path} href={item.path}>
                 <Card className="card-hover glass cursor-pointer">

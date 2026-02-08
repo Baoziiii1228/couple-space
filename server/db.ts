@@ -16,7 +16,12 @@ import {
   timeCapsules, InsertTimeCapsule,
   footprints, InsertFootprint,
   todoLists, InsertTodoList,
-  verificationCodes
+  verificationCodes,
+  milestones, InsertMilestone,
+  achievements, InsertAchievement,
+  hundredThings, InsertHundredThing,
+  ledgerRecords, InsertLedgerRecord,
+  gameRecords, InsertGameRecord
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -173,10 +178,10 @@ export async function updateAlbum(id: number, data: Partial<InsertAlbum>) {
   await db.update(albums).set(data).where(eq(albums.id, id));
 }
 
-export async function deleteAlbum(id: number) {
+export async function deleteAlbum(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(albums).where(eq(albums.id, id));
+  await db.delete(albums).where(and(eq(albums.id, id), eq(albums.coupleId, coupleId)));
 }
 
 // ==================== 照片相关 ====================
@@ -196,10 +201,10 @@ export async function getPhotosByCoupleId(coupleId: number, albumId?: number) {
   return await db.select().from(photos).where(and(...conditions)).orderBy(desc(photos.createdAt));
 }
 
-export async function deletePhoto(id: number) {
+export async function deletePhoto(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(photos).where(eq(photos.id, id));
+  await db.delete(photos).where(and(eq(photos.id, id), eq(photos.coupleId, coupleId)));
 }
 
 // ==================== 日记相关 ====================
@@ -230,10 +235,10 @@ export async function updateDiary(id: number, data: Partial<InsertDiary>) {
   await db.update(diaries).set(data).where(eq(diaries.id, id));
 }
 
-export async function deleteDiary(id: number) {
+export async function deleteDiary(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(diaries).where(eq(diaries.id, id));
+  await db.delete(diaries).where(and(eq(diaries.id, id), eq(diaries.coupleId, coupleId)));
 }
 
 // ==================== 日记评论相关 ====================
@@ -272,10 +277,10 @@ export async function updateAnniversary(id: number, data: Partial<InsertAnnivers
   await db.update(anniversaries).set(data).where(eq(anniversaries.id, id));
 }
 
-export async function deleteAnniversary(id: number) {
+export async function deleteAnniversary(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(anniversaries).where(eq(anniversaries.id, id));
+  await db.delete(anniversaries).where(and(eq(anniversaries.id, id), eq(anniversaries.coupleId, coupleId)));
 }
 
 // ==================== 任务相关 ====================
@@ -299,10 +304,10 @@ export async function updateTask(id: number, data: Partial<InsertTask>) {
   await db.update(tasks).set(data).where(eq(tasks.id, id));
 }
 
-export async function deleteTask(id: number) {
+export async function deleteTask(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(tasks).where(eq(tasks.id, id));
+  await db.delete(tasks).where(and(eq(tasks.id, id), eq(tasks.coupleId, coupleId)));
 }
 
 // ==================== 留言相关 ====================
@@ -314,10 +319,17 @@ export async function createMessage(data: InsertMessage) {
   return result[0].insertId;
 }
 
-export async function getMessagesByCoupleId(coupleId: number) {
+export async function getMessagesByCoupleId(coupleId: number, limit?: number, offset?: number) {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(messages).where(eq(messages.coupleId, coupleId)).orderBy(desc(messages.createdAt));
+  let query = db.select().from(messages).where(eq(messages.coupleId, coupleId)).orderBy(desc(messages.createdAt));
+  if (limit !== undefined) {
+    query = query.limit(limit);
+  }
+  if (offset !== undefined) {
+    query = query.offset(offset);
+  }
+  return await query;
 }
 
 export async function markMessageAsRead(id: number) {
@@ -401,10 +413,10 @@ export async function updateWish(id: number, data: Partial<InsertWish>) {
   await db.update(wishes).set(data).where(eq(wishes.id, id));
 }
 
-export async function deleteWish(id: number) {
+export async function deleteWish(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(wishes).where(eq(wishes.id, id));
+  await db.delete(wishes).where(and(eq(wishes.id, id), eq(wishes.coupleId, coupleId)));
 }
 
 // ==================== 时光胶囊相关 ====================
@@ -462,10 +474,10 @@ export async function updateFootprint(id: number, data: Partial<InsertFootprint>
   await db.update(footprints).set(data).where(eq(footprints.id, id));
 }
 
-export async function deleteFootprint(id: number) {
+export async function deleteFootprint(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(footprints).where(eq(footprints.id, id));
+  await db.delete(footprints).where(and(eq(footprints.id, id), eq(footprints.coupleId, coupleId)));
 }
 
 // ==================== 待办清单相关 ====================
@@ -491,10 +503,10 @@ export async function updateTodoList(id: number, data: Partial<InsertTodoList>) 
   await db.update(todoLists).set(data).where(eq(todoLists.id, id));
 }
 
-export async function deleteTodoList(id: number) {
+export async function deleteTodoList(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(todoLists).where(eq(todoLists.id, id));
+  await db.delete(todoLists).where(and(eq(todoLists.id, id), eq(todoLists.coupleId, coupleId)));
 }
 
 // ==================== 验证码相关 ====================
@@ -503,12 +515,25 @@ export async function createVerificationCode(email: string, code: string, type: 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  // 频率限制：检查1分钟内是否已发送验证码
+  const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+  const recentCode = await db.select().from(verificationCodes)
+    .where(and(
+      eq(verificationCodes.email, email),
+      gte(verificationCodes.createdAt, oneMinuteAgo)
+    ))
+    .limit(1);
+  
+  if (recentCode.length > 0) {
+    throw new Error("发送过于频繁，请1分钟后再试");
+  }
+  
   // 使旧的验证码失效
   await db.update(verificationCodes)
     .set({ used: true })
     .where(and(eq(verificationCodes.email, email), eq(verificationCodes.used, false)));
   
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10分钟过期
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5分钟过期（从10分钟缩短）
   await db.insert(verificationCodes).values({
     email,
     code,
@@ -522,21 +547,39 @@ export async function verifyCode(email: string, code: string): Promise<boolean> 
   if (!db) return false;
   
   const now = new Date();
+  
+  // 查找验证码记录
   const result = await db.select().from(verificationCodes)
     .where(and(
       eq(verificationCodes.email, email),
-      eq(verificationCodes.code, code),
       eq(verificationCodes.used, false),
       gte(verificationCodes.expiresAt, now)
     ))
+    .orderBy(desc(verificationCodes.createdAt))
     .limit(1);
   
   if (result.length === 0) return false;
   
-  // 标记为已使用
+  const record = result[0];
+  
+  // 检查尝试次数是否超限（5次）
+  if (record.attemptCount >= 5) {
+    throw new Error("验证码尝试次数过多，请重新获取");
+  }
+  
+  // 验证码不匹配
+  if (record.code !== code) {
+    // 增加尝试次数
+    await db.update(verificationCodes)
+      .set({ attemptCount: record.attemptCount + 1 })
+      .where(eq(verificationCodes.id, record.id));
+    return false;
+  }
+  
+  // 验证成功，标记为已使用
   await db.update(verificationCodes)
     .set({ used: true })
-    .where(eq(verificationCodes.id, result[0].id));
+    .where(eq(verificationCodes.id, record.id));
   
   return true;
 }
@@ -552,4 +595,231 @@ export async function updateUserPassword(userId: number, hashedPassword: string)
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(users).set({ password: hashedPassword }).where(eq(users.id, userId));
+}
+
+// ==================== 恋爱大事记（里程碑）相关 ====================
+
+export async function createMilestone(data: InsertMilestone) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(milestones).values(data);
+  return result[0].insertId;
+}
+
+export async function getMilestonesByCoupleId(coupleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(milestones).where(eq(milestones.coupleId, coupleId)).orderBy(desc(milestones.eventDate));
+}
+
+export async function updateMilestone(id: number, data: Partial<InsertMilestone>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(milestones).set(data).where(eq(milestones.id, id));
+}
+
+export async function deleteMilestone(id: number, coupleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(milestones).where(and(eq(milestones.id, id), eq(milestones.coupleId, coupleId)));
+}
+
+// ==================== 成就系统相关 ====================
+
+export async function getAchievementsByCoupleId(coupleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(achievements).where(eq(achievements.coupleId, coupleId)).orderBy(desc(achievements.unlockedAt));
+}
+
+export async function unlockAchievement(coupleId: number, key: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // 使用 INSERT IGNORE 避免重复
+  try {
+    await db.insert(achievements).values({ coupleId, key });
+    return true; // 新解锁
+  } catch (e: any) {
+    if (e?.code === 'ER_DUP_ENTRY') return false; // 已解锁
+    throw e;
+  }
+}
+
+export async function hasAchievement(coupleId: number, key: string) {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db.select().from(achievements)
+    .where(and(eq(achievements.coupleId, coupleId), eq(achievements.key, key)))
+    .limit(1);
+  return result.length > 0;
+}
+
+// ==================== 一起做100件事相关 ====================
+
+export async function getHundredThingsByCoupleIdAndYear(coupleId: number, year: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(hundredThings)
+    .where(and(eq(hundredThings.coupleId, coupleId), eq(hundredThings.year, year)))
+    .orderBy(asc(hundredThings.thingIndex));
+}
+
+export async function createHundredThing(data: InsertHundredThing) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(hundredThings).values(data);
+  return result[0].insertId;
+}
+
+export async function updateHundredThing(id: number, data: Partial<InsertHundredThing>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(hundredThings).set(data).where(eq(hundredThings.id, id));
+}
+
+export async function deleteHundredThing(id: number, coupleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(hundredThings).where(and(eq(hundredThings.id, id), eq(hundredThings.coupleId, coupleId)));
+}
+
+export async function getHundredThingsStats(coupleId: number, year: number) {
+  const db = await getDb();
+  if (!db) return { total: 0, completed: 0 };
+  const items = await db.select().from(hundredThings)
+    .where(and(eq(hundredThings.coupleId, coupleId), eq(hundredThings.year, year)));
+  const total = items.length;
+  const completed = items.filter(i => i.isCompleted).length;
+  return { total, completed };
+}
+
+// ==================== 成就检查辅助函数 ====================
+
+export async function getTasksCompletedCount(coupleId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(tasks)
+    .where(and(eq(tasks.coupleId, coupleId), eq(tasks.isCompleted, true)));
+  return result.length;
+}
+
+export async function getDiariesCount(coupleId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(diaries).where(eq(diaries.coupleId, coupleId));
+  return result.length;
+}
+
+export async function getPhotosCount(coupleId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(photos).where(eq(photos.coupleId, coupleId));
+  return result.length;
+}
+
+export async function getFootprintsCount(coupleId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(footprints).where(eq(footprints.coupleId, coupleId));
+  return result.length;
+}
+
+export async function getMessagesCount(coupleId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(messages).where(eq(messages.coupleId, coupleId));
+  return result.length;
+}
+
+export async function getWishesCompletedCount(coupleId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(wishes)
+    .where(and(eq(wishes.coupleId, coupleId), eq(wishes.isCompleted, true)));
+  return result.length;
+}
+
+export async function getMoodRecordsCount(coupleId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(moodRecords).where(eq(moodRecords.coupleId, coupleId));
+  return result.length;
+}
+
+
+// ==================== 恋爱账本 ====================
+
+export async function getLedgerRecordsByCoupleId(coupleId: number, startDate?: Date, endDate?: Date) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [eq(ledgerRecords.coupleId, coupleId)];
+  if (startDate) conditions.push(gte(ledgerRecords.date, startDate));
+  if (endDate) conditions.push(lte(ledgerRecords.date, endDate));
+  return await db.select().from(ledgerRecords)
+    .where(and(...conditions))
+    .orderBy(desc(ledgerRecords.date));
+}
+
+export async function createLedgerRecord(data: InsertLedgerRecord) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.insert(ledgerRecords).values(data);
+  return result[0].insertId;
+}
+
+export async function updateLedgerRecord(id: number, data: Partial<InsertLedgerRecord>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(ledgerRecords).set(data).where(eq(ledgerRecords.id, id));
+}
+
+export async function deleteLedgerRecord(id: number, coupleId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(ledgerRecords).where(and(eq(ledgerRecords.id, id), eq(ledgerRecords.coupleId, coupleId)));
+}
+
+export async function getLedgerStats(coupleId: number, year?: number, month?: number) {
+  const db = await getDb();
+  if (!db) return { totalIncome: 0, totalExpense: 0, balance: 0 };
+  
+  const conditions = [eq(ledgerRecords.coupleId, coupleId)];
+  if (year) {
+    const startDate = new Date(year, month ? month - 1 : 0, 1);
+    const endDate = month 
+      ? new Date(year, month, 0, 23, 59, 59)
+      : new Date(year, 11, 31, 23, 59, 59);
+    conditions.push(gte(ledgerRecords.date, startDate));
+    conditions.push(lte(ledgerRecords.date, endDate));
+  }
+  
+  const records = await db.select().from(ledgerRecords).where(and(...conditions));
+  
+  let totalIncome = 0;
+  let totalExpense = 0;
+  records.forEach(r => {
+    const amount = parseFloat(r.amount);
+    if (r.type === "income") totalIncome += amount;
+    else totalExpense += amount;
+  });
+  
+  return { totalIncome, totalExpense, balance: totalIncome - totalExpense };
+}
+
+// ==================== 情侣游戏 ====================
+
+export async function getGameRecordsByCoupleId(coupleId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(gameRecords)
+    .where(eq(gameRecords.coupleId, coupleId))
+    .orderBy(desc(gameRecords.createdAt))
+    .limit(limit);
+}
+
+export async function createGameRecord(data: InsertGameRecord) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.insert(gameRecords).values(data);
+  return result[0].insertId;
 }

@@ -9,6 +9,7 @@ import { ArrowLeft, Plus, Calendar, Trash2, Palette, Image, Edit2 } from "lucide
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState, useMemo } from "react";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { toast } from "sonner";
 import { format, differenceInDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -88,9 +89,11 @@ export default function Anniversary() {
     onError: (err) => toast.error(err.message),
   });
 
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const deleteAnniversary = trpc.anniversary.delete.useMutation({
     onSuccess: () => {
       toast.success("已删除");
+      setDeleteId(null);
       refetch();
     },
     onError: (err) => toast.error(err.message),
@@ -453,7 +456,7 @@ export default function Anniversary() {
                         variant="ghost"
                         size="icon"
                         className={`${anniversary.bgImage || anniversary.bgColor ? 'text-white/70 hover:text-red-300 hover:bg-white/20' : 'text-muted-foreground hover:text-destructive'}`}
-                        onClick={() => deleteAnniversary.mutate({ id: anniversary.id })}
+                        onClick={() => setDeleteId(anniversary.id)}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -476,6 +479,15 @@ export default function Anniversary() {
           </Card>
         )}
       </main>
+
+      <ConfirmDeleteDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={() => deleteId && deleteAnniversary.mutate({ id: deleteId })}
+        title="删除纪念日"
+        description="确定要删除这个纪念日吗？删除后无法恢复。"
+        isPending={deleteAnniversary.isPending}
+      />
     </div>
   );
 }

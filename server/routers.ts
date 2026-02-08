@@ -338,8 +338,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await getUserCouple(ctx.user.id);
-        await db.deleteAlbum(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteAlbum(input.id, couple.id);
         return { success: true };
       }),
   }),
@@ -414,8 +414,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await getUserCouple(ctx.user.id);
-        await db.deletePhoto(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deletePhoto(input.id, couple.id);
         return { success: true };
       }),
   }),
@@ -483,7 +483,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await db.deleteDiary(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteDiary(input.id, couple.id);
         return { success: true };
       }),
 
@@ -557,7 +558,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await db.deleteAnniversary(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteAnniversary(input.id, couple.id);
         return { success: true };
       }),
   }),
@@ -601,21 +603,27 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await db.deleteTask(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteTask(input.id, couple.id);
         return { success: true };
       }),
   }),
 
   // ==================== 留言板 ====================
   message: router({
-    list: protectedProcedure.query(async ({ ctx }) => {
-      const couple = await getUserCouple(ctx.user.id);
-      const messages = await db.getMessagesByCoupleId(couple.id);
-      return messages.map(m => ({
-        ...m,
-        isOwn: m.senderId === ctx.user.id,
-      }));
-    }),
+    list: protectedProcedure
+      .input(z.object({
+        limit: z.number().optional(),
+        offset: z.number().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        const messages = await db.getMessagesByCoupleId(couple.id, input?.limit, input?.offset);
+        return messages.map(m => ({
+          ...m,
+          isOwn: m.senderId === ctx.user.id,
+        }));
+      }),
 
     send: protectedProcedure
       .input(z.object({ content: z.string() }))
@@ -715,7 +723,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await db.deleteWish(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteWish(input.id, couple.id);
         return { success: true };
       }),
   }),
@@ -810,7 +819,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await db.deleteFootprint(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteFootprint(input.id, couple.id);
         return { success: true };
       }),
   }),
@@ -818,7 +828,7 @@ export const appRouter = router({
   // ==================== 待办清单 ====================
   todoList: router({
     list: protectedProcedure
-      .input(z.object({ type: z.enum(["movie", "restaurant", "other"]).optional() }).optional())
+      .input(z.object({ type: z.enum(["movie", "restaurant", "music", "book", "other"]).optional() }).optional())
       .query(async ({ ctx, input }) => {
         const couple = await getUserCouple(ctx.user.id);
         return await db.getTodoListsByCoupleId(couple.id, input?.type);
@@ -826,7 +836,7 @@ export const appRouter = router({
 
     create: protectedProcedure
       .input(z.object({
-        type: z.enum(["movie", "restaurant", "other"]),
+        type: z.enum(["movie", "restaurant", "music", "book", "other"]),
         title: z.string(),
         description: z.string().optional(),
         imageUrl: z.string().optional(),
@@ -855,13 +865,416 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    rate: protectedProcedure
+      .input(z.object({ id: z.number(), rating: z.number().min(1).max(5) }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateTodoList(input.id, { rating: input.rating });
+        return { success: true };
+      }),
+
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await db.deleteTodoList(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteTodoList(input.id, couple.id);
         return { success: true };
       }),
   }),
+
+  // ==================== 恋爱大事记 ====================
+  milestone: router({
+    // 获取时间线（聚合自动+手动）
+    getTimeline: protectedProcedure.query(async ({ ctx }) => {
+      const couple = await getUserCouple(ctx.user.id);
+      const partnerId = getPartnerId(couple, ctx.user.id);
+
+      // 1. 获取手动添加的里程碑
+      const manualMilestones = await db.getMilestonesByCoupleId(couple.id);
+
+      // 2. 自动聚合其他表的事件
+      const autoEvents: Array<{
+        id: number;
+        title: string;
+        description: string | null;
+        emoji: string;
+        eventDate: Date;
+        category: string;
+        relatedId: number;
+        isAuto: boolean;
+      }> = [];
+
+      // 在一起的日期
+      if (couple.togetherDate) {
+        autoEvents.push({
+          id: 0, title: "我们在一起了", description: "爱情的起点",
+          emoji: "💕", eventDate: new Date(couple.togetherDate),
+          category: "couple", relatedId: couple.id, isAuto: true,
+        });
+      }
+
+      // 已完成的任务
+      const allTasks = await db.getTasksByCoupleId(couple.id);
+      allTasks.filter(t => t.isCompleted && t.completedAt).forEach(t => {
+        autoEvents.push({
+          id: t.id, title: `完成任务：${t.title}`, description: t.description,
+          emoji: "⭐", eventDate: new Date(t.completedAt!),
+          category: "task", relatedId: t.id, isAuto: true,
+        });
+      });
+
+      // 已实现的愿望
+      const allWishes = await db.getWishesByCoupleId(couple.id);
+      allWishes.filter(w => w.isCompleted && w.completedAt).forEach(w => {
+        autoEvents.push({
+          id: w.id, title: `实现愿望：${w.title}`, description: w.description,
+          emoji: "🌟", eventDate: new Date(w.completedAt!),
+          category: "wish", relatedId: w.id, isAuto: true,
+        });
+      });
+
+      // 足迹
+      const allFootprints = await db.getFootprintsByCoupleId(couple.id);
+      allFootprints.forEach(f => {
+        autoEvents.push({
+          id: f.id, title: `足迹：${f.title}`, description: f.description,
+          emoji: "📍", eventDate: new Date(f.visitedAt),
+          category: "footprint", relatedId: f.id, isAuto: true,
+        });
+      });
+
+      // 合并并排序
+      const timeline = [
+        ...manualMilestones.map(m => ({ ...m, isAuto: false })),
+        ...autoEvents,
+      ].sort((a, b) => new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime());
+
+      return timeline;
+    }),
+
+    // 手动添加里程碑
+    create: protectedProcedure
+      .input(z.object({
+        title: z.string(),
+        description: z.string().optional(),
+        emoji: z.string().optional(),
+        eventDate: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        const id = await db.createMilestone({
+          coupleId: couple.id,
+          creatorId: ctx.user.id,
+          title: input.title,
+          description: input.description ?? null,
+          emoji: input.emoji ?? "💖",
+          eventDate: new Date(input.eventDate),
+          category: "manual",
+          relatedId: null,
+        });
+        return { id };
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        emoji: z.string().optional(),
+        eventDate: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, eventDate, ...rest } = input;
+        await db.updateMilestone(id, {
+          ...rest,
+          eventDate: eventDate ? new Date(eventDate) : undefined,
+        });
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteMilestone(input.id, couple.id);
+        return { success: true };
+      }),
+  }),
+
+  // ==================== 成就系统 ====================
+  achievement: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const couple = await getUserCouple(ctx.user.id);
+      const unlocked = await db.getAchievementsByCoupleId(couple.id);
+      const unlockedKeys = new Set(unlocked.map(a => a.key));
+
+      // 获取统计数据用于进度计算
+      const [tasksCount, diariesCount, photosCount, footprintsCount, messagesCount, wishesCount, moodCount] = await Promise.all([
+        db.getTasksCompletedCount(couple.id),
+        db.getDiariesCount(couple.id),
+        db.getPhotosCount(couple.id),
+        db.getFootprintsCount(couple.id),
+        db.getMessagesCount(couple.id),
+        db.getWishesCompletedCount(couple.id),
+        db.getMoodRecordsCount(couple.id),
+      ]);
+
+      // 计算在一起的天数
+      let daysTogether = 0;
+      if (couple.togetherDate) {
+        daysTogether = Math.floor((Date.now() - new Date(couple.togetherDate).getTime()) / (1000 * 60 * 60 * 24));
+      }
+
+      // 定义所有成就
+      const allAchievements = [
+        { key: "first_diary", title: "第一篇日记", description: "写下第一篇恋爱日记", emoji: "📖", target: 1, current: diariesCount, category: "记录" },
+        { key: "diary_10", title: "日记达人", description: "累计写 10 篇日记", emoji: "📝", target: 10, current: diariesCount, category: "记录" },
+        { key: "diary_50", title: "日记大师", description: "累计写 50 篇日记", emoji: "📚", target: 50, current: diariesCount, category: "记录" },
+        { key: "first_photo", title: "第一张照片", description: "上传第一张情侣照片", emoji: "📷", target: 1, current: photosCount, category: "记录" },
+        { key: "photo_50", title: "影像收藏家", description: "累计上传 50 张照片", emoji: "🌟", target: 50, current: photosCount, category: "记录" },
+        { key: "photo_200", title: "影像大师", description: "累计上传 200 张照片", emoji: "🎥", target: 200, current: photosCount, category: "记录" },
+        { key: "first_task", title: "第一个任务", description: "完成第一个情侣任务", emoji: "⭐", target: 1, current: tasksCount, category: "任务" },
+        { key: "task_10", title: "任务达人", description: "累计完成 10 个任务", emoji: "🏆", target: 10, current: tasksCount, category: "任务" },
+        { key: "task_50", title: "任务大师", description: "累计完成 50 个任务", emoji: "👑", target: 50, current: tasksCount, category: "任务" },
+        { key: "task_100", title: "任务传奇", description: "累计完成 100 个任务", emoji: "🔥", target: 100, current: tasksCount, category: "任务" },
+        { key: "first_wish", title: "第一个愿望", description: "实现第一个愿望", emoji: "🌠", target: 1, current: wishesCount, category: "任务" },
+        { key: "wish_10", title: "心愿达成者", description: "累计实现 10 个愿望", emoji: "✨", target: 10, current: wishesCount, category: "任务" },
+        { key: "first_footprint", title: "第一个足迹", description: "留下第一个足迹", emoji: "👣", target: 1, current: footprintsCount, category: "探索" },
+        { key: "footprint_10", title: "旅行达人", description: "累计 10 个足迹", emoji: "✈️", target: 10, current: footprintsCount, category: "探索" },
+        { key: "footprint_30", title: "环游世界", description: "累计 30 个足迹", emoji: "🌍", target: 30, current: footprintsCount, category: "探索" },
+        { key: "first_message", title: "第一条留言", description: "发送第一条留言", emoji: "💌", target: 1, current: messagesCount, category: "互动" },
+        { key: "message_100", title: "情话绵绵", description: "累计 100 条留言", emoji: "💬", target: 100, current: messagesCount, category: "互动" },
+        { key: "message_500", title: "话唐僧", description: "累计 500 条留言", emoji: "📣", target: 500, current: messagesCount, category: "互动" },
+        { key: "mood_7", title: "心情记录员", description: "累计打卡 7 次心情", emoji: "😊", target: 7, current: moodCount, category: "互动" },
+        { key: "mood_30", title: "心情日历", description: "累计打卡 30 次心情", emoji: "📅", target: 30, current: moodCount, category: "互动" },
+        { key: "days_30", title: "满月纪念", description: "在一起 30 天", emoji: "🌙", target: 30, current: daysTogether, category: "里程碑" },
+        { key: "days_100", title: "百天纪念", description: "在一起 100 天", emoji: "💯", target: 100, current: daysTogether, category: "里程碑" },
+        { key: "days_365", title: "一周年纪念", description: "在一起 365 天", emoji: "🎉", target: 365, current: daysTogether, category: "里程碑" },
+        { key: "days_730", title: "两周年纪念", description: "在一起 730 天", emoji: "🎊", target: 730, current: daysTogether, category: "里程碑" },
+        { key: "days_1095", title: "三周年纪念", description: "在一起 1095 天", emoji: "💍", target: 1095, current: daysTogether, category: "里程碑" },
+      ];
+
+      // 自动解锁达标的成就
+      for (const achievement of allAchievements) {
+        if (achievement.current >= achievement.target && !unlockedKeys.has(achievement.key)) {
+          const isNew = await db.unlockAchievement(couple.id, achievement.key);
+          if (isNew) unlockedKeys.add(achievement.key);
+        }
+      }
+
+      return allAchievements.map(a => ({
+        ...a,
+        isUnlocked: unlockedKeys.has(a.key),
+        progress: Math.min(a.current / a.target, 1),
+      }));
+    }),
+  }),
+
+  // ==================== 一起做100件事 ====================
+  hundredThings: router({
+    list: protectedProcedure
+      .input(z.object({ year: z.number().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        const year = input?.year || new Date().getFullYear();
+        return await db.getHundredThingsByCoupleIdAndYear(couple.id, year);
+      }),
+
+    getStats: protectedProcedure
+      .input(z.object({ year: z.number().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        const year = input?.year || new Date().getFullYear();
+        return await db.getHundredThingsStats(couple.id, year);
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        title: z.string(),
+        year: z.number().optional(),
+        thingIndex: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        const year = input.year || new Date().getFullYear();
+        // 自动计算序号
+        const existing = await db.getHundredThingsByCoupleIdAndYear(couple.id, year);
+        if (existing.length >= 100) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "今年已添加 100 件事了" });
+        }
+        const thingIndex = input.thingIndex || (existing.length + 1);
+        const id = await db.createHundredThing({
+          coupleId: couple.id,
+          year,
+          thingIndex,
+          title: input.title,
+        });
+        return { id };
+      }),
+
+    // 批量初始化（从预设列表）
+    initFromPreset: protectedProcedure
+      .input(z.object({ year: z.number().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        const year = input.year || new Date().getFullYear();
+        const existing = await db.getHundredThingsByCoupleIdAndYear(couple.id, year);
+        if (existing.length > 0) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "今年已有事项，无法重新初始化" });
+        }
+        const presetThings = [
+          "一起看一次日出", "一起看一次日落", "一起做一頓饭", "一起看一场电影", "一起去游乐园",
+          "一起去海边", "一起去爬山", "一起去野餐", "一起去看演唱会", "一起拍情侣照",
+          "一起学一道新菜", "一起看星星", "一起去图书馆", "一起健身", "一起骑自行车",
+          "一起放风筝", "一起去博物馆", "一起写一封信", "一起去花市买花", "一起看烟花",
+          "一起去咖啡厅", "一起去游泳", "一起看一本书", "一起去公园散步", "一起去寺庙祈福",
+          "一起去吃火锅", "一起去吃日料", "一起去吃西餐", "一起做蛋糕", "一起去夜市",
+          "一起去滑冰", "一起去滑雪", "一起去铓鱼", "一起去露营", "一起去潜水",
+          "一起去动物园", "一起去水族馆", "一起去植物园", "一起去天文馆", "一起去展览",
+          "一起学一支舞", "一起学一首歌", "一起画一幅画", "一起拼一个拼图", "一起玩桌游",
+          "一起玩游戏", "一起去 KTV", "一起去密室逃脱", "一起去打保龄球", "一起去射箭",
+          "一起去打网球", "一起去打羽毛球", "一起跑步", "一起做瑜伽", "一起冥想",
+          "一起写日记", "一起学一门新技能", "一起去志愿服务", "一起养一盆植物", "一起去赶海",
+          "一起去看花展", "一起去音乐节", "一起去美术馆", "一起去古镇", "一起去温泉",
+          "一起去滑翻", "一起去攻略一家网红店", "一起去集市", "一起去看日历上的今天", "一起录一个视频",
+          "一起去影院看午夜场", "一起去吃早茅", "一起去喝下午茶", "一起去逛超市", "一起去买情侣装",
+          "一起去买情侣饰品", "一起去做手工", "一起去陶艺馆", "一起去花艺课", "一起去烘焙课",
+          "一起去绘画课", "一起去写真馆", "一起去吃自助餐", "一起去吃烧烤", "一起去吃甜品",
+          "一起去喝奶茶", "一起去逐日落", "一起去看彩虹", "一起去雨中散步", "一起去堆雪人",
+          "一起去看花火", "一起去跳蚤市场", "一起去乡村旅行", "一起去座摩天轮", "一起去坐过山车",
+          "一起去看日出云海", "一起去打卡一座城市", "一起去另一个城市旅行", "一起去一个没去过的地方", "一起完成一个共同目标",
+        ];
+        for (let i = 0; i < presetThings.length; i++) {
+          await db.createHundredThing({
+            coupleId: couple.id,
+            year,
+            thingIndex: i + 1,
+            title: presetThings[i],
+          });
+        }
+        return { success: true, count: presetThings.length };
+      }),
+
+    complete: protectedProcedure
+      .input(z.object({ id: z.number(), note: z.string().optional(), photoUrl: z.string().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateHundredThing(input.id, {
+          isCompleted: true,
+          completedAt: new Date(),
+          completedBy: ctx.user.id,
+          note: input.note ?? null,
+          photoUrl: input.photoUrl ?? null,
+        });
+        return { success: true };
+      }),
+
+    uncomplete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateHundredThing(input.id, {
+          isCompleted: false,
+          completedAt: null,
+          completedBy: null,
+          note: null,
+          photoUrl: null,
+        });
+        return { success: true };
+      }),
+
+    update: protectedProcedure
+      .input(z.object({ id: z.number(), title: z.string().optional(), note: z.string().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...data } = input;
+        await db.updateHundredThing(id, data);
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteHundredThing(input.id, couple.id);
+        return { success: true };
+      }),
+  }),
+
+  // ==================== 恋爱账本 ====================
+  ledger: router({
+    list: protectedProcedure
+      .input(z.object({
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        return await db.getLedgerRecordsByCoupleId(
+          couple.id,
+          input?.startDate ? new Date(input.startDate) : undefined,
+          input?.endDate ? new Date(input.endDate) : undefined
+        );
+      }),
+
+    stats: protectedProcedure
+      .input(z.object({
+        year: z.number().optional(),
+        month: z.number().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        return await db.getLedgerStats(couple.id, input?.year, input?.month);
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        type: z.enum(["income", "expense"]),
+        amount: z.string(),
+        category: z.string(),
+        description: z.string().optional(),
+        date: z.string(),
+        paidBy: z.enum(["user1", "user2", "split", "together"]).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        const id = await db.createLedgerRecord({
+          coupleId: couple.id,
+          creatorId: ctx.user.id,
+          type: input.type,
+          amount: input.amount,
+          category: input.category,
+          description: input.description ?? null,
+          date: new Date(input.date),
+          paidBy: input.paidBy ?? "together",
+        });
+        return { id };
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        type: z.enum(["income", "expense"]).optional(),
+        amount: z.string().optional(),
+        category: z.string().optional(),
+        description: z.string().optional(),
+        date: z.string().optional(),
+        paidBy: z.enum(["user1", "user2", "split", "together"]).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, date, ...rest } = input;
+        await db.updateLedgerRecord(id, {
+          ...rest,
+          date: date ? new Date(date) : undefined,
+        });
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteLedgerRecord(input.id, couple.id);
+        return { success: true };
+      }),
+  }),
+
 });
 
 export type AppRouter = typeof appRouter;
