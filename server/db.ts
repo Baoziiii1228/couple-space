@@ -16,7 +16,10 @@ import {
   timeCapsules, InsertTimeCapsule,
   footprints, InsertFootprint,
   todoLists, InsertTodoList,
-  verificationCodes
+  verificationCodes,
+  milestones, InsertMilestone,
+  achievements, InsertAchievement,
+  hundredThings, InsertHundredThing
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -552,4 +555,153 @@ export async function updateUserPassword(userId: number, hashedPassword: string)
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(users).set({ password: hashedPassword }).where(eq(users.id, userId));
+}
+
+// ==================== 恋爱大事记（里程碑）相关 ====================
+
+export async function createMilestone(data: InsertMilestone) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(milestones).values(data);
+  return result[0].insertId;
+}
+
+export async function getMilestonesByCoupleId(coupleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(milestones).where(eq(milestones.coupleId, coupleId)).orderBy(desc(milestones.eventDate));
+}
+
+export async function updateMilestone(id: number, data: Partial<InsertMilestone>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(milestones).set(data).where(eq(milestones.id, id));
+}
+
+export async function deleteMilestone(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(milestones).where(eq(milestones.id, id));
+}
+
+// ==================== 成就系统相关 ====================
+
+export async function getAchievementsByCoupleId(coupleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(achievements).where(eq(achievements.coupleId, coupleId)).orderBy(desc(achievements.unlockedAt));
+}
+
+export async function unlockAchievement(coupleId: number, key: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // 使用 INSERT IGNORE 避免重复
+  try {
+    await db.insert(achievements).values({ coupleId, key });
+    return true; // 新解锁
+  } catch (e: any) {
+    if (e?.code === 'ER_DUP_ENTRY') return false; // 已解锁
+    throw e;
+  }
+}
+
+export async function hasAchievement(coupleId: number, key: string) {
+  const db = await getDb();
+  if (!db) return false;
+  const result = await db.select().from(achievements)
+    .where(and(eq(achievements.coupleId, coupleId), eq(achievements.key, key)))
+    .limit(1);
+  return result.length > 0;
+}
+
+// ==================== 一起做100件事相关 ====================
+
+export async function getHundredThingsByCoupleIdAndYear(coupleId: number, year: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(hundredThings)
+    .where(and(eq(hundredThings.coupleId, coupleId), eq(hundredThings.year, year)))
+    .orderBy(asc(hundredThings.thingIndex));
+}
+
+export async function createHundredThing(data: InsertHundredThing) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(hundredThings).values(data);
+  return result[0].insertId;
+}
+
+export async function updateHundredThing(id: number, data: Partial<InsertHundredThing>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(hundredThings).set(data).where(eq(hundredThings.id, id));
+}
+
+export async function deleteHundredThing(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(hundredThings).where(eq(hundredThings.id, id));
+}
+
+export async function getHundredThingsStats(coupleId: number, year: number) {
+  const db = await getDb();
+  if (!db) return { total: 0, completed: 0 };
+  const items = await db.select().from(hundredThings)
+    .where(and(eq(hundredThings.coupleId, coupleId), eq(hundredThings.year, year)));
+  const total = items.length;
+  const completed = items.filter(i => i.isCompleted).length;
+  return { total, completed };
+}
+
+// ==================== 成就检查辅助函数 ====================
+
+export async function getTasksCompletedCount(coupleId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(tasks)
+    .where(and(eq(tasks.coupleId, coupleId), eq(tasks.isCompleted, true)));
+  return result.length;
+}
+
+export async function getDiariesCount(coupleId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(diaries).where(eq(diaries.coupleId, coupleId));
+  return result.length;
+}
+
+export async function getPhotosCount(coupleId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(photos).where(eq(photos.coupleId, coupleId));
+  return result.length;
+}
+
+export async function getFootprintsCount(coupleId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(footprints).where(eq(footprints.coupleId, coupleId));
+  return result.length;
+}
+
+export async function getMessagesCount(coupleId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(messages).where(eq(messages.coupleId, coupleId));
+  return result.length;
+}
+
+export async function getWishesCompletedCount(coupleId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(wishes)
+    .where(and(eq(wishes.coupleId, coupleId), eq(wishes.isCompleted, true)));
+  return result.length;
+}
+
+export async function getMoodRecordsCount(coupleId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(moodRecords).where(eq(moodRecords.coupleId, coupleId));
+  return result.length;
 }

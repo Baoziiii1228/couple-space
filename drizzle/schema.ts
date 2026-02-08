@@ -260,3 +260,55 @@ export const todoLists = mysqlTable("todoLists", {
 
 export type TodoList = typeof todoLists.$inferSelect;
 export type InsertTodoList = typeof todoLists.$inferInsert;
+
+// ==================== 恋爱大事记（里程碑） ====================
+
+export const milestones = mysqlTable("milestones", {
+  id: int("id").autoincrement().primaryKey(),
+  coupleId: int("coupleId").notNull(),
+  creatorId: int("creatorId").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  emoji: varchar("emoji", { length: 10 }),
+  eventDate: timestamp("eventDate").notNull(),
+  category: varchar("category", { length: 50 }), // manual, diary, task, anniversary, footprint, wish
+  relatedId: int("relatedId"), // 关联的记录ID
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Milestone = typeof milestones.$inferSelect;
+export type InsertMilestone = typeof milestones.$inferInsert;
+
+// ==================== 成就系统 ====================
+
+export const achievements = mysqlTable("achievements", {
+  id: int("id").autoincrement().primaryKey(),
+  coupleId: int("coupleId").notNull(),
+  key: varchar("key", { length: 100 }).notNull(), // 成就标识
+  unlockedAt: timestamp("unlockedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Achievement = typeof achievements.$inferSelect;
+export type InsertAchievement = typeof achievements.$inferInsert;
+
+// ==================== 一起做100件事 ====================
+
+export const hundredThings = mysqlTable("hundredThings", {
+  id: int("id").autoincrement().primaryKey(),
+  coupleId: int("coupleId").notNull(),
+  year: int("year").notNull(), // 年份
+  thingIndex: int("thingIndex").notNull(), // 事项序号 1-100
+  title: varchar("title", { length: 200 }).notNull(),
+  isCompleted: boolean("isCompleted").default(false).notNull(),
+  completedAt: timestamp("completedAt"),
+  completedBy: int("completedBy"),
+  note: text("note"), // 完成感想
+  photoUrl: text("photoUrl"), // 打卡照片
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type HundredThing = typeof hundredThings.$inferSelect;
+export type InsertHundredThing = typeof hundredThings.$inferInsert;

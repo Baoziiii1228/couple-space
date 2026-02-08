@@ -19,6 +19,9 @@ import Footprints from "./pages/Footprints";
 import TodoList from "./pages/TodoList";
 import Pair from "./pages/Pair";
 import Settings from "./pages/Settings";
+import Timeline from "./pages/Timeline";
+import Achievements from "./pages/Achievements";
+import HundredThings from "./pages/HundredThings";
 
 function Router() {
   return (
@@ -38,6 +41,9 @@ function Router() {
       <Route path="/footprints" component={Footprints} />
       <Route path="/todo-list" component={TodoList} />
       <Route path="/settings" component={Settings} />
+      <Route path="/timeline" component={Timeline} />
+      <Route path="/achievements" component={Achievements} />
+      <Route path="/hundred-things" component={HundredThings} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

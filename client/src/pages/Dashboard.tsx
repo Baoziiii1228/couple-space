@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   Heart, Camera, BookOpen, Calendar, Star, MessageCircle, 
-  Smile, Gift, Clock, MapPin, Film, LogOut, Settings, Moon, Sun
+  Smile, Gift, Clock, MapPin, Film, LogOut, Settings, Moon, Sun,
+  Trophy, Milestone, ListChecks
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
@@ -25,6 +26,9 @@ const navItems = [
   { icon: Clock, title: "胶囊", path: "/time-capsule", color: "text-indigo-500 dark:text-indigo-400" },
   { icon: MapPin, title: "足迹", path: "/footprints", color: "text-teal-500 dark:text-teal-400" },
   { icon: Film, title: "清单", path: "/todo-list", color: "text-rose-500 dark:text-rose-400" },
+  { icon: Milestone, title: "大事记", path: "/timeline", color: "text-cyan-500 dark:text-cyan-400" },
+  { icon: Trophy, title: "成就", path: "/achievements", color: "text-amber-500 dark:text-amber-400" },
+  { icon: ListChecks, title: "100件事", path: "/hundred-things", color: "text-emerald-500 dark:text-emerald-400" },
 ];
 
 export default function Dashboard() {
