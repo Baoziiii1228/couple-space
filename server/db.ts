@@ -19,7 +19,9 @@ import {
   verificationCodes,
   milestones, InsertMilestone,
   achievements, InsertAchievement,
-  hundredThings, InsertHundredThing
+  hundredThings, InsertHundredThing,
+  ledgerRecords, InsertLedgerRecord,
+  gameRecords, InsertGameRecord
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -704,4 +706,82 @@ export async function getMoodRecordsCount(coupleId: number) {
   if (!db) return 0;
   const result = await db.select().from(moodRecords).where(eq(moodRecords.coupleId, coupleId));
   return result.length;
+}
+
+
+// ==================== 恋爱账本 ====================
+
+export async function getLedgerRecordsByCoupleId(coupleId: number, startDate?: Date, endDate?: Date) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [eq(ledgerRecords.coupleId, coupleId)];
+  if (startDate) conditions.push(gte(ledgerRecords.date, startDate));
+  if (endDate) conditions.push(lte(ledgerRecords.date, endDate));
+  return await db.select().from(ledgerRecords)
+    .where(and(...conditions))
+    .orderBy(desc(ledgerRecords.date));
+}
+
+export async function createLedgerRecord(data: InsertLedgerRecord) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.insert(ledgerRecords).values(data);
+  return result[0].insertId;
+}
+
+export async function updateLedgerRecord(id: number, data: Partial<InsertLedgerRecord>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(ledgerRecords).set(data).where(eq(ledgerRecords.id, id));
+}
+
+export async function deleteLedgerRecord(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(ledgerRecords).where(eq(ledgerRecords.id, id));
+}
+
+export async function getLedgerStats(coupleId: number, year?: number, month?: number) {
+  const db = await getDb();
+  if (!db) return { totalIncome: 0, totalExpense: 0, balance: 0 };
+  
+  const conditions = [eq(ledgerRecords.coupleId, coupleId)];
+  if (year) {
+    const startDate = new Date(year, month ? month - 1 : 0, 1);
+    const endDate = month 
+      ? new Date(year, month, 0, 23, 59, 59)
+      : new Date(year, 11, 31, 23, 59, 59);
+    conditions.push(gte(ledgerRecords.date, startDate));
+    conditions.push(lte(ledgerRecords.date, endDate));
+  }
+  
+  const records = await db.select().from(ledgerRecords).where(and(...conditions));
+  
+  let totalIncome = 0;
+  let totalExpense = 0;
+  records.forEach(r => {
+    const amount = parseFloat(r.amount);
+    if (r.type === "income") totalIncome += amount;
+    else totalExpense += amount;
+  });
+  
+  return { totalIncome, totalExpense, balance: totalIncome - totalExpense };
+}
+
+// ==================== 情侣游戏 ====================
+
+export async function getGameRecordsByCoupleId(coupleId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(gameRecords)
+    .where(eq(gameRecords.coupleId, coupleId))
+    .orderBy(desc(gameRecords.createdAt))
+    .limit(limit);
+}
+
+export async function createGameRecord(data: InsertGameRecord) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.insert(gameRecords).values(data);
+  return result[0].insertId;
 }

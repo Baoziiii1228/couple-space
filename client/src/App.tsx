@@ -22,6 +22,7 @@ import Settings from "./pages/Settings";
 import Timeline from "./pages/Timeline";
 import Achievements from "./pages/Achievements";
 import HundredThings from "./pages/HundredThings";
+import Ledger from "./pages/Ledger";
 
 function Router() {
   return (
@@ -44,6 +45,7 @@ function Router() {
       <Route path="/timeline" component={Timeline} />
       <Route path="/achievements" component={Achievements} />
       <Route path="/hundred-things" component={HundredThings} />
+      <Route path="/ledger" component={Ledger} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

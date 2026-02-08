@@ -1,19 +1,25 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Send, Heart, MessageCircle } from "lucide-react";
+import { ArrowLeft, Send, Heart, MessageCircle, SmilePlus } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
+const quickEmojis = ["❤️", "😘", "🥰", "😍", "💕", "🤗", "😊", "🌹", "💋", "✨", "🎉", "👍"];
+
 export default function Messages() {
   const [newMessage, setNewMessage] = useState("");
+  const [showEmojis, setShowEmojis] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const { data: messages, refetch } = trpc.message.list.useQuery();
+  const { data: messages, refetch } = trpc.message.list.useQuery(undefined, {
+    refetchInterval: 5000, // 每5秒自动刷新
+  });
   const { data: dailyQuote } = trpc.message.getDailyQuote.useQuery();
 
   const sendMessage = trpc.message.send.useMutation({
@@ -24,16 +30,22 @@ export default function Messages() {
     onError: (err) => toast.error(err.message),
   });
 
-  const handleSend = () => {
+  const handleSend = useCallback(() => {
     if (!newMessage.trim()) return;
     sendMessage.mutate({ content: newMessage.trim() });
-  };
+  }, [newMessage, sendMessage]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const insertEmoji = (emoji: string) => {
+    setNewMessage(prev => prev + emoji);
+    setShowEmojis(false);
+    inputRef.current?.focus();
   };
 
   useEffect(() => {
@@ -52,6 +64,9 @@ export default function Messages() {
             </Link>
             <h1 className="font-semibold">留言板</h1>
           </div>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground animate-pulse">● 实时</span>
+          </div>
         </div>
       </header>
 
@@ -64,7 +79,7 @@ export default function Messages() {
                 <Heart className="w-4 h-4 text-primary" />
                 今日情话
               </div>
-              <p className="text-foreground italic">\"{dailyQuote.content}\"</p>
+              <p className="text-foreground italic">"{dailyQuote.content}"</p>
             </CardContent>
           </Card>
         )}
@@ -103,10 +118,37 @@ export default function Messages() {
           <div ref={messagesEndRef} />
         </div>
 
+        {/* 快捷表情面板 */}
+        {showEmojis && (
+          <div className="glass border border-white/40 dark:border-white/10 rounded-2xl p-3 mb-2">
+            <div className="grid grid-cols-6 gap-2">
+              {quickEmojis.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  className="text-2xl p-2 rounded-lg hover:bg-secondary/50 transition-colors"
+                  onClick={() => insertEmoji(emoji)}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* 输入框 */}
         <div className="sticky bottom-0 glass border-t border-white/20 dark:border-white/10 -mx-4 px-4 py-3">
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="flex-shrink-0"
+              onClick={() => setShowEmojis(!showEmojis)}
+            >
+              <SmilePlus className="w-5 h-5" />
+            </Button>
             <Input
+              ref={inputRef}
               placeholder="写下你想说的话..."
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}

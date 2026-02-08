@@ -818,7 +818,7 @@ export const appRouter = router({
   // ==================== 待办清单 ====================
   todoList: router({
     list: protectedProcedure
-      .input(z.object({ type: z.enum(["movie", "restaurant", "other"]).optional() }).optional())
+      .input(z.object({ type: z.enum(["movie", "restaurant", "music", "book", "other"]).optional() }).optional())
       .query(async ({ ctx, input }) => {
         const couple = await getUserCouple(ctx.user.id);
         return await db.getTodoListsByCoupleId(couple.id, input?.type);
@@ -826,7 +826,7 @@ export const appRouter = router({
 
     create: protectedProcedure
       .input(z.object({
-        type: z.enum(["movie", "restaurant", "other"]),
+        type: z.enum(["movie", "restaurant", "music", "book", "other"]),
         title: z.string(),
         description: z.string().optional(),
         imageUrl: z.string().optional(),
@@ -852,6 +852,13 @@ export const appRouter = router({
           completedAt: new Date(),
           rating: input.rating ?? null,
         });
+        return { success: true };
+      }),
+
+    rate: protectedProcedure
+      .input(z.object({ id: z.number(), rating: z.number().min(1).max(5) }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateTodoList(input.id, { rating: input.rating });
         return { success: true };
       }),
 
@@ -1176,6 +1183,84 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
+  // ==================== 恋爱账本 ====================
+  ledger: router({
+    list: protectedProcedure
+      .input(z.object({
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        return await db.getLedgerRecordsByCoupleId(
+          couple.id,
+          input?.startDate ? new Date(input.startDate) : undefined,
+          input?.endDate ? new Date(input.endDate) : undefined
+        );
+      }),
+
+    stats: protectedProcedure
+      .input(z.object({
+        year: z.number().optional(),
+        month: z.number().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        return await db.getLedgerStats(couple.id, input?.year, input?.month);
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        type: z.enum(["income", "expense"]),
+        amount: z.string(),
+        category: z.string(),
+        description: z.string().optional(),
+        date: z.string(),
+        paidBy: z.enum(["user1", "user2", "split", "together"]).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        const id = await db.createLedgerRecord({
+          coupleId: couple.id,
+          creatorId: ctx.user.id,
+          type: input.type,
+          amount: input.amount,
+          category: input.category,
+          description: input.description ?? null,
+          date: new Date(input.date),
+          paidBy: input.paidBy ?? "together",
+        });
+        return { id };
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        type: z.enum(["income", "expense"]).optional(),
+        amount: z.string().optional(),
+        category: z.string().optional(),
+        description: z.string().optional(),
+        date: z.string().optional(),
+        paidBy: z.enum(["user1", "user2", "split", "together"]).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, date, ...rest } = input;
+        await db.updateLedgerRecord(id, {
+          ...rest,
+          date: date ? new Date(date) : undefined,
+        });
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteLedgerRecord(input.id);
+        return { success: true };
+      }),
+  }),
+
 });
 
 export type AppRouter = typeof appRouter;

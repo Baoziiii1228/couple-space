@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -6,11 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Gift, Check, Trash2, Star } from "lucide-react";
+import { ArrowLeft, Plus, Gift, Check, Trash2, Star, Shuffle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState } from "react";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 
 const priorityConfig = {
   high: { label: "高", color: "text-red-500 dark:text-red-400", bg: "bg-red-100 dark:bg-red-900/30" },
@@ -20,6 +20,8 @@ const priorityConfig = {
 
 export default function Wishes() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [randomWish, setRandomWish] = useState<any>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
   const [newWish, setNewWish] = useState({
     title: "",
     description: "",
@@ -62,6 +64,32 @@ export default function Wishes() {
     createWish.mutate(newWish);
   };
 
+  // 随机抽取愿望
+  const drawRandomWish = () => {
+    const pending = wishes?.filter(w => !w.isCompleted) || [];
+    if (pending.length === 0) {
+      toast.error("没有待实现的愿望可以抽取");
+      return;
+    }
+    setIsDrawing(true);
+    setRandomWish(null);
+    
+    // 动画效果：快速切换几次再停下
+    let count = 0;
+    const interval = setInterval(() => {
+      count++;
+      const idx = Math.floor(Math.random() * pending.length);
+      setRandomWish(pending[idx]);
+      if (count >= 12) {
+        clearInterval(interval);
+        setIsDrawing(false);
+        const finalIdx = Math.floor(Math.random() * pending.length);
+        setRandomWish(pending[finalIdx]);
+        toast.success("命运之手选中了这个愿望！✨");
+      }
+    }, 120);
+  };
+
   const pendingWishes = wishes?.filter(w => !w.isCompleted) || [];
   const completedWishes = wishes?.filter(w => w.isCompleted) || [];
 
@@ -77,60 +105,143 @@ export default function Wishes() {
             </Link>
             <h1 className="font-semibold">愿望清单</h1>
           </div>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-1">
-                <Plus className="w-4 h-4" />
-                许愿
+          <div className="flex items-center gap-2">
+            {pendingWishes.length > 0 && (
+              <Button variant="outline" size="sm" className="gap-1" onClick={drawRandomWish} disabled={isDrawing}>
+                <Shuffle className="w-4 h-4" />
+                抽签
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>许个愿望</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>愿望内容</Label>
-                  <Input
-                    placeholder="例如：一起去看极光"
-                    value={newWish.title}
-                    onChange={(e) => setNewWish({ ...newWish, title: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>详细描述（可选）</Label>
-                  <Textarea
-                    placeholder="写下更多细节..."
-                    value={newWish.description}
-                    onChange={(e) => setNewWish({ ...newWish, description: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>优先级</Label>
-                  <Select 
-                    value={newWish.priority} 
-                    onValueChange={(v: "low" | "medium" | "high") => setNewWish({ ...newWish, priority: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="high">⭐⭐⭐ 非常想要</SelectItem>
-                      <SelectItem value="medium">⭐⭐ 比较想要</SelectItem>
-                      <SelectItem value="low">⭐ 有点想要</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button className="w-full" onClick={handleCreate} disabled={createWish.isPending}>
-                  {createWish.isPending ? "添加中..." : "许下愿望 ✨"}
+            )}
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-1">
+                  <Plus className="w-4 h-4" />
+                  许愿
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>许个愿望</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>愿望内容</Label>
+                    <Input
+                      placeholder="例如：一起去看极光"
+                      value={newWish.title}
+                      onChange={(e) => setNewWish({ ...newWish, title: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>详细描述（可选）</Label>
+                    <Textarea
+                      placeholder="写下更多细节..."
+                      value={newWish.description}
+                      onChange={(e) => setNewWish({ ...newWish, description: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>优先级</Label>
+                    <Select 
+                      value={newWish.priority} 
+                      onValueChange={(v: "low" | "medium" | "high") => setNewWish({ ...newWish, priority: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="high">非常想要</SelectItem>
+                        <SelectItem value="medium">比较想要</SelectItem>
+                        <SelectItem value="low">有点想要</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button className="w-full" onClick={handleCreate} disabled={createWish.isPending}>
+                    {createWish.isPending ? "添加中..." : "许下愿望 ✨"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </header>
 
       <main className="container py-6 space-y-6">
+        {/* 随机抽取结果 */}
+        <AnimatePresence>
+          {randomWish && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: -20 }}
+            >
+              <Card className={`border-2 border-primary/50 overflow-hidden ${isDrawing ? 'animate-pulse' : ''}`}>
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-primary/10" />
+                <CardContent className="relative p-6 text-center">
+                  <div className="text-4xl mb-3">🎯</div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {isDrawing ? "命运之手正在选择..." : "今天就来实现这个愿望吧！"}
+                  </p>
+                  <h3 className="text-xl font-bold mb-2">{randomWish.title}</h3>
+                  {randomWish.description && (
+                    <p className="text-sm text-muted-foreground mb-4">{randomWish.description}</p>
+                  )}
+                  {!isDrawing && (
+                    <div className="flex items-center justify-center gap-3">
+                      <Button
+                        size="sm"
+                        onClick={() => completeWish.mutate({ id: randomWish.id })}
+                      >
+                        <Check className="w-4 h-4 mr-1" />
+                        实现它
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={drawRandomWish}
+                      >
+                        <Shuffle className="w-4 h-4 mr-1" />
+                        再抽一次
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setRandomWish(null)}
+                      >
+                        关闭
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* 统计 */}
+        {wishes && wishes.length > 0 && (
+          <div className="grid grid-cols-3 gap-3">
+            <Card className="glass border-white/40 dark:border-white/10">
+              <CardContent className="p-3 text-center">
+                <p className="text-xs text-muted-foreground">总愿望</p>
+                <p className="text-xl font-bold text-primary">{wishes.length}</p>
+              </CardContent>
+            </Card>
+            <Card className="glass border-white/40 dark:border-white/10">
+              <CardContent className="p-3 text-center">
+                <p className="text-xs text-muted-foreground">待实现</p>
+                <p className="text-xl font-bold text-yellow-500">{pendingWishes.length}</p>
+              </CardContent>
+            </Card>
+            <Card className="glass border-white/40 dark:border-white/10">
+              <CardContent className="p-3 text-center">
+                <p className="text-xs text-muted-foreground">已实现</p>
+                <p className="text-xl font-bold text-green-500">{completedWishes.length}</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* 待实现的愿望 */}
         {pendingWishes.length > 0 && (
           <div>
@@ -212,4 +323,3 @@ export default function Wishes() {
     </div>
   );
 }
-

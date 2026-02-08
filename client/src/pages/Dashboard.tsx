@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { 
   Heart, Camera, BookOpen, Calendar, Star, MessageCircle, 
   Smile, Gift, Clock, MapPin, Film, LogOut, Settings, Moon, Sun,
-  Trophy, Milestone, ListChecks
+  Trophy, Milestone, ListChecks, Wallet
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
@@ -29,6 +29,7 @@ const navItems = [
   { icon: Milestone, title: "大事记", path: "/timeline", color: "text-cyan-500 dark:text-cyan-400" },
   { icon: Trophy, title: "成就", path: "/achievements", color: "text-amber-500 dark:text-amber-400" },
   { icon: ListChecks, title: "100件事", path: "/hundred-things", color: "text-emerald-500 dark:text-emerald-400" },
+  { icon: Wallet, title: "账本", path: "/ledger", color: "text-lime-500 dark:text-lime-400" },
 ];
 
 export default function Dashboard() {

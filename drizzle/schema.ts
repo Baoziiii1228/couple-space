@@ -247,7 +247,7 @@ export const todoLists = mysqlTable("todoLists", {
   id: int("id").autoincrement().primaryKey(),
   coupleId: int("coupleId").notNull(),
   creatorId: int("creatorId").notNull(),
-  type: mysqlEnum("type", ["movie", "restaurant", "other"]).notNull(),
+  type: mysqlEnum("type", ["movie", "restaurant", "music", "book", "other"]).notNull(),
   title: varchar("title", { length: 200 }).notNull(),
   description: text("description"),
   imageUrl: text("imageUrl"),
@@ -312,3 +312,36 @@ export const hundredThings = mysqlTable("hundredThings", {
 
 export type HundredThing = typeof hundredThings.$inferSelect;
 export type InsertHundredThing = typeof hundredThings.$inferInsert;
+
+// ==================== 恋爱账本 ====================
+
+export const ledgerRecords = mysqlTable("ledgerRecords", {
+  id: int("id").autoincrement().primaryKey(),
+  coupleId: int("coupleId").notNull(),
+  creatorId: int("creatorId").notNull(),
+  type: mysqlEnum("type", ["income", "expense"]).notNull(),
+  amount: varchar("amount", { length: 20 }).notNull(), // 金额（字符串存储避免精度问题）
+  category: varchar("category", { length: 50 }).notNull(), // 分类
+  description: text("description"),
+  date: timestamp("date").notNull(),
+  paidBy: mysqlEnum("paidBy", ["user1", "user2", "split", "together"]).default("together").notNull(), // 谁付的
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type LedgerRecord = typeof ledgerRecords.$inferSelect;
+export type InsertLedgerRecord = typeof ledgerRecords.$inferInsert;
+
+// ==================== 情侣游戏 ====================
+
+export const gameRecords = mysqlTable("gameRecords", {
+  id: int("id").autoincrement().primaryKey(),
+  coupleId: int("coupleId").notNull(),
+  gameType: varchar("gameType", { length: 50 }).notNull(), // truth_or_dare, questions, dice
+  content: json("content").$type<Record<string, any>>(), // 游戏数据
+  result: text("result"), // 游戏结果
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});  
+
+export type GameRecord = typeof gameRecords.$inferSelect;
+export type InsertGameRecord = typeof gameRecords.$inferInsert;

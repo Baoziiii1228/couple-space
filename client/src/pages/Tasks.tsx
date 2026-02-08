@@ -5,21 +5,46 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Plus, Star, Check, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Star, Check, Trash2, Filter } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 
+const categories = [
+  { value: "", label: "全部", emoji: "📋" },
+  { value: "约会", label: "约会", emoji: "💑" },
+  { value: "旅行", label: "旅行", emoji: "✈️" },
+  { value: "美食", label: "美食", emoji: "🍽️" },
+  { value: "运动", label: "运动", emoji: "🏃" },
+  { value: "学习", label: "学习", emoji: "📚" },
+  { value: "生活", label: "生活", emoji: "🏠" },
+  { value: "其他", label: "其他", emoji: "✨" },
+];
+
 const presetTasks = [
-  "一起看日出", "一起看日落", "一起去旅行", "一起做饭", "一起看电影",
-  "一起逛街", "一起健身", "一起学习新技能", "一起养一盆植物", "一起拍情侣照",
-  "一起去游乐园", "一起去海边", "一起去爬山", "一起去野餐", "一起去看演唱会",
+  { title: "一起看日出", category: "约会" },
+  { title: "一起看日落", category: "约会" },
+  { title: "一起去旅行", category: "旅行" },
+  { title: "一起做饭", category: "美食" },
+  { title: "一起看电影", category: "约会" },
+  { title: "一起逛街", category: "生活" },
+  { title: "一起健身", category: "运动" },
+  { title: "一起学习新技能", category: "学习" },
+  { title: "一起养一盆植物", category: "生活" },
+  { title: "一起拍情侣照", category: "约会" },
+  { title: "一起去游乐园", category: "旅行" },
+  { title: "一起去海边", category: "旅行" },
+  { title: "一起去爬山", category: "运动" },
+  { title: "一起去野餐", category: "美食" },
+  { title: "一起去看演唱会", category: "约会" },
 ];
 
 export default function Tasks() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [newTask, setNewTask] = useState({ title: "", description: "", category: "" });
+  const [activeFilter, setActiveFilter] = useState("");
+  const [showFilter, setShowFilter] = useState(false);
+  const [newTask, setNewTask] = useState({ title: "", description: "", category: "其他" });
 
   const { data: tasks, refetch } = trpc.task.list.useQuery();
 
@@ -27,7 +52,7 @@ export default function Tasks() {
     onSuccess: () => {
       toast.success("任务添加成功！");
       setIsCreateOpen(false);
-      setNewTask({ title: "", description: "", category: "" });
+      setNewTask({ title: "", description: "", category: "其他" });
       refetch();
     },
     onError: (err) => toast.error(err.message),
@@ -57,9 +82,16 @@ export default function Tasks() {
     createTask.mutate(newTask);
   };
 
-  const handleAddPreset = (title: string) => {
-    createTask.mutate({ title, description: "", category: "预设" });
+  const handleAddPreset = (preset: { title: string; category: string }) => {
+    createTask.mutate({ title: preset.title, description: "", category: preset.category });
   };
+
+  // 按分类筛选
+  const filteredTasks = useMemo(() => {
+    if (!tasks) return [];
+    if (!activeFilter) return tasks;
+    return tasks.filter(t => t.category === activeFilter);
+  }, [tasks, activeFilter]);
 
   const stats = useMemo(() => {
     if (!tasks) return { total: 0, completed: 0, progress: 0 };
@@ -69,8 +101,26 @@ export default function Tasks() {
     return { total, completed, progress };
   }, [tasks]);
 
-  const pendingTasks = tasks?.filter(t => !t.isCompleted) || [];
-  const completedTasks = tasks?.filter(t => t.isCompleted) || [];
+  // 分类统计
+  const categoryStats = useMemo(() => {
+    if (!tasks) return {};
+    const stats: Record<string, { total: number; completed: number }> = {};
+    tasks.forEach(t => {
+      const cat = t.category || "其他";
+      if (!stats[cat]) stats[cat] = { total: 0, completed: 0 };
+      stats[cat].total++;
+      if (t.isCompleted) stats[cat].completed++;
+    });
+    return stats;
+  }, [tasks]);
+
+  const pendingTasks = filteredTasks.filter(t => !t.isCompleted);
+  const completedTasks = filteredTasks.filter(t => t.isCompleted);
+
+  const getCategoryEmoji = (category: string) => {
+    const cat = categories.find(c => c.value === category);
+    return cat?.emoji || "✨";
+  };
 
   return (
     <div className="min-h-screen gradient-warm-subtle dark:bg-slate-900">
@@ -84,55 +134,82 @@ export default function Tasks() {
             </Link>
             <h1 className="font-semibold text-foreground">情侣任务</h1>
           </div>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-1">
-                <Plus className="w-4 h-4" />
-                添加
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>添加任务</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>任务名称</Label>
-                  <Input
-                    placeholder="例如：一起去看海"
-                    value={newTask.title}
-                    onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>描述（可选）</Label>
-                  <Textarea
-                    placeholder="任务详情..."
-                    value={newTask.description}
-                    onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>快速添加</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {presetTasks.slice(0, 6).map((title) => (
-                      <Button
-                        key={title}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setNewTask({ ...newTask, title })}
-                      >
-                        {title}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                <Button className="w-full" onClick={handleCreate} disabled={createTask.isPending}>
-                  {createTask.isPending ? "添加中..." : "添加任务"}
+          <div className="flex items-center gap-2">
+            <Button
+              variant={showFilter ? "secondary" : "ghost"}
+              size="icon"
+              onClick={() => setShowFilter(!showFilter)}
+            >
+              <Filter className="w-4 h-4" />
+            </Button>
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-1">
+                  <Plus className="w-4 h-4" />
+                  添加
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>添加任务</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>任务名称</Label>
+                    <Input
+                      placeholder="例如：一起去看海"
+                      value={newTask.title}
+                      onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>分类</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {categories.filter(c => c.value).map((cat) => (
+                        <button
+                          key={cat.value}
+                          className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                            newTask.category === cat.value
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-secondary/50 hover:bg-secondary"
+                          }`}
+                          onClick={() => setNewTask({ ...newTask, category: cat.value })}
+                        >
+                          {cat.emoji} {cat.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>描述（可选）</Label>
+                    <Textarea
+                      placeholder="任务详情..."
+                      value={newTask.description}
+                      onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>快速添加</Label>
+                    <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                      {presetTasks.map((preset) => (
+                        <Button
+                          key={preset.title}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setNewTask({ ...newTask, title: preset.title, category: preset.category })}
+                        >
+                          {getCategoryEmoji(preset.category)} {preset.title}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <Button className="w-full" onClick={handleCreate} disabled={createTask.isPending}>
+                    {createTask.isPending ? "添加中..." : "添加任务"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </header>
 
@@ -155,10 +232,37 @@ export default function Tasks() {
           </CardContent>
         </Card>
 
+        {/* 分类筛选栏 */}
+        {showFilter && (
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat) => {
+              const catStat = cat.value ? categoryStats[cat.value] : null;
+              return (
+                <button
+                  key={cat.value}
+                  className={`px-3 py-1.5 rounded-full text-sm transition-all flex items-center gap-1 ${
+                    activeFilter === cat.value
+                      ? "bg-primary text-primary-foreground shadow-md"
+                      : "bg-secondary/50 hover:bg-secondary text-foreground"
+                  }`}
+                  onClick={() => setActiveFilter(cat.value)}
+                >
+                  {cat.emoji} {cat.label}
+                  {catStat && (
+                    <span className="text-xs opacity-70">({catStat.completed}/{catStat.total})</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* 待完成任务 */}
         {pendingTasks.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold mb-4 text-foreground">待完成</h2>
+            <h2 className="text-lg font-semibold mb-4 text-foreground">
+              待完成 {activeFilter && `· ${activeFilter}`}
+            </h2>
             <div className="space-y-3">
               {pendingTasks.map((task) => (
                 <Card key={task.id} className="glass border-white/40 dark:border-white/20">
@@ -170,9 +274,16 @@ export default function Tasks() {
                       <Check className="w-4 h-4 text-primary opacity-0 hover:opacity-100" />
                     </button>
                     <div className="flex-1">
-                      <h3 className="font-medium text-foreground">{task.title}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium text-foreground">{task.title}</h3>
+                        {task.category && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-secondary/50 text-muted-foreground">
+                            {getCategoryEmoji(task.category)} {task.category}
+                          </span>
+                        )}
+                      </div>
                       {task.description && (
-                        <p className="text-sm text-muted-foreground">{task.description}</p>
+                        <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
                       )}
                     </div>
                     <Button
@@ -193,7 +304,9 @@ export default function Tasks() {
         {/* 已完成任务 */}
         {completedTasks.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold mb-4 text-foreground">已完成 ✨</h2>
+            <h2 className="text-lg font-semibold mb-4 text-foreground">
+              已完成 ✨ {activeFilter && `· ${activeFilter}`}
+            </h2>
             <div className="space-y-3">
               {completedTasks.map((task) => (
                 <Card key={task.id} className="glass border-white/40 dark:border-white/20 opacity-70">
@@ -202,7 +315,14 @@ export default function Tasks() {
                       <Check className="w-4 h-4 text-primary-foreground" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-medium line-through text-muted-foreground">{task.title}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium line-through text-muted-foreground">{task.title}</h3>
+                        {task.category && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-secondary/50 text-muted-foreground">
+                            {getCategoryEmoji(task.category)} {task.category}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -218,14 +338,14 @@ export default function Tasks() {
               <Star className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">还没有任务，添加你们想一起完成的事吧</p>
               <div className="flex flex-wrap justify-center gap-2 mb-4">
-                {presetTasks.slice(0, 5).map((title) => (
+                {presetTasks.slice(0, 5).map((preset) => (
                   <Button
-                    key={title}
+                    key={preset.title}
                     variant="outline"
                     size="sm"
-                    onClick={() => handleAddPreset(title)}
+                    onClick={() => handleAddPreset(preset)}
                   >
-                    {title}
+                    {getCategoryEmoji(preset.category)} {preset.title}
                   </Button>
                 ))}
               </div>
@@ -236,8 +356,23 @@ export default function Tasks() {
             </CardContent>
           </Card>
         )}
+
+        {/* 筛选后无结果 */}
+        {activeFilter && filteredTasks.length === 0 && tasks && tasks.length > 0 && (
+          <Card className="glass border-white/40 dark:border-white/20">
+            <CardContent className="p-8 text-center">
+              <p className="text-muted-foreground">该分类下暂无任务</p>
+              <Button
+                variant="link"
+                className="mt-2"
+                onClick={() => setActiveFilter("")}
+              >
+                查看全部任务
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </main>
     </div>
   );
 }
-
