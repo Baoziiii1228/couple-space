@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import { ENV } from "./env";
 
-// 开发模式下如果没有配置 API key，使用空字符串避免报错
+// 开发模式下如果没有配置 API key，使用 null 避免报错
 const resend = process.env.RESEND_API_KEY 
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
