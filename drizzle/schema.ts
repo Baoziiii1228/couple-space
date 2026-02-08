@@ -24,6 +24,7 @@ export const verificationCodes = mysqlTable("verificationCodes", {
   type: mysqlEnum("type", ["login", "register", "reset"]).notNull(),
   expiresAt: timestamp("expiresAt").notNull(),
   used: boolean("used").default(false).notNull(),
+  attemptCount: int("attemptCount").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

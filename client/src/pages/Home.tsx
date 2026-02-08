@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, BookOpen, Calendar, Star, MessageCircle, Smile, Gift, Clock, MapPin, Film, ArrowRight, Sun, Moon, Settings } from "lucide-react";
+import { Camera, BookOpen, Calendar, Star, MessageCircle, Smile, Gift, Clock, MapPin, Film, ArrowRight, Sun, Moon, Settings, History, Trophy, CheckSquare, Wallet } from "lucide-react";
 import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
 import { useState } from "react";
@@ -15,13 +15,17 @@ const features = [
   { icon: Camera, title: "情侣相册", desc: "珍藏美好瞬间" },
   { icon: BookOpen, title: "恋爱日记", desc: "书写爱的故事" },
   { icon: Calendar, title: "纪念日", desc: "不错过每个重要日子" },
-  { icon: Star, title: "情侣任务", desc: "一起完成100件小事" },
+  { icon: Star, title: "情侣任务", desc: "一起完成小目标" },
   { icon: MessageCircle, title: "留言板", desc: "传递甜蜜情话" },
   { icon: Smile, title: "心情打卡", desc: "记录每日心情" },
   { icon: Gift, title: "愿望清单", desc: "实现彼此的愿望" },
   { icon: Clock, title: "时光胶囊", desc: "给未来的一封信" },
   { icon: MapPin, title: "足迹地图", desc: "标记去过的地方" },
   { icon: Film, title: "待办清单", desc: "想看的电影想吃的美食" },
+  { icon: History, title: "恋爱大事记", desc: "自动生成爱的时间线" },
+  { icon: Trophy, title: "成就系统", desc: "见证共同成长" },
+  { icon: CheckSquare, title: "一起做100件事", desc: "每年更新的挑战清单" },
+  { icon: Wallet, title: "恋爱账本", desc: "记录共同开销" },
 ];
 
 // 时间轴三个阶段

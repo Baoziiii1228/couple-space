@@ -508,12 +508,25 @@ export async function createVerificationCode(email: string, code: string, type: 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  // 频率限制：检查1分钟内是否已发送验证码
+  const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+  const recentCode = await db.select().from(verificationCodes)
+    .where(and(
+      eq(verificationCodes.email, email),
+      gte(verificationCodes.createdAt, oneMinuteAgo)
+    ))
+    .limit(1);
+  
+  if (recentCode.length > 0) {
+    throw new Error("发送过于频繁，请1分钟后再试");
+  }
+  
   // 使旧的验证码失效
   await db.update(verificationCodes)
     .set({ used: true })
     .where(and(eq(verificationCodes.email, email), eq(verificationCodes.used, false)));
   
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10分钟过期
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5分钟过期（从10分钟缩短）
   await db.insert(verificationCodes).values({
     email,
     code,
@@ -527,21 +540,39 @@ export async function verifyCode(email: string, code: string): Promise<boolean> 
   if (!db) return false;
   
   const now = new Date();
+  
+  // 查找验证码记录
   const result = await db.select().from(verificationCodes)
     .where(and(
       eq(verificationCodes.email, email),
-      eq(verificationCodes.code, code),
       eq(verificationCodes.used, false),
       gte(verificationCodes.expiresAt, now)
     ))
+    .orderBy(desc(verificationCodes.createdAt))
     .limit(1);
   
   if (result.length === 0) return false;
   
-  // 标记为已使用
+  const record = result[0];
+  
+  // 检查尝试次数是否超限（5次）
+  if (record.attemptCount >= 5) {
+    throw new Error("验证码尝试次数过多，请重新获取");
+  }
+  
+  // 验证码不匹配
+  if (record.code !== code) {
+    // 增加尝试次数
+    await db.update(verificationCodes)
+      .set({ attemptCount: record.attemptCount + 1 })
+      .where(eq(verificationCodes.id, record.id));
+    return false;
+  }
+  
+  // 验证成功，标记为已使用
   await db.update(verificationCodes)
     .set({ used: true })
-    .where(eq(verificationCodes.id, result[0].id));
+    .where(eq(verificationCodes.id, record.id));
   
   return true;
 }
