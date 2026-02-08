@@ -319,10 +319,17 @@ export async function createMessage(data: InsertMessage) {
   return result[0].insertId;
 }
 
-export async function getMessagesByCoupleId(coupleId: number) {
+export async function getMessagesByCoupleId(coupleId: number, limit?: number, offset?: number) {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(messages).where(eq(messages.coupleId, coupleId)).orderBy(desc(messages.createdAt));
+  let query = db.select().from(messages).where(eq(messages.coupleId, coupleId)).orderBy(desc(messages.createdAt));
+  if (limit !== undefined) {
+    query = query.limit(limit);
+  }
+  if (offset !== undefined) {
+    query = query.offset(offset);
+  }
+  return await query;
 }
 
 export async function markMessageAsRead(id: number) {

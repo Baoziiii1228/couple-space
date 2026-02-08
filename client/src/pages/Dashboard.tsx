@@ -154,7 +154,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="container py-6 space-y-6">
+      <main className="container max-w-7xl mx-auto py-6 space-y-6">
         {/* 纪念日倒计时卡片 - 突出显示 */}
         {nextAnniversary && (
           <motion.div
@@ -275,7 +275,7 @@ export default function Dashboard() {
         {/* 功能导航 */}
         <div>
           <h2 className="text-lg font-semibold mb-4">功能</h2>
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-3">
             {navItems.map((item) => (
               <Link key={item.path} href={item.path}>
                 <Card className="card-hover glass cursor-pointer">

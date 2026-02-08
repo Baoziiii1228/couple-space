@@ -611,14 +611,19 @@ export const appRouter = router({
 
   // ==================== 留言板 ====================
   message: router({
-    list: protectedProcedure.query(async ({ ctx }) => {
-      const couple = await getUserCouple(ctx.user.id);
-      const messages = await db.getMessagesByCoupleId(couple.id);
-      return messages.map(m => ({
-        ...m,
-        isOwn: m.senderId === ctx.user.id,
-      }));
-    }),
+    list: protectedProcedure
+      .input(z.object({
+        limit: z.number().optional(),
+        offset: z.number().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        const messages = await db.getMessagesByCoupleId(couple.id, input?.limit, input?.offset);
+        return messages.map(m => ({
+          ...m,
+          isOwn: m.senderId === ctx.user.id,
+        }));
+      }),
 
     send: protectedProcedure
       .input(z.object({ content: z.string() }))
