@@ -2,20 +2,27 @@ import { ENV } from "./env";
 
 /**
  * 使用 Manus 内置邮件 API 发送验证码邮件
+ * 开发环境：打印到控制台
+ * 生产环境：使用 Manus API 发送
  */
 export async function sendVerificationCodeViaManus(
   email: string,
   code: string
 ): Promise<boolean> {
-  if (!ENV.forgeApiUrl || !ENV.forgeApiKey) {
-    console.warn("[Manus Email] Forge API not configured, falling back to console log");
-    // 开发模式：打印到控制台
+  // 开发环境：直接打印到控制台
+  if (process.env.NODE_ENV === "development") {
     console.log(`\n========================================`);
-    console.log(`📧 验证码邮件 (Manus API 未配置)`);
+    console.log(`📧 验证码邮件`);
     console.log(`收件人: ${email}`);
     console.log(`验证码: ${code}`);
     console.log(`========================================\n`);
     return true;
+  }
+
+  // 生产环境：使用 Manus API
+  if (!ENV.forgeApiUrl || !ENV.forgeApiKey) {
+    console.error("[Manus Email] Forge API not configured");
+    return false;
   }
 
   const htmlContent = `
