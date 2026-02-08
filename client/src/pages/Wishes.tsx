@@ -10,6 +10,7 @@ import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { motion, AnimatePresence } from "framer-motion";
 
 const priorityConfig = {
@@ -48,9 +49,11 @@ export default function Wishes() {
     onError: (err) => toast.error(err.message),
   });
 
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const deleteWish = trpc.wish.delete.useMutation({
     onSuccess: () => {
       toast.success("已删除");
+      setDeleteId(null);
       refetch();
     },
     onError: (err) => toast.error(err.message),
@@ -273,7 +276,7 @@ export default function Wishes() {
                         variant="ghost"
                         size="icon"
                         className="text-muted-foreground hover:text-destructive"
-                        onClick={() => deleteWish.mutate({ id: wish.id })}
+                        onClick={() => setDeleteId(wish.id)}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -320,6 +323,15 @@ export default function Wishes() {
           </Card>
         )}
       </main>
+
+      <ConfirmDeleteDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={() => deleteId && deleteWish.mutate({ id: deleteId })}
+        title="删除愿望"
+        description="确定要删除这个愿望吗？删除后无法恢复。"
+        isPending={deleteWish.isPending}
+      />
     </div>
   );
 }

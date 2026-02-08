@@ -10,6 +10,7 @@ import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
@@ -84,11 +85,13 @@ export default function Ledger() {
     onError: (err) => toast.error(err.message),
   });
 
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const deleteRecord = trpc.ledger.delete.useMutation({
     onSuccess: () => {
       toast.success("已删除");
+      setDeleteId(null);
       refetch();
-      refetchStats();
+      statsRefetch();
     },
     onError: (err) => toast.error(err.message),
   });
@@ -407,7 +410,7 @@ export default function Ledger() {
                                   variant="ghost"
                                   size="icon"
                                   className="w-7 h-7 text-muted-foreground hover:text-destructive"
-                                  onClick={() => deleteRecord.mutate({ id: record.id })}
+                                  onClick={() => setDeleteId(record.id)}
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </Button>
@@ -438,6 +441,15 @@ export default function Ledger() {
           ))}
         </Tabs>
       </main>
+
+      <ConfirmDeleteDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={() => deleteId && deleteRecord.mutate({ id: deleteId })}
+        title="删除记录"
+        description="确定要删除这条账目记录吗？删除后无法恢复。"
+        isPending={deleteRecord.isPending}
+      />
     </div>
   );
 }

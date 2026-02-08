@@ -338,8 +338,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await getUserCouple(ctx.user.id);
-        await db.deleteAlbum(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteAlbum(input.id, couple.id);
         return { success: true };
       }),
   }),
@@ -414,8 +414,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await getUserCouple(ctx.user.id);
-        await db.deletePhoto(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deletePhoto(input.id, couple.id);
         return { success: true };
       }),
   }),
@@ -483,7 +483,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await db.deleteDiary(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteDiary(input.id, couple.id);
         return { success: true };
       }),
 
@@ -557,7 +558,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await db.deleteAnniversary(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteAnniversary(input.id, couple.id);
         return { success: true };
       }),
   }),
@@ -601,7 +603,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await db.deleteTask(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteTask(input.id, couple.id);
         return { success: true };
       }),
   }),
@@ -715,7 +718,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await db.deleteWish(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteWish(input.id, couple.id);
         return { success: true };
       }),
   }),
@@ -810,7 +814,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await db.deleteFootprint(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteFootprint(input.id, couple.id);
         return { success: true };
       }),
   }),
@@ -865,7 +870,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await db.deleteTodoList(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteTodoList(input.id, couple.id);
         return { success: true };
       }),
   }),
@@ -983,7 +989,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await db.deleteMilestone(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteMilestone(input.id, couple.id);
         return { success: true };
       }),
   }),
@@ -1179,7 +1186,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await db.deleteHundredThing(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteHundredThing(input.id, couple.id);
         return { success: true };
       }),
   }),
@@ -1256,7 +1264,8 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await db.deleteLedgerRecord(input.id);
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteLedgerRecord(input.id, couple.id);
         return { success: true };
       }),
   }),

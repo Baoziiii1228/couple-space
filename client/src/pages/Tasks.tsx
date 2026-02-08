@@ -10,6 +10,7 @@ import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 
 const categories = [
   { value: "", label: "全部", emoji: "📋" },
@@ -66,9 +67,11 @@ export default function Tasks() {
     onError: (err) => toast.error(err.message),
   });
 
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const deleteTask = trpc.task.delete.useMutation({
     onSuccess: () => {
       toast.success("已删除");
+      setDeleteId(null);
       refetch();
     },
     onError: (err) => toast.error(err.message),
@@ -290,7 +293,7 @@ export default function Tasks() {
                       variant="ghost"
                       size="icon"
                       className="text-muted-foreground hover:text-destructive"
-                      onClick={() => deleteTask.mutate({ id: task.id })}
+                      onClick={() => setDeleteId(task.id)}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -373,6 +376,15 @@ export default function Tasks() {
           </Card>
         )}
       </main>
+
+      <ConfirmDeleteDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={() => deleteId && deleteTask.mutate({ id: deleteId })}
+        title="删除任务"
+        description="确定要删除这个任务吗？删除后无法恢复。"
+        isPending={deleteTask.isPending}
+      />
     </div>
   );
 }

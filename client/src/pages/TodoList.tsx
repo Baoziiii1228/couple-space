@@ -10,6 +10,7 @@ import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 
 type ListType = "movie" | "restaurant" | "music" | "book";
 
@@ -69,10 +70,12 @@ export default function TodoList() {
     onError: (err) => toast.error(err.message),
   });
 
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const deleteItem = trpc.todoList.delete.useMutation({
     onSuccess: () => {
       toast.success("已删除");
-      refetchCurrent();
+      setDeleteId(null);
+      refetch();
     },
     onError: (err) => toast.error(err.message),
   });
@@ -305,7 +308,7 @@ export default function TodoList() {
                                 variant="ghost"
                                 size="icon"
                                 className="text-muted-foreground hover:text-destructive"
-                                onClick={() => deleteItem.mutate({ id: item.id })}
+                                onClick={() => setDeleteId(item.id)}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
@@ -367,6 +370,15 @@ export default function TodoList() {
           ))}
         </Tabs>
       </main>
+
+      <ConfirmDeleteDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={() => deleteId && deleteItem.mutate({ id: deleteId })}
+        title="删除清单项"
+        description="确定要删除这个清单项吗？删除后无法恢复。"
+        isPending={deleteItem.isPending}
+      />
     </div>
   );
 }

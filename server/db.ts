@@ -178,10 +178,10 @@ export async function updateAlbum(id: number, data: Partial<InsertAlbum>) {
   await db.update(albums).set(data).where(eq(albums.id, id));
 }
 
-export async function deleteAlbum(id: number) {
+export async function deleteAlbum(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(albums).where(eq(albums.id, id));
+  await db.delete(albums).where(and(eq(albums.id, id), eq(albums.coupleId, coupleId)));
 }
 
 // ==================== 照片相关 ====================
@@ -201,10 +201,10 @@ export async function getPhotosByCoupleId(coupleId: number, albumId?: number) {
   return await db.select().from(photos).where(and(...conditions)).orderBy(desc(photos.createdAt));
 }
 
-export async function deletePhoto(id: number) {
+export async function deletePhoto(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(photos).where(eq(photos.id, id));
+  await db.delete(photos).where(and(eq(photos.id, id), eq(photos.coupleId, coupleId)));
 }
 
 // ==================== 日记相关 ====================
@@ -235,10 +235,10 @@ export async function updateDiary(id: number, data: Partial<InsertDiary>) {
   await db.update(diaries).set(data).where(eq(diaries.id, id));
 }
 
-export async function deleteDiary(id: number) {
+export async function deleteDiary(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(diaries).where(eq(diaries.id, id));
+  await db.delete(diaries).where(and(eq(diaries.id, id), eq(diaries.coupleId, coupleId)));
 }
 
 // ==================== 日记评论相关 ====================
@@ -277,10 +277,10 @@ export async function updateAnniversary(id: number, data: Partial<InsertAnnivers
   await db.update(anniversaries).set(data).where(eq(anniversaries.id, id));
 }
 
-export async function deleteAnniversary(id: number) {
+export async function deleteAnniversary(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(anniversaries).where(eq(anniversaries.id, id));
+  await db.delete(anniversaries).where(and(eq(anniversaries.id, id), eq(anniversaries.coupleId, coupleId)));
 }
 
 // ==================== 任务相关 ====================
@@ -304,10 +304,10 @@ export async function updateTask(id: number, data: Partial<InsertTask>) {
   await db.update(tasks).set(data).where(eq(tasks.id, id));
 }
 
-export async function deleteTask(id: number) {
+export async function deleteTask(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(tasks).where(eq(tasks.id, id));
+  await db.delete(tasks).where(and(eq(tasks.id, id), eq(tasks.coupleId, coupleId)));
 }
 
 // ==================== 留言相关 ====================
@@ -406,10 +406,10 @@ export async function updateWish(id: number, data: Partial<InsertWish>) {
   await db.update(wishes).set(data).where(eq(wishes.id, id));
 }
 
-export async function deleteWish(id: number) {
+export async function deleteWish(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(wishes).where(eq(wishes.id, id));
+  await db.delete(wishes).where(and(eq(wishes.id, id), eq(wishes.coupleId, coupleId)));
 }
 
 // ==================== 时光胶囊相关 ====================
@@ -467,10 +467,10 @@ export async function updateFootprint(id: number, data: Partial<InsertFootprint>
   await db.update(footprints).set(data).where(eq(footprints.id, id));
 }
 
-export async function deleteFootprint(id: number) {
+export async function deleteFootprint(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(footprints).where(eq(footprints.id, id));
+  await db.delete(footprints).where(and(eq(footprints.id, id), eq(footprints.coupleId, coupleId)));
 }
 
 // ==================== 待办清单相关 ====================
@@ -496,10 +496,10 @@ export async function updateTodoList(id: number, data: Partial<InsertTodoList>) 
   await db.update(todoLists).set(data).where(eq(todoLists.id, id));
 }
 
-export async function deleteTodoList(id: number) {
+export async function deleteTodoList(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(todoLists).where(eq(todoLists.id, id));
+  await db.delete(todoLists).where(and(eq(todoLists.id, id), eq(todoLists.coupleId, coupleId)));
 }
 
 // ==================== 验证码相关 ====================
@@ -580,10 +580,10 @@ export async function updateMilestone(id: number, data: Partial<InsertMilestone>
   await db.update(milestones).set(data).where(eq(milestones.id, id));
 }
 
-export async function deleteMilestone(id: number) {
+export async function deleteMilestone(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(milestones).where(eq(milestones.id, id));
+  await db.delete(milestones).where(and(eq(milestones.id, id), eq(milestones.coupleId, coupleId)));
 }
 
 // ==================== 成就系统相关 ====================
@@ -639,10 +639,10 @@ export async function updateHundredThing(id: number, data: Partial<InsertHundred
   await db.update(hundredThings).set(data).where(eq(hundredThings.id, id));
 }
 
-export async function deleteHundredThing(id: number) {
+export async function deleteHundredThing(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(hundredThings).where(eq(hundredThings.id, id));
+  await db.delete(hundredThings).where(and(eq(hundredThings.id, id), eq(hundredThings.coupleId, coupleId)));
 }
 
 export async function getHundredThingsStats(coupleId: number, year: number) {
@@ -735,10 +735,10 @@ export async function updateLedgerRecord(id: number, data: Partial<InsertLedgerR
   await db.update(ledgerRecords).set(data).where(eq(ledgerRecords.id, id));
 }
 
-export async function deleteLedgerRecord(id: number) {
+export async function deleteLedgerRecord(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) return;
-  await db.delete(ledgerRecords).where(eq(ledgerRecords.id, id));
+  await db.delete(ledgerRecords).where(and(eq(ledgerRecords.id, id), eq(ledgerRecords.coupleId, coupleId)));
 }
 
 export async function getLedgerStats(coupleId: number, year?: number, month?: number) {

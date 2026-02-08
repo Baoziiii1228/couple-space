@@ -9,6 +9,7 @@ import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
@@ -43,9 +44,11 @@ export default function Footprints() {
     onError: (err) => toast.error(err.message),
   });
 
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const deleteFootprint = trpc.footprint.delete.useMutation({
     onSuccess: () => {
       toast.success("已删除");
+      setDeleteId(null);
       refetch();
     },
     onError: (err) => toast.error(err.message),
@@ -327,7 +330,7 @@ export default function Footprints() {
                               variant="ghost"
                               size="icon"
                               className="text-muted-foreground hover:text-destructive"
-                              onClick={() => deleteFootprint.mutate({ id: footprint.id })}
+                              onClick={() => setDeleteId(footprint.id)}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -363,6 +366,15 @@ export default function Footprints() {
           </Card>
         )}
       </main>
+
+      <ConfirmDeleteDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={() => deleteId && deleteFootprint.mutate({ id: deleteId })}
+        title="删除足迹"
+        description="确定要删除这个足迹吗？删除后无法恢复。"
+        isPending={deleteFootprint.isPending}
+      />
     </div>
   );
 }
