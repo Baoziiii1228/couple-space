@@ -61,8 +61,10 @@ export const appRouter = router({
           throw new TRPCError({ code: "BAD_REQUEST", message: "该邮箱未注册，请先注册" });
         }
         
-        // 生成 6 位验证码
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        // 生成 6 位验证码（开发模式使用固定验证码 123456）
+        const code = process.env.NODE_ENV === 'production' 
+          ? Math.floor(100000 + Math.random() * 900000).toString()
+          : '123456';
         await db.createVerificationCode(email, code, type);
         
         // 发送邮件
