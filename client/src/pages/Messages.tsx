@@ -28,7 +28,7 @@ export default function Messages() {
     { limit: PAGE_SIZE, offset: 0 },
     {
       refetchInterval: 5000, // 每5秒自动刷新最新消息
-      onSuccess: (data) => {
+      onSuccess: (data: any) => {
         if (offset === 0) {
           setAllMessages(data);
           setHasMore(data.length === PAGE_SIZE);
@@ -54,7 +54,7 @@ export default function Messages() {
     const newOffset = offset + PAGE_SIZE;
     
     try {
-      const moreMessages = await loadMoreQuery.refetch({ limit: PAGE_SIZE, offset: newOffset });
+      const moreMessages = await loadMoreQuery.refetch({ limit: PAGE_SIZE, offset: newOffset } as any);
       if (moreMessages.data && moreMessages.data.length > 0) {
         setAllMessages(prev => [...prev, ...moreMessages.data]);
         setOffset(newOffset);

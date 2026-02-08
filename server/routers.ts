@@ -619,7 +619,7 @@ export const appRouter = router({
       .query(async ({ ctx, input }) => {
         const couple = await getUserCouple(ctx.user.id);
         const messages = await db.getMessagesByCoupleId(couple.id, input?.limit, input?.offset);
-        return messages.map(m => ({
+        return messages.map((m: any) => ({
           ...m,
           isOwn: m.senderId === ctx.user.id,
         }));

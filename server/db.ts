@@ -322,7 +322,7 @@ export async function createMessage(data: InsertMessage) {
 export async function getMessagesByCoupleId(coupleId: number, limit?: number, offset?: number) {
   const db = await getDb();
   if (!db) return [];
-  let query = db.select().from(messages).where(eq(messages.coupleId, coupleId)).orderBy(desc(messages.createdAt));
+  let query: any = db.select().from(messages).where(eq(messages.coupleId, coupleId)).orderBy(desc(messages.createdAt));
   if (limit !== undefined) {
     query = query.limit(limit);
   }
@@ -489,7 +489,7 @@ export async function createTodoList(data: InsertTodoList) {
   return result[0].insertId;
 }
 
-export async function getTodoListsByCoupleId(coupleId: number, type?: "movie" | "restaurant" | "other") {
+export async function getTodoListsByCoupleId(coupleId: number, type?: "movie" | "restaurant" | "music" | "book" | "other") {
   const db = await getDb();
   if (!db) return [];
   const conditions = [eq(todoLists.coupleId, coupleId)];

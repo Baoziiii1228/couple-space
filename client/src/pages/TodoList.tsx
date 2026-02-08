@@ -75,7 +75,7 @@ export default function TodoList() {
     onSuccess: () => {
       toast.success("已删除");
       setDeleteId(null);
-      refetch();
+      refetchCurrent();
     },
     onError: (err) => toast.error(err.message),
   });
@@ -341,7 +341,7 @@ export default function TodoList() {
                                     <Star
                                       key={s}
                                       className={`w-3.5 h-3.5 ${
-                                        s <= item.rating
+                                        s <= (item.rating ?? 0)
                                           ? "text-yellow-400 fill-yellow-400"
                                           : "text-gray-300"
                                       }`}
