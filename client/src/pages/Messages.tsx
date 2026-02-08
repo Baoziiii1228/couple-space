@@ -15,50 +15,61 @@ const PAGE_SIZE = 20; // 每页加载20条消息
 export default function Messages() {
   const [newMessage, setNewMessage] = useState("");
   const [showEmojis, setShowEmojis] = useState(false);
-  const [offset, setOffset] = useState(0);
   const [allMessages, setAllMessages] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
+  const [loadOffset, setLoadOffset] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [initialLoaded, setInitialLoaded] = useState(false);
 
   // 初始加载和定时刷新（只刷新最新的20条）
   const { data: latestMessages, refetch } = trpc.message.list.useQuery(
     { limit: PAGE_SIZE, offset: 0 },
     {
       refetchInterval: 5000, // 每5秒自动刷新最新消息
-      onSuccess: (data: any) => {
-        if (offset === 0) {
-          setAllMessages(data);
-          setHasMore(data.length === PAGE_SIZE);
-        }
-      },
     }
   );
+
+  // 用 useEffect 替代已弃用的 onSuccess
+  useEffect(() => {
+    if (latestMessages && !isLoadingMore) {
+      setAllMessages(prev => {
+        // 如果还没有加载过更多历史消息，直接替换
+        if (loadOffset === 0) {
+          return latestMessages;
+        }
+        // 如果已经加载了历史消息，只更新最新部分
+        const oldMessages = prev.slice(latestMessages.length);
+        return [...latestMessages, ...oldMessages];
+      });
+      if (!initialLoaded) {
+        setHasMore(latestMessages.length === PAGE_SIZE);
+        setInitialLoaded(true);
+      }
+    }
+  }, [latestMessages]);
 
   const { data: dailyQuote } = trpc.message.getDailyQuote.useQuery();
 
-  // 加载更多消息
-  const loadMoreQuery = trpc.message.list.useQuery(
-    { limit: PAGE_SIZE, offset },
-    {
-      enabled: false, // 手动触发
-    }
-  );
+  const utils = trpc.useUtils();
 
+  // 加载更多消息 - 使用 utils.client 直接调用
   const loadMore = useCallback(async () => {
     if (isLoadingMore || !hasMore) return;
     
     setIsLoadingMore(true);
-    const newOffset = offset + PAGE_SIZE;
+    const newOffset = loadOffset + PAGE_SIZE;
     
     try {
-      const moreMessages = await loadMoreQuery.refetch({ limit: PAGE_SIZE, offset: newOffset } as any);
-      if (moreMessages.data && moreMessages.data.length > 0) {
-        setAllMessages(prev => [...prev, ...moreMessages.data]);
-        setOffset(newOffset);
-        setHasMore(moreMessages.data.length === PAGE_SIZE);
+      const moreMessages = await utils.client.message.list.query({ 
+        limit: PAGE_SIZE, 
+        offset: newOffset 
+      });
+      if (moreMessages && moreMessages.length > 0) {
+        setAllMessages(prev => [...prev, ...moreMessages]);
+        setLoadOffset(newOffset);
+        setHasMore(moreMessages.length === PAGE_SIZE);
       } else {
         setHasMore(false);
       }
@@ -67,7 +78,7 @@ export default function Messages() {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [offset, isLoadingMore, hasMore, loadMoreQuery]);
+  }, [loadOffset, isLoadingMore, hasMore, utils]);
 
   // 监听滚动事件，触发加载更多
   useEffect(() => {
@@ -75,10 +86,10 @@ export default function Messages() {
     if (!container) return;
 
     const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
+      const { scrollTop } = container;
       // 滚动到顶部时加载更多历史消息
       if (scrollTop === 0 && hasMore && !isLoadingMore) {
-        const previousScrollHeight = scrollHeight;
+        const previousScrollHeight = container.scrollHeight;
         loadMore().then(() => {
           // 保持滚动位置，避免跳动
           requestAnimationFrame(() => {
@@ -124,12 +135,14 @@ export default function Messages() {
     inputRef.current?.focus();
   };
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
   // 初次加载完成后滚动到底部
   useEffect(() => {
-    if (allMessages.length > 0 && offset === 0) {
+    if (allMessages.length > 0 && loadOffset === 0 && initialLoaded) {
       messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
     }
-  }, [allMessages.length, offset]);
+  }, [initialLoaded]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 pb-20">
