@@ -1531,6 +1531,154 @@ export const appRouter = router({
         await db.updateFitnessGoal(input.id, updates);
         return { success: true };
       }),
+
+    // 点赞
+    like: protectedProcedure
+      .input(z.object({ recordId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.createFitnessLike({
+          recordId: input.recordId,
+          userId: ctx.user.id,
+        });
+        return { success: true };
+      }),
+
+    unlike: protectedProcedure
+      .input(z.object({ recordId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteFitnessLike(input.recordId, ctx.user.id);
+        return { success: true };
+      }),
+
+    getLikes: protectedProcedure
+      .input(z.object({ recordId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        return await db.getFitnessLikesByRecordId(input.recordId);
+      }),
+
+    // 评论
+    addComment: protectedProcedure
+      .input(z.object({
+        recordId: z.number(),
+        content: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const id = await db.createFitnessComment({
+          recordId: input.recordId,
+          userId: ctx.user.id,
+          content: input.content,
+        });
+        return { id };
+      }),
+
+    getComments: protectedProcedure
+      .input(z.object({ recordId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        return await db.getFitnessCommentsByRecordId(input.recordId);
+      }),
+
+    deleteComment: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteFitnessComment(input.id, ctx.user.id);
+        return { success: true };
+      }),
+  }),
+
+  // 点菜板
+  menu: router({
+    // 菜单管理
+    listItems: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getMenuItemsByUserId(ctx.user.id);
+    }),
+
+    getPartnerItems: protectedProcedure.query(async ({ ctx }) => {
+      const couple = await getUserCouple(ctx.user.id);
+      const partnerId = getPartnerId(couple, ctx.user.id);
+      if (!partnerId) throw new TRPCError({ code: "NOT_FOUND", message: "未找到伴侣" });
+      return await db.getMenuItemsByUserId(partnerId);
+    }),
+
+    createItem: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        category: z.string().optional(),
+        rating: z.number().min(1).max(5).optional(),
+        imageUrl: z.string().optional(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const id = await db.createMenuItem({
+          userId: ctx.user.id,
+          name: input.name,
+          category: input.category ?? null,
+          rating: input.rating ?? 3,
+          imageUrl: input.imageUrl ?? null,
+          notes: input.notes ?? null,
+        });
+        return { id };
+      }),
+
+    updateItem: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        category: z.string().optional(),
+        rating: z.number().min(1).max(5).optional(),
+        imageUrl: z.string().optional(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...updates } = input;
+        await db.updateMenuItem(id, ctx.user.id, updates as any);
+        return { success: true };
+      }),
+
+    deleteItem: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteMenuItem(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    // 点菜历史
+    listOrders: protectedProcedure.query(async ({ ctx }) => {
+      const couple = await getUserCouple(ctx.user.id);
+      return await db.getOrderHistoryByCoupleId(couple.id);
+    }),
+
+    createOrder: protectedProcedure
+      .input(z.object({
+        menuItemIds: z.array(z.number()),
+        orderDate: z.string(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        const id = await db.createOrderHistory({
+          coupleId: couple.id,
+          orderedBy: ctx.user.id,
+          menuItemIds: input.menuItemIds as any,
+          orderDate: new Date(input.orderDate),
+          completed: false,
+          rating: null,
+          notes: input.notes ?? null,
+        });
+        return { id };
+      }),
+
+    updateOrder: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        completed: z.boolean().optional(),
+        rating: z.number().min(1).max(5).optional(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...updates } = input;
+        await db.updateOrderHistory(id, updates as any);
+        return { success: true };
+      }),
   }),
 });
 

@@ -26,7 +26,11 @@ import {
   promises, InsertPromise,
   periodRecords, InsertPeriodRecord,
   fitnessRecords, InsertFitnessRecord,
-  fitnessGoals, InsertFitnessGoal
+  fitnessGoals, InsertFitnessGoal,
+  menuItems, InsertMenuItem,
+  orderHistory, InsertOrderHistory,
+  fitnessLikes, InsertFitnessLike,
+  fitnessComments, InsertFitnessComment
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -962,4 +966,97 @@ export async function updateFitnessGoal(id: number, data: Partial<InsertFitnessG
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(fitnessGoals).set(data).where(eq(fitnessGoals.id, id));
+}
+
+// ==================== 点菜板 ====================
+
+export async function getMenuItemsByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.select().from(menuItems)
+    .where(eq(menuItems.userId, userId))
+    .orderBy(desc(menuItems.createdAt));
+}
+
+export async function createMenuItem(data: InsertMenuItem) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(menuItems).values(data);
+  return result[0].insertId;
+}
+
+export async function updateMenuItem(id: number, userId: number, data: Partial<InsertMenuItem>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(menuItems).set(data).where(and(eq(menuItems.id, id), eq(menuItems.userId, userId)));
+}
+
+export async function deleteMenuItem(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(menuItems).where(and(eq(menuItems.id, id), eq(menuItems.userId, userId)));
+}
+
+export async function getOrderHistoryByCoupleId(coupleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.select().from(orderHistory)
+    .where(eq(orderHistory.coupleId, coupleId))
+    .orderBy(desc(orderHistory.orderDate));
+}
+
+export async function createOrderHistory(data: InsertOrderHistory) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(orderHistory).values(data);
+  return result[0].insertId;
+}
+
+export async function updateOrderHistory(id: number, data: Partial<InsertOrderHistory>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(orderHistory).set(data).where(eq(orderHistory.id, id));
+}
+
+// ==================== 健身互相鼓励 ====================
+
+export async function getFitnessLikesByRecordId(recordId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.select().from(fitnessLikes)
+    .where(eq(fitnessLikes.recordId, recordId));
+}
+
+export async function createFitnessLike(data: InsertFitnessLike) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(fitnessLikes).values(data);
+  return result[0].insertId;
+}
+
+export async function deleteFitnessLike(recordId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(fitnessLikes).where(and(eq(fitnessLikes.recordId, recordId), eq(fitnessLikes.userId, userId)));
+}
+
+export async function getFitnessCommentsByRecordId(recordId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.select().from(fitnessComments)
+    .where(eq(fitnessComments.recordId, recordId))
+    .orderBy(desc(fitnessComments.createdAt));
+}
+
+export async function createFitnessComment(data: InsertFitnessComment) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(fitnessComments).values(data);
+  return result[0].insertId;
+}
+
+export async function deleteFitnessComment(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(fitnessComments).where(and(eq(fitnessComments.id, id), eq(fitnessComments.userId, userId)));
 }

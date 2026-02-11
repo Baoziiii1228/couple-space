@@ -444,3 +444,124 @@ export const fitnessGoals = mysqlTable("fitnessGoals", {
 
 export type FitnessGoal = typeof fitnessGoals.$inferSelect;
 export type InsertFitnessGoal = typeof fitnessGoals.$inferInsert;
+
+// ==================== 成就定义 ====================
+
+export const achievementDefinitions = mysqlTable("achievementDefinitions", {
+  id: int("id").autoincrement().primaryKey(),
+  category: varchar("category", { length: 50 }).notNull(), // 大类：运动达人、体重管理等
+  name: varchar("name", { length: 100 }).notNull(), // 成就名称
+  description: text("description"), // 描述
+  icon: varchar("icon", { length: 50 }), // 图标emoji
+  tier1Target: int("tier1Target").notNull(), // 第一档目标
+  tier2Target: int("tier2Target").notNull(), // 第二档目标
+  tier3Target: int("tier3Target").notNull(), // 第三档目标
+  tier1Reward: varchar("tier1Reward", { length: 100 }), // 第一档奖励
+  tier2Reward: varchar("tier2Reward", { length: 100 }), // 第二档奖励
+  tier3Reward: varchar("tier3Reward", { length: 100 }), // 第三档奖励
+  type: varchar("type", { length: 50 }).notNull(), // 类型：用于计算进度
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AchievementDefinition = typeof achievementDefinitions.$inferSelect;
+export type InsertAchievementDefinition = typeof achievementDefinitions.$inferInsert;
+
+export const userAchievementProgress = mysqlTable("userAchievementProgress", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  achievementId: int("achievementId").notNull(),
+  currentProgress: int("currentProgress").default(0).notNull(), // 当前进度
+  tier: int("tier").default(0).notNull(), // 当前档次：0/1/2/3
+  unlockedAt: timestamp("unlockedAt"), // 解锁时间
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserAchievementProgress = typeof userAchievementProgress.$inferSelect;
+export type InsertUserAchievementProgress = typeof userAchievementProgress.$inferInsert;
+
+// ==================== 点菜板 ====================
+
+export const menuItems = mysqlTable("menuItems", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // 菜单所有者
+  name: varchar("name", { length: 100 }).notNull(), // 菜品名称
+  category: varchar("category", { length: 50 }), // 分类：中餐、西餐等
+  rating: int("rating").default(3), // 喜爱程度1-5星
+  imageUrl: text("imageUrl"), // 图片URL
+  notes: text("notes"), // 备注
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MenuItem = typeof menuItems.$inferSelect;
+export type InsertMenuItem = typeof menuItems.$inferInsert;
+
+export const orderHistory = mysqlTable("orderHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  coupleId: int("coupleId").notNull(),
+  orderedBy: int("orderedBy").notNull(), // 谁点的
+  menuItemIds: json("menuItemIds").$type<number[]>(), // 点的菜品ID列表
+  orderDate: timestamp("orderDate").notNull(),
+  completed: boolean("completed").default(false), // 是否完成
+  rating: int("rating"), // 评价1-5
+  notes: text("notes"), // 备注
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type OrderHistory = typeof orderHistory.$inferSelect;
+export type InsertOrderHistory = typeof orderHistory.$inferInsert;
+
+// ==================== 健身互相鼓励 ====================
+
+export const fitnessLikes = mysqlTable("fitnessLikes", {
+  id: int("id").autoincrement().primaryKey(),
+  recordId: int("recordId").notNull(), // 健身记录ID
+  userId: int("userId").notNull(), // 点赞人
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FitnessLike = typeof fitnessLikes.$inferSelect;
+export type InsertFitnessLike = typeof fitnessLikes.$inferInsert;
+
+export const fitnessComments = mysqlTable("fitnessComments", {
+  id: int("id").autoincrement().primaryKey(),
+  recordId: int("recordId").notNull(), // 健身记录ID
+  userId: int("userId").notNull(), // 评论人
+  content: text("content").notNull(), // 评论内容
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FitnessComment = typeof fitnessComments.$inferSelect;
+export type InsertFitnessComment = typeof fitnessComments.$inferInsert;
+
+// ==================== 情侣挑战 ====================
+
+export const challenges = mysqlTable("challenges", {
+  id: int("id").autoincrement().primaryKey(),
+  coupleId: int("coupleId").notNull(),
+  createdBy: int("createdBy").notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 挑战类型
+  title: varchar("title", { length: 200 }).notNull(), // 标题
+  description: text("description"), // 描述
+  targetValue: int("targetValue").notNull(), // 目标值
+  startDate: timestamp("startDate").notNull(),
+  endDate: timestamp("endDate").notNull(),
+  status: varchar("status", { length: 20 }).default("pending").notNull(), // pending/active/completed/failed
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Challenge = typeof challenges.$inferSelect;
+export type InsertChallenge = typeof challenges.$inferInsert;
+
+export const challengeProgress = mysqlTable("challengeProgress", {
+  id: int("id").autoincrement().primaryKey(),
+  challengeId: int("challengeId").notNull(),
+  userId: int("userId").notNull(),
+  currentProgress: int("currentProgress").default(0).notNull(),
+  lastUpdated: timestamp("lastUpdated").defaultNow().notNull(),
+});
+
+export type ChallengeProgress = typeof challengeProgress.$inferSelect;
+export type InsertChallengeProgress = typeof challengeProgress.$inferInsert;

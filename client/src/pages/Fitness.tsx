@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, TrendingDown, TrendingUp, Dumbbell, Heart, Target } from "lucide-react";
+import { ArrowLeft, Plus, TrendingDown, TrendingUp, Dumbbell, Heart, Target, ThumbsUp, MessageCircle } from "lucide-react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -486,6 +486,7 @@ export default function Fitness() {
                       {record.notes && (
                         <p className="text-sm text-muted-foreground mt-1">{record.notes}</p>
                       )}
+                      <FitnessRecordActions recordId={record.id} />
                     </div>
                     <Button
                       variant="ghost"
@@ -502,6 +503,143 @@ export default function Fitness() {
           </CardContent>
         </Card>
       </main>
+    </div>
+  );
+}
+
+// 点赞和评论组件
+function FitnessRecordActions({ recordId }: { recordId: number }) {
+  const { user } = useAuth();
+  const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState("");
+
+  const utils = trpc.useUtils();
+  const { data: likes = [] } = trpc.fitness.getLikes.useQuery({ recordId });
+  const { data: comments = [] } = trpc.fitness.getComments.useQuery({ recordId });
+
+  const likeMutation = trpc.fitness.like.useMutation({
+    onSuccess: () => {
+      utils.fitness.getLikes.invalidate({ recordId });
+      toast.success("点赞成功");
+    },
+  });
+
+  const unlikeMutation = trpc.fitness.unlike.useMutation({
+    onSuccess: () => {
+      utils.fitness.getLikes.invalidate({ recordId });
+      toast.success("取消点赞");
+    },
+  });
+
+  const addCommentMutation = trpc.fitness.addComment.useMutation({
+    onSuccess: () => {
+      utils.fitness.getComments.invalidate({ recordId });
+      setCommentText("");
+      toast.success("评论成功");
+    },
+  });
+
+  const isLiked = likes.some((like: any) => like.userId === user?.id);
+
+  const handleLike = () => {
+    if (isLiked) {
+      unlikeMutation.mutate({ recordId });
+    } else {
+      likeMutation.mutate({ recordId });
+    }
+  };
+
+  const handleAddComment = () => {
+    if (!commentText.trim()) return;
+    addCommentMutation.mutate({ recordId, content: commentText });
+  };
+
+  const quickEncouragements = [
+    "加油！你最棒！💪",
+    "坚持就是胜利！🏆",
+    "今天也很努力呢！⭐",
+    "继续保持！👍",
+    "为你骄傲！❤️",
+  ];
+
+  return (
+    <div className="mt-3 space-y-2">
+      {/* 点赞和评论按钮 */}
+      <div className="flex items-center gap-4 text-sm">
+        <button
+          onClick={handleLike}
+          className={`flex items-center gap-1 transition-colors ${
+            isLiked ? "text-red-500" : "text-gray-500 hover:text-red-500"
+          }`}
+        >
+          <ThumbsUp className={`w-4 h-4 ${isLiked ? "fill-red-500" : ""}`} />
+          <span>{likes.length > 0 ? likes.length : "点赞"}</span>
+        </button>
+        <button
+          onClick={() => setShowComments(!showComments)}
+          className="flex items-center gap-1 text-gray-500 hover:text-blue-500 transition-colors"
+        >
+          <MessageCircle className="w-4 h-4" />
+          <span>{comments.length > 0 ? comments.length : "评论"}</span>
+        </button>
+      </div>
+
+      {/* 评论区域 */}
+      {showComments && (
+        <div className="space-y-2 pt-2 border-t">
+          {/* 快捷鼓励语 */}
+          <div className="flex flex-wrap gap-2">
+            {quickEncouragements.map((text) => (
+              <button
+                key={text}
+                onClick={() => {
+                  addCommentMutation.mutate({ recordId, content: text });
+                }}
+                className="px-3 py-1 text-xs bg-gradient-to-r from-pink-100 to-purple-100 text-gray-700 rounded-full hover:shadow-md transition"
+              >
+                {text}
+              </button>
+            ))}
+          </div>
+
+          {/* 评论列表 */}
+          {comments.length > 0 && (
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {comments.map((comment: any) => (
+                <div key={comment.id} className="text-sm bg-gray-50 rounded-lg p-2">
+                  <p className="text-gray-700">{comment.content}</p>
+                  <span className="text-xs text-gray-400">
+                    {new Date(comment.createdAt).toLocaleString('zh-CN')}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 评论输入框 */}
+          <div className="flex gap-2">
+            <Input
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="写下你的鼓励..."
+              className="flex-1"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleAddComment();
+                }
+              }}
+            />
+            <Button
+              size="sm"
+              onClick={handleAddComment}
+              disabled={!commentText.trim() || addCommentMutation.isPending}
+            >
+              发送
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
