@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Gift, Check, Trash2, Star, Shuffle } from "lucide-react";
+import { ArrowLeft, Plus, Gift, Check, Trash2, Star, Shuffle, Search, Filter, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState } from "react";
@@ -43,6 +43,12 @@ export default function Wishes() {
     description: "",
     priority: "medium" as "low" | "medium" | "high",
   });
+  
+  // 搜索和筛选状态
+  const [searchQuery, setSearchQuery] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState<"all" | "high" | "medium" | "low">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "completed">("all");
+  const [showFilters, setShowFilters] = useState(false);
 
   const { data: wishes, refetch } = trpc.wish.list.useQuery();
 
@@ -108,8 +114,30 @@ export default function Wishes() {
     }, 120);
   };
 
-  const pendingWishes = wishes?.filter(w => !w.isCompleted) || [];
-  const completedWishes = wishes?.filter(w => w.isCompleted) || [];
+  // 应用搜索和筛选
+  const filteredWishes = wishes?.filter(w => {
+    // 搜索过滤
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchTitle = w.title.toLowerCase().includes(query);
+      const matchDesc = w.description?.toLowerCase().includes(query);
+      if (!matchTitle && !matchDesc) return false;
+    }
+
+    // 优先级过滤
+    if (priorityFilter !== "all" && w.priority !== priorityFilter) {
+      return false;
+    }
+
+    // 状态过滤
+    if (statusFilter === "pending" && w.isCompleted) return false;
+    if (statusFilter === "completed" && !w.isCompleted) return false;
+
+    return true;
+  }) || [];
+
+  const pendingWishes = filteredWishes.filter(w => !w.isCompleted);
+  const completedWishes = filteredWishes.filter(w => w.isCompleted);
 
   return (
     <div className="min-h-screen gradient-warm-subtle">
@@ -198,10 +226,109 @@ export default function Wishes() {
               </DialogContent>
             </Dialog>
           </div>
-        </div>
-      </header>
+        </div>      </header>
 
-      <main className="container py-6 space-y-6">
+      <main className="container pb-20 pt-6">
+        {/* 搜索和筛选栏 */}
+        <Card className="mb-6">
+          <CardContent className="p-4 space-y-3">
+            {/* 搜索框 */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="搜索愿望内容..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-10"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            {/* 筛选按钮 */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant={showFilters ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="gap-2"
+              >
+                <Filter className="h-4 w-4" />
+                筛选
+              </Button>
+              {(priorityFilter !== "all" || statusFilter !== "all") && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setPriorityFilter("all");
+                    setStatusFilter("all");
+                  }}
+                  className="gap-1"
+                >
+                  <X className="h-3 w-3" />
+                  清除筛选
+                </Button>
+              )}
+            </div>
+
+            {/* 筛选选项 */}
+            {showFilters && (
+              <div className="space-y-3 pt-2 border-t">
+                {/* 优先级筛选 */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">优先级</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { value: "all", label: "全部" },
+                      { value: "high", label: "非常想要" },
+                      { value: "medium", label: "比较想要" },
+                      { value: "low", label: "有点想要" },
+                    ].map((option) => (
+                      <Button
+                        key={option.value}
+                        variant={priorityFilter === option.value ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setPriorityFilter(option.value as any)}
+                      >
+                        {option.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 状态筛选 */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">状态</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { value: "all", label: "全部" },
+                      { value: "pending", label: "待实现" },
+                      { value: "completed", label: "已实现" },
+                    ].map((option) => (
+                      <Button
+                        key={option.value}
+                        variant={statusFilter === option.value ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setStatusFilter(option.value as any)}
+                      >
+                        {option.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="space-y-6">
         {/* 随机抽取结果 */}
         <AnimatePresence>
           {randomWish && (
@@ -354,6 +481,7 @@ export default function Wishes() {
             </CardContent>
           </Card>
         )}
+        </div>
       </main>
 
       <ConfirmDeleteDialog

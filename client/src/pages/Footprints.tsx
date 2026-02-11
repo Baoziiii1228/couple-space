@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Plus, MapPin, Trash2, Navigation, CalendarDays } from "lucide-react";
+import { ArrowLeft, Plus, MapPin, Trash2, Navigation, CalendarDays, Search, Filter, X, Star } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState, useMemo } from "react";
@@ -31,6 +31,11 @@ const quickFootprintTags = [
 export default function Footprints() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [filterYear, setFilterYear] = useState<string>("all");
+  
+  // 搜索和筛选状态
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateFilter, setDateFilter] = useState<"all" | "thisYear" | "lastYear" | "older">("all");
+  const [showFilters, setShowFilters] = useState(false);
   const [newFootprint, setNewFootprint] = useState({
     title: "",
     description: "",
@@ -139,15 +144,41 @@ export default function Footprints() {
     };
   }, [footprints]);
 
-  // 按年份筛选
+  // 应用搜索和筛选
   const filteredFootprints = useMemo(() => {
     if (!footprints) return [];
-    if (filterYear === "all") return footprints;
+    
     return footprints.filter(f => {
-      const year = new Date(f.visitedAt).getFullYear().toString();
-      return year === filterYear;
+      // 搜索过滤
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchTitle = f.title.toLowerCase().includes(query);
+        const matchAddress = f.address?.toLowerCase().includes(query);
+        const matchDesc = f.description?.toLowerCase().includes(query);
+        if (!matchTitle && !matchAddress && !matchDesc) return false;
+      }
+
+      // 日期筛选
+      if (dateFilter !== "all") {
+        const visitDate = new Date(f.visitedAt);
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const visitYear = visitDate.getFullYear();
+        
+        if (dateFilter === "thisYear" && visitYear !== currentYear) return false;
+        if (dateFilter === "lastYear" && visitYear !== currentYear - 1) return false;
+        if (dateFilter === "older" && visitYear >= currentYear - 1) return false;
+      }
+
+      // 年份筛选（保留原有功能）
+      if (filterYear !== "all") {
+        const year = new Date(f.visitedAt).getFullYear().toString();
+        if (year !== filterYear) return false;
+      }
+
+      return true;
     });
-  }, [footprints, filterYear]);
+  }, [footprints, filterYear, searchQuery, dateFilter]);
 
   // 按年份分组
   const groupedFootprints = useMemo(() => {
@@ -260,10 +291,85 @@ export default function Footprints() {
               </div>
             </DialogContent>
           </Dialog>
-        </div>
-      </header>
+        </div>      </header>
 
-      <main className="container py-6 space-y-6">
+      <main className="container pb-20 pt-6">
+        {/* 搜索和筛选栏 */}
+        <Card className="mb-6">
+          <CardContent className="p-4 space-y-3">
+            {/* 搜索框 */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="搜索地点名称..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-10"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            {/* 筛选按钮 */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant={showFilters ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="gap-2"
+              >
+                <Filter className="h-4 w-4" />
+                筛选
+              </Button>
+              {dateFilter !== "all" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setDateFilter("all")}
+                  className="gap-1"
+                >
+                  <X className="h-3 w-3" />
+                  清除筛选
+                </Button>
+              )}
+            </div>
+
+            {/* 筛选选项 */}
+            {showFilters && (
+              <div className="space-y-3 pt-2 border-t">
+                {/* 日期筛选 */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">时间</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { value: "all", label: "全部" },
+                      { value: "thisYear", label: "今年" },
+                      { value: "lastYear", label: "去年" },
+                      { value: "older", label: "更早" },
+                    ].map((option) => (
+                      <Button
+                        key={option.value}
+                        variant={dateFilter === option.value ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setDateFilter(option.value as any)}
+                      >
+                        {option.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="space-y-6">
         {/* 统计卡片 */}
         {stats && (
           <div className="grid grid-cols-3 gap-3">
@@ -397,6 +503,7 @@ export default function Footprints() {
             </CardContent>
           </Card>
         )}
+        </div>
       </main>
 
       <ConfirmDeleteDialog
