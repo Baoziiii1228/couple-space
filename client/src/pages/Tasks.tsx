@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Plus, Star, Check, Trash2, Filter } from "lucide-react";
+import { ArrowLeft, Plus, Star, Check, Trash2, Filter, Search, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState, useMemo } from "react";
@@ -46,6 +46,8 @@ export default function Tasks() {
   const [activeFilter, setActiveFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
   const [showFilter, setShowFilter] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "completed">("all");
   const [newTask, setNewTask] = useState({ title: "", description: "", category: "其他", priority: "medium" as "high" | "medium" | "low" });
 
   const { data: tasks, refetch } = trpc.task.list.useQuery();
@@ -90,18 +92,38 @@ export default function Tasks() {
     createTask.mutate({ title: preset.title, description: "", category: preset.category });
   };
 
-  // 按分类和优先级筛选
+  // 按搜索、分类、优先级和状态筛选
   const filteredTasks = useMemo(() => {
     if (!tasks) return [];
     let filtered = tasks;
+    
+    // 搜索过滤
+    if (searchQuery) {
+      filtered = filtered.filter(t => 
+        t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    }
+    
+    // 分类过滤
     if (activeFilter) {
       filtered = filtered.filter(t => t.category === activeFilter);
     }
+    
+    // 优先级过滤
     if (priorityFilter) {
       filtered = filtered.filter(t => t.priority === priorityFilter);
     }
+    
+    // 状态过滤
+    if (statusFilter === "pending") {
+      filtered = filtered.filter(t => !t.isCompleted);
+    } else if (statusFilter === "completed") {
+      filtered = filtered.filter(t => t.isCompleted);
+    }
+    
     return filtered;
-  }, [tasks, activeFilter, priorityFilter]);
+  }, [tasks, searchQuery, activeFilter, priorityFilter, statusFilter]);
 
   const stats = useMemo(() => {
     if (!tasks) return { total: 0, completed: 0, progress: 0 };
@@ -277,9 +299,68 @@ export default function Tasks() {
           </CardContent>
         </Card>
 
-        {/* 筛选栏 */}
+        {/* 搜索和筛选栏 */}
         {showFilter && (
           <div className="space-y-3">
+            {/* 搜索框 */}
+            <div>
+              <p className="text-sm font-medium mb-2">搜索任务</p>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="搜索任务名称或描述..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-9"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {/* 状态筛选 */}
+            <div>
+              <p className="text-sm font-medium mb-2">任务状态</p>
+              <div className="flex gap-2">
+                <button
+                  className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                    statusFilter === "all"
+                      ? "bg-primary text-primary-foreground shadow-md"
+                      : "bg-secondary/50 hover:bg-secondary text-foreground"
+                  }`}
+                  onClick={() => setStatusFilter("all")}
+                >
+                  📋 全部
+                </button>
+                <button
+                  className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                    statusFilter === "pending"
+                      ? "bg-primary text-primary-foreground shadow-md"
+                      : "bg-secondary/50 hover:bg-secondary text-foreground"
+                  }`}
+                  onClick={() => setStatusFilter("pending")}
+                >
+                  ⏳ 进行中
+                </button>
+                <button
+                  className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                    statusFilter === "completed"
+                      ? "bg-green-500 text-white shadow-md"
+                      : "bg-secondary/50 hover:bg-secondary text-foreground"
+                  }`}
+                  onClick={() => setStatusFilter("completed")}
+                >
+                  ✅ 已完成
+                </button>
+              </div>
+            </div>
+            
             <div>
               <p className="text-sm font-medium mb-2">分类筛选</p>
               <div className="flex flex-wrap gap-2">
