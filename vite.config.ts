@@ -159,7 +159,7 @@ const plugins = [
   vitePluginManusDebugCollector(),
   VitePWA({
     registerType: "autoUpdate",
-    includeAssets: ["icon-192.png", "icon-512.png", "apple-touch-icon.png"],
+    includeAssets: [],
     manifest: {
       name: "包子与烧卖",
       short_name: "包子烧卖",
@@ -172,19 +172,19 @@ const plugins = [
       orientation: "portrait",
       icons: [
         {
-          src: "icon-192.png",
+          src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663330480659/wKMsEsIsfJbgdFAO.png",
           sizes: "192x192",
           type: "image/png",
           purpose: "any maskable",
         },
         {
-          src: "icon-512.png",
+          src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663330480659/nzaqUMcwptIfgMMW.png",
           sizes: "512x512",
           type: "image/png",
           purpose: "any maskable",
         },
         {
-          src: "apple-touch-icon.png",
+          src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663330480659/DTEPEOtZCCCHbjDt.png",
           sizes: "180x180",
           type: "image/png",
           purpose: "apple touch icon",
@@ -192,8 +192,22 @@ const plugins = [
       ],
     },
     workbox: {
-      globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+      globPatterns: ["**/*.{js,css,html,ico,svg,woff,woff2}"],
       runtimeCaching: [
+        {
+          urlPattern: /^https:\/\/files\.manuscdn\.com\/.*/i,
+          handler: "CacheFirst",
+          options: {
+            cacheName: "cdn-images-cache",
+            expiration: {
+              maxEntries: 50,
+              maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+            },
+            cacheableResponse: {
+              statuses: [0, 200],
+            },
+          },
+        },
         {
           urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
           handler: "CacheFirst",
