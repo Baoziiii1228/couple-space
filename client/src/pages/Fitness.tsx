@@ -512,6 +512,7 @@ function FitnessRecordActions({ recordId }: { recordId: number }) {
   const { user } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const [showLikesList, setShowLikesList] = useState(false);
 
   const utils = trpc.useUtils();
   const { data: likes = [] } = trpc.fitness.getLikes.useQuery({ recordId });
@@ -536,6 +537,13 @@ function FitnessRecordActions({ recordId }: { recordId: number }) {
       utils.fitness.getComments.invalidate({ recordId });
       setCommentText("");
       toast.success("评论成功");
+    },
+  });
+
+  const deleteCommentMutation = trpc.fitness.deleteComment.useMutation({
+    onSuccess: () => {
+      utils.fitness.getComments.invalidate({ recordId });
+      toast.success("评论已删除");
     },
   });
 
@@ -573,7 +581,17 @@ function FitnessRecordActions({ recordId }: { recordId: number }) {
           }`}
         >
           <ThumbsUp className={`w-4 h-4 ${isLiked ? "fill-red-500" : ""}`} />
-          <span>{likes.length > 0 ? likes.length : "点赞"}</span>
+          <span
+            onClick={(e) => {
+              if (likes.length > 0) {
+                e.stopPropagation();
+                setShowLikesList(true);
+              }
+            }}
+            className={likes.length > 0 ? "cursor-pointer hover:underline" : ""}
+          >
+            {likes.length > 0 ? likes.length : "点赞"}
+          </span>
         </button>
         <button
           onClick={() => setShowComments(!showComments)}
@@ -606,11 +624,25 @@ function FitnessRecordActions({ recordId }: { recordId: number }) {
           {comments.length > 0 && (
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {comments.map((comment: any) => (
-                <div key={comment.id} className="text-sm bg-gray-50 rounded-lg p-2">
-                  <p className="text-gray-700">{comment.content}</p>
-                  <span className="text-xs text-gray-400">
-                    {new Date(comment.createdAt).toLocaleString('zh-CN')}
-                  </span>
+                <div key={comment.id} className="text-sm bg-gray-50 rounded-lg p-2 flex justify-between items-start">
+                  <div className="flex-1">
+                    <p className="text-gray-700">{comment.content}</p>
+                    <span className="text-xs text-gray-400">
+                      {new Date(comment.createdAt).toLocaleString('zh-CN')}
+                    </span>
+                  </div>
+                  {comment.userId === user?.id && (
+                    <button
+                      onClick={() => {
+                        if (confirm("确定要删除这条评论吗？")) {
+                          deleteCommentMutation.mutate({ id: comment.id });
+                        }
+                      }}
+                      className="text-red-500 hover:text-red-700 text-xs ml-2"
+                    >
+                      删除
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -637,6 +669,36 @@ function FitnessRecordActions({ recordId }: { recordId: number }) {
             >
               发送
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* 点赞用户列表对话框 */}
+      {showLikesList && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowLikesList(false)}>
+          <div className="bg-white rounded-xl max-w-sm w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold mb-4">点赞列表 ({likes.length})</h3>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {likes.map((like: any) => (
+                <div key={like.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                  <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold">
+                    {like.userId === user?.id ? "我" : "TA"}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium">{like.userId === user?.id ? "我" : "TA"}</div>
+                    <div className="text-xs text-gray-500">
+                      {new Date(like.createdAt).toLocaleString('zh-CN')}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowLikesList(false)}
+              className="w-full mt-4 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+            >
+              关闭
+            </button>
           </div>
         </div>
       )}

@@ -1,0 +1,1 @@
+ALTER TABLE `menuItems` ADD `zone` varchar(20) DEFAULT 'other';

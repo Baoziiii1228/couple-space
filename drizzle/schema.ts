@@ -487,6 +487,7 @@ export const menuItems = mysqlTable("menuItems", {
   userId: int("userId").notNull(), // 菜单所有者
   name: varchar("name", { length: 100 }).notNull(), // 菜品名称
   category: varchar("category", { length: 50 }), // 分类：中餐、西餐等
+  zone: varchar("zone", { length: 20 }).default("other"), // 分区：meat(荤菜)、vegetable(素菜)、staple(主食)、soup(汤品)、dessert(甜品)
   rating: int("rating").default(3), // 喜爱程度1-5星
   imageUrl: text("imageUrl"), // 图片URL
   notes: text("notes"), // 备注

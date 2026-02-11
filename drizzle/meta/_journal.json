@@ -57,6 +57,13 @@
       "when": 1770840269802,
       "tag": "0007_known_wolfpack",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1770841034044,
+      "tag": "0008_powerful_zaran",
+      "breakpoints": true
     }
   ]
 }
