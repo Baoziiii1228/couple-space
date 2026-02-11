@@ -33,7 +33,7 @@ export function AnnualReport({ year = new Date().getFullYear() }: AnnualReportPr
       return date >= startDate && date <= endDate;
     }) || [];
 
-    const yearMessages = messages?.filter(m => {
+    const yearMessages = messages?.filter((m: any) => {
       const date = new Date(m.createdAt);
       return date >= startDate && date <= endDate;
     }) || [];

@@ -43,6 +43,13 @@
       "when": 1770796208715,
       "tag": "0005_purple_lightspeed",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1770838298477,
+      "tag": "0006_clammy_micromacro",
+      "breakpoints": true
     }
   ]
 }
