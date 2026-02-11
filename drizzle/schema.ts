@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, decimal } from "drizzle-orm/mysql-core";
 
 // ==================== 用户系统 ====================
 
@@ -399,6 +399,8 @@ export const periodRecords = mysqlTable("periodRecords", {
   cycleLength: int("cycleLength"), // 周期长度（天）
   periodLength: int("periodLength"), // 经期长度（天）
   symptoms: json("symptoms").$type<string[]>(), // 症状列表
+  painLevel: int("painLevel"), // 痛经程度 1-5
+  moodLevel: int("moodLevel"), // 情绪状态 1-5
   notes: text("notes"), // 备注
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -406,3 +408,39 @@ export const periodRecords = mysqlTable("periodRecords", {
 
 export type PeriodRecord = typeof periodRecords.$inferSelect;
 export type InsertPeriodRecord = typeof periodRecords.$inferInsert;
+
+// ==================== 健身记录 ====================
+
+export const fitnessRecords = mysqlTable("fitnessRecords", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  date: timestamp("date").notNull(),
+  weight: decimal("weight", { precision: 5, scale: 2 }), // 体重（kg）
+  exerciseType: varchar("exerciseType", { length: 50 }), // 运动类型
+  duration: int("duration"), // 运动时长（分钟）
+  calories: int("calories"), // 消耗卡路里
+  notes: text("notes"), // 备注
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type FitnessRecord = typeof fitnessRecords.$inferSelect;
+export type InsertFitnessRecord = typeof fitnessRecords.$inferInsert;
+
+// ==================== 健身目标 ====================
+
+export const fitnessGoals = mysqlTable("fitnessGoals", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  targetWeight: decimal("targetWeight", { precision: 5, scale: 2 }), // 目标体重
+  startWeight: decimal("startWeight", { precision: 5, scale: 2 }), // 起始体重
+  startDate: timestamp("startDate").notNull(),
+  targetDate: timestamp("targetDate"), // 目标日期
+  weeklyExerciseGoal: int("weeklyExerciseGoal"), // 每周运动目标（次数）
+  isActive: boolean("isActive").default(true), // 是否激活
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type FitnessGoal = typeof fitnessGoals.$inferSelect;
+export type InsertFitnessGoal = typeof fitnessGoals.$inferInsert;

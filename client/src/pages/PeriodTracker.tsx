@@ -19,6 +19,24 @@ const symptoms = [
   { value: "fatigue", label: "疲劳", emoji: "😴" },
   { value: "bloating", label: "腹胀", emoji: "🤰" },
   { value: "acne", label: "痘痘", emoji: "😖" },
+  { value: "backache", label: "腰痛", emoji: "🧘" },
+  { value: "nausea", label: "恶心", emoji: "🤢" },
+];
+
+const painLevels = [
+  { value: 1, label: "轻微", emoji: "🙂", color: "bg-green-100 text-green-600 dark:bg-green-900/30" },
+  { value: 2, label: "轻度", emoji: "😐", color: "bg-blue-100 text-blue-600 dark:bg-blue-900/30" },
+  { value: 3, label: "中度", emoji: "😟", color: "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30" },
+  { value: 4, label: "中重度", emoji: "😣", color: "bg-orange-100 text-orange-600 dark:bg-orange-900/30" },
+  { value: 5, label: "严重", emoji: "😭", color: "bg-red-100 text-red-600 dark:bg-red-900/30" },
+];
+
+const moodLevels = [
+  { value: 1, label: "很好", emoji: "😄", color: "bg-green-100 text-green-600 dark:bg-green-900/30" },
+  { value: 2, label: "还行", emoji: "😊", color: "bg-blue-100 text-blue-600 dark:bg-blue-900/30" },
+  { value: 3, label: "一般", emoji: "😐", color: "bg-gray-100 text-gray-600 dark:bg-gray-700/30" },
+  { value: 4, label: "不好", emoji: "😞", color: "bg-orange-100 text-orange-600 dark:bg-orange-900/30" },
+  { value: 5, label: "很差", emoji: "😢", color: "bg-red-100 text-red-600 dark:bg-red-900/30" },
 ];
 
 export default function PeriodTracker() {
@@ -27,6 +45,8 @@ export default function PeriodTracker() {
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
+  const [painLevel, setPainLevel] = useState<number>(0);
+  const [moodLevel, setMoodLevel] = useState<number>(0);
   const [notes, setNotes] = useState("");
 
   const { data: records, refetch } = trpc.periodTracker.list.useQuery();
@@ -38,6 +58,8 @@ export default function PeriodTracker() {
       setStartDate(undefined);
       setEndDate(undefined);
       setSelectedSymptoms([]);
+      setPainLevel(0);
+      setMoodLevel(0);
       setNotes("");
       refetch();
     },
@@ -59,8 +81,10 @@ export default function PeriodTracker() {
       endDate: endDate?.toISOString(),
       periodLength,
       symptoms: selectedSymptoms,
+      painLevel: painLevel || undefined,
+      moodLevel: moodLevel || undefined,
       notes,
-    });
+    } as any);
   };
 
   // 计算平均周期和预测
@@ -183,11 +207,52 @@ export default function PeriodTracker() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label>痛经程度</Label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {painLevels.map((level) => (
+                      <button
+                        key={level.value}
+                        type="button"
+                        className={`p-2 rounded-lg text-center text-xs transition-all ${
+                          painLevel === level.value
+                            ? "ring-2 ring-primary scale-105"
+                            : "hover:scale-105"
+                        } ${level.color}`}
+                        onClick={() => setPainLevel(level.value)}
+                      >
+                        <div className="text-xl mb-1">{level.emoji}</div>
+                        <div>{level.label}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>情绪状态</Label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {moodLevels.map((level) => (
+                      <button
+                        key={level.value}
+                        type="button"
+                        className={`p-2 rounded-lg text-center text-xs transition-all ${
+                          moodLevel === level.value
+                            ? "ring-2 ring-primary scale-105"
+                            : "hover:scale-105"
+                        } ${level.color}`}
+                        onClick={() => setMoodLevel(level.value)}
+                      >
+                        <div className="text-xl mb-1">{level.emoji}</div>
+                        <div>{level.label}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
                   <Label>症状</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {symptoms.map((symptom) => (
                       <button
                         key={symptom.value}
+                        type="button"
                         className={`px-3 py-2 rounded-lg text-sm transition-all ${
                           selectedSymptoms.includes(symptom.value)
                             ? "bg-primary text-primary-foreground"
@@ -284,6 +349,81 @@ export default function PeriodTracker() {
                     }
                   </p>
                 </div>
+                {/* 关怀建议 */}
+                {prediction.daysUntilNext > 0 && prediction.daysUntilNext <= 3 && (
+                  <div className="pt-4 border-t bg-pink-50 dark:bg-pink-900/10 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
+                    <p className="text-sm font-medium text-pink-600 dark:text-pink-400 mb-2">
+                      💕 给男友的关怀提示
+                    </p>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• 提前准备红糖、暖宝宝、止痛药</li>
+                      <li>• 多关心她的情绪，耐心倾听</li>
+                      <li>• 准备她喜欢的零食和水果</li>
+                      <li>• 帮她做家务，让她多休息</li>
+                    </ul>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* 当前状态关怀建议 */}
+        {currentStatus && (currentStatus.status === "period" || currentStatus.status === "pms") && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="glass border-pink-200 dark:border-pink-800 bg-gradient-to-br from-pink-50/50 to-rose-50/50 dark:from-pink-900/10 dark:to-rose-900/10">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Heart className="w-5 h-5 text-pink-500" />
+                  {currentStatus.status === "period" ? "经期关怀" : "经前期关怀"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {currentStatus.status === "period" ? (
+                  <>
+                    <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3">
+                      <p className="text-sm font-medium text-pink-600 dark:text-pink-400 mb-2">🤗 给她的建议</p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• 多喝热水，保持身体温暖</li>
+                        <li>• 避免剧烈运动，可以散步或瑜伽</li>
+                        <li>• 充足睡眠，不要熬夜</li>
+                        <li>• 吃些温热的食物，避免生冷</li>
+                      </ul>
+                    </div>
+                    <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3">
+                      <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-2">👦 给男友的建议</p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• 今天她可能会痛经，多关心她</li>
+                        <li>• 帮她冲一杯红糖姜茶或热牛奶</li>
+                        <li>• 情绪可能波动，请耐心一些</li>
+                        <li>• 主动承担家务，让她好好休息</li>
+                      </ul>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3">
+                      <p className="text-sm font-medium text-pink-600 dark:text-pink-400 mb-2">🤗 给她的建议</p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• 注意保持心情愉快</li>
+                        <li>• 适当运动，缓解压力</li>
+                        <li>• 准备好经期用品</li>
+                      </ul>
+                    </div>
+                    <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3">
+                      <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-2">👦 给男友的建议</p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• 她可能会情绪敏感，多关心她</li>
+                        <li>• 准备一些小惊喜或礼物</li>
+                        <li>• 耐心倾听，给予鼓励</li>
+                      </ul>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </motion.div>

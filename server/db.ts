@@ -24,7 +24,9 @@ import {
   gameRecords, InsertGameRecord,
   countdowns, InsertCountdown,
   promises, InsertPromise,
-  periodRecords, InsertPeriodRecord
+  periodRecords, InsertPeriodRecord,
+  fitnessRecords, InsertFitnessRecord,
+  fitnessGoals, InsertFitnessGoal
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -912,4 +914,52 @@ export async function deletePeriodRecord(id: number, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(periodRecords).where(and(eq(periodRecords.id, id), eq(periodRecords.userId, userId)));
+}
+
+// ==================== 健身记录 ====================
+
+export async function getFitnessRecordsByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.select().from(fitnessRecords)
+    .where(eq(fitnessRecords.userId, userId))
+    .orderBy(desc(fitnessRecords.date));
+}
+
+export async function createFitnessRecord(data: InsertFitnessRecord) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(fitnessRecords).values(data);
+  return result[0].insertId;
+}
+
+export async function deleteFitnessRecord(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(fitnessRecords).where(and(eq(fitnessRecords.id, id), eq(fitnessRecords.userId, userId)));
+}
+
+// ==================== 健身目标 ====================
+
+export async function getFitnessGoalByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const goals = await db.select().from(fitnessGoals)
+    .where(and(eq(fitnessGoals.userId, userId), eq(fitnessGoals.isActive, true)))
+    .orderBy(desc(fitnessGoals.createdAt))
+    .limit(1);
+  return goals[0] || null;
+}
+
+export async function createFitnessGoal(data: InsertFitnessGoal) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(fitnessGoals).values(data);
+  return result[0].insertId;
+}
+
+export async function updateFitnessGoal(id: number, data: Partial<InsertFitnessGoal>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(fitnessGoals).set(data).where(eq(fitnessGoals.id, id));
 }

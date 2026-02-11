@@ -1427,6 +1427,8 @@ export const appRouter = router({
         endDate: z.string().optional(),
         periodLength: z.number().optional(),
         symptoms: z.array(z.string()).optional(),
+        painLevel: z.number().min(1).max(5).optional(),
+        moodLevel: z.number().min(1).max(5).optional(),
         notes: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
@@ -1436,6 +1438,8 @@ export const appRouter = router({
           endDate: input.endDate ? new Date(input.endDate) : null,
           periodLength: input.periodLength ?? null,
           symptoms: input.symptoms ?? null,
+          painLevel: input.painLevel ?? null,
+          moodLevel: input.moodLevel ?? null,
           notes: input.notes ?? null,
         });
         return { id };
@@ -1445,6 +1449,86 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         await db.deletePeriodRecord(input.id, ctx.user.id);
+        return { success: true };
+      }),
+  }),
+
+  // 健身记录
+  fitness: router({
+    listRecords: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getFitnessRecordsByUserId(ctx.user.id);
+    }),
+
+    createRecord: protectedProcedure
+      .input(z.object({
+        date: z.string(),
+        weight: z.number().optional(),
+        exerciseType: z.string().optional(),
+        duration: z.number().optional(),
+        calories: z.number().optional(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const id = await db.createFitnessRecord({
+          userId: ctx.user.id,
+          date: new Date(input.date),
+          weight: input.weight?.toString() ?? null,
+          exerciseType: input.exerciseType ?? null,
+          duration: input.duration ?? null,
+          calories: input.calories ?? null,
+          notes: input.notes ?? null,
+        });
+        return { id };
+      }),
+
+    deleteRecord: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteFitnessRecord(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    getGoal: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getFitnessGoalByUserId(ctx.user.id);
+    }),
+
+    createGoal: protectedProcedure
+      .input(z.object({
+        targetWeight: z.number(),
+        startWeight: z.number(),
+        startDate: z.string(),
+        targetDate: z.string().optional(),
+        weeklyExerciseGoal: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const id = await db.createFitnessGoal({
+          userId: ctx.user.id,
+          targetWeight: input.targetWeight.toString(),
+          startWeight: input.startWeight.toString(),
+          startDate: new Date(input.startDate),
+          targetDate: input.targetDate ? new Date(input.targetDate) : null,
+          weeklyExerciseGoal: input.weeklyExerciseGoal ?? null,
+          isActive: true,
+        });
+        return { id };
+      }),
+
+    updateGoal: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        targetWeight: z.number().optional(),
+        targetDate: z.string().optional(),
+        weeklyExerciseGoal: z.number().optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const updates: any = {};
+        if (input.targetWeight !== undefined) updates.targetWeight = input.targetWeight.toString();
+        if (input.targetDate !== undefined) updates.targetDate = new Date(input.targetDate);
+        if (input.weeklyExerciseGoal !== undefined) updates.weeklyExerciseGoal = input.weeklyExerciseGoal;
+        if (input.isActive !== undefined) updates.isActive = input.isActive;
+        
+        await db.updateFitnessGoal(input.id, updates);
         return { success: true };
       }),
   }),
