@@ -30,7 +30,10 @@ import {
   menuItems, InsertMenuItem,
   orderHistory, InsertOrderHistory,
   fitnessLikes, InsertFitnessLike,
-  fitnessComments, InsertFitnessComment
+  fitnessComments, InsertFitnessComment,
+  userAchievementProgress,
+  challenges,
+  challengeProgress
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1059,4 +1062,119 @@ export async function deleteFitnessComment(id: number, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(fitnessComments).where(and(eq(fitnessComments.id, id), eq(fitnessComments.userId, userId)));
+}
+
+// ==================== 成就系统 ====================
+export async function getUserAchievementProgress(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.select().from(userAchievementProgress)
+    .where(eq(userAchievementProgress.userId, userId));
+}
+
+export async function createOrUpdateAchievementProgress(data: {
+  userId: number;
+  achievementId: number;
+  tier: number;
+  currentProgress: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // 先查询是否存在
+  const existing = await db.select().from(userAchievementProgress)
+    .where(and(
+      eq(userAchievementProgress.userId, data.userId),
+      eq(userAchievementProgress.achievementId, data.achievementId)
+    ))
+    .limit(1);
+  
+  if (existing.length > 0) {
+    // 更新
+    await db.update(userAchievementProgress)
+      .set({
+        tier: data.tier,
+        currentProgress: data.currentProgress,
+        unlockedAt: data.tier > 0 ? new Date() : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(userAchievementProgress.id, existing[0].id));
+    return existing[0].id;
+  } else {
+    // 创建
+    const result = await db.insert(userAchievementProgress).values({
+      userId: data.userId,
+      achievementId: data.achievementId,
+      tier: data.tier,
+      currentProgress: data.currentProgress,
+      unlockedAt: data.tier > 0 ? new Date() : null,
+    } as any);
+    return result[0].insertId;
+  }
+}
+
+// ==================== 情侣挑战 ====================
+export async function createChallenge(data: {
+  coupleId: number;
+  createdBy: number;
+  title: string;
+  description: string;
+  type: string;
+  targetValue: number;
+  startDate: Date;
+  endDate: Date;
+  status: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(challenges).values(data as any);
+  return result[0].insertId;
+}
+
+export async function getChallengesByCoupleId(coupleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.select().from(challenges)
+    .where(eq(challenges.coupleId, coupleId))
+    .orderBy(desc(challenges.createdAt));
+}
+
+export async function updateChallenge(id: number, updates: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(challenges).set(updates).where(eq(challenges.id, id));
+}
+
+export async function getChallengeProgress(challengeId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.select().from(challengeProgress)
+    .where(eq(challengeProgress.challengeId, challengeId));
+}
+
+export async function updateChallengeProgress(challengeId: number, userId: number, currentProgress: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // 先查询是否存在
+  const existing = await db.select().from(challengeProgress)
+    .where(and(
+      eq(challengeProgress.challengeId, challengeId),
+      eq(challengeProgress.userId, userId)
+    ))
+    .limit(1);
+  
+  if (existing.length > 0) {
+    // 更新
+    await db.update(challengeProgress)
+      .set({ currentProgress, lastUpdated: new Date() })
+      .where(eq(challengeProgress.id, existing[0].id));
+  } else {
+    // 创建
+    await db.insert(challengeProgress).values({
+      challengeId,
+      userId,
+      currentProgress,
+    } as any);
+  }
 }
