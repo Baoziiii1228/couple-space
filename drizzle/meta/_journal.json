@@ -64,6 +64,13 @@
       "when": 1770841034044,
       "tag": "0008_powerful_zaran",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1770843041494,
+      "tag": "0009_giant_bloodstorm",
+      "breakpoints": true
     }
   ]
 }

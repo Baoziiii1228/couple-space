@@ -33,7 +33,8 @@ import {
   fitnessComments, InsertFitnessComment,
   userAchievementProgress,
   challenges,
-  challengeProgress
+  challengeProgress,
+  challengeComments, InsertChallengeComment
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1177,4 +1178,25 @@ export async function updateChallengeProgress(challengeId: number, userId: numbe
       currentProgress,
     } as any);
   }
+}
+
+
+// ==================== 挑战评论 ====================
+export async function createChallengeComment(data: InsertChallengeComment) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(challengeComments).values(data as any);
+  return result;
+}
+export async function getChallengeComments(challengeId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(challengeComments)
+    .where(eq(challengeComments.challengeId, challengeId))
+    .orderBy(desc(challengeComments.createdAt));
+}
+export async function deleteChallengeComment(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(challengeComments).where(eq(challengeComments.id, id));
 }

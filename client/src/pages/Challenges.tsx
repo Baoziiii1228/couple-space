@@ -1,5 +1,57 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { trpc } from '../lib/trpc';
+
+// 庆祝动画组件
+function CelebrationAnimation({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 animate-fadeIn">
+      <div className="relative">
+        {/* 主文字 */}
+        <div className="text-center animate-bounce">
+          <div className="text-8xl mb-4">🎉</div>
+          <h2 className="text-4xl font-bold text-white mb-2">挑战完成！</h2>
+          <p className="text-xl text-white">你们真棒！</p>
+        </div>
+        
+        {/* 彩带效果 */}
+        <div className="absolute inset-0 pointer-events-none">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-12 animate-confetti"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: '-50px',
+                backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F'][i % 6],
+                animationDelay: `${Math.random() * 0.5}s`,
+                animationDuration: `${2 + Math.random()}s`,
+                transform: `rotate(${Math.random() * 360}deg)`,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+      
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes confetti {
+          0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        .animate-confetti { animation: confetti 3s linear forwards; }
+      `}</style>
+    </div>
+  );
+}
 
 // 挑战类型配置
 const CHALLENGE_TYPES = [
@@ -190,9 +242,182 @@ function CreateChallengeDialog({ onClose, onSuccess }: { onClose: () => void; on
   );
 }
 
+// 进度更新对话框
+function UpdateProgressDialog({ challenge, currentProgress, onClose, onUpdate }: {
+  challenge: any;
+  currentProgress: number;
+  onClose: () => void;
+  onUpdate: (progress: number) => void;
+}) {
+  const [progress, setProgress] = useState(currentProgress);
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onUpdate(progress);
+    onClose();
+  };
+  
+  const challengeType = CHALLENGE_TYPES.find(t => t.id === challenge.type);
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-gray-800">更新进度</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* 挑战信息 */}
+          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${challengeType?.color} flex items-center justify-center text-2xl`}>
+              {challengeType?.icon}
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-800">{challenge.title}</h3>
+              <p className="text-sm text-gray-500">目标: {challenge.targetValue}</p>
+            </div>
+          </div>
+          
+          {/* 当前进度显示 */}
+          <div className="text-center">
+            <div className="text-5xl font-bold text-purple-600 mb-2">{progress}</div>
+            <div className="text-sm text-gray-500">当前进度</div>
+          </div>
+          
+          {/* 滑块 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              拖动滑块调整
+            </label>
+            <input
+              type="range"
+              min="0"
+              max={challenge.targetValue}
+              value={progress}
+              onChange={(e) => setProgress(Number(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-500"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>0</span>
+              <span>{challenge.targetValue}</span>
+            </div>
+          </div>
+          
+          {/* 步进器 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              快速调整
+            </label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setProgress(Math.max(0, progress - 10))}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+              >
+                -10
+              </button>
+              <button
+                type="button"
+                onClick={() => setProgress(Math.max(0, progress - 1))}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+              >
+                -1
+              </button>
+              <input
+                type="number"
+                value={progress}
+                onChange={(e) => setProgress(Math.max(0, Math.min(challenge.targetValue, Number(e.target.value))))}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                min="0"
+                max={challenge.targetValue}
+              />
+              <button
+                type="button"
+                onClick={() => setProgress(Math.min(challenge.targetValue, progress + 1))}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+              >
+                +1
+              </button>
+              <button
+                type="button"
+                onClick={() => setProgress(Math.min(challenge.targetValue, progress + 10))}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+              >
+                +10
+              </button>
+            </div>
+          </div>
+          
+          {/* 进度百分比 */}
+          <div className="bg-purple-50 rounded-xl p-4">
+            <div className="flex justify-between text-sm text-gray-600 mb-2">
+              <span>完成度</span>
+              <span className="font-bold text-purple-600">
+                {Math.round((progress / challenge.targetValue) * 100)}%
+              </span>
+            </div>
+            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full bg-gradient-to-r ${challengeType?.color} transition-all duration-300`}
+                style={{ width: `${(progress / challenge.targetValue) * 100}%` }}
+              />
+            </div>
+          </div>
+          
+          {/* 按钮 */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              取消
+            </button>
+            <button
+              type="submit"
+              className={`flex-1 px-4 py-2 bg-gradient-to-br ${challengeType?.color} text-white rounded-lg hover:shadow-lg transition-all`}
+            >
+              确认更新
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // 挑战卡片组件
 function ChallengeCard({ challenge }: { challenge: any }) {
+  const [showUpdateDialog, setShowUpdateDialog] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [showCelebration, setShowCelebration] = useState(false);
   const utils = trpc.useUtils();
+  
+  // 评论相关
+  const { data: comments } = trpc.challenges.getComments.useQuery(
+    { challengeId: challenge.id },
+    { enabled: showComments }
+  );
+  
+  const addCommentMutation = trpc.challenges.addComment.useMutation({
+    onSuccess: () => {
+      utils.challenges.getComments.invalidate({ challengeId: challenge.id });
+      setCommentText('');
+    },
+  });
+  
+  const deleteCommentMutation = trpc.challenges.deleteComment.useMutation({
+    onSuccess: () => {
+      utils.challenges.getComments.invalidate({ challengeId: challenge.id });
+    },
+  });
   const acceptMutation = trpc.challenges.accept.useMutation({
     onSuccess: () => utils.challenges.list.invalidate(),
   });
@@ -202,7 +427,10 @@ function ChallengeCard({ challenge }: { challenge: any }) {
   });
   
   const completeMutation = trpc.challenges.complete.useMutation({
-    onSuccess: () => utils.challenges.list.invalidate(),
+    onSuccess: () => {
+      setShowCelebration(true);
+      utils.challenges.list.invalidate();
+    },
   });
   
   const challengeType = CHALLENGE_TYPES.find(t => t.id === challenge.type);
@@ -290,21 +518,27 @@ function ChallengeCard({ challenge }: { challenge: any }) {
         {challenge.status === 'active' && (
           <>
             <button
-              onClick={() => {
-                const newProgress = prompt('输入你的当前进度：', myProgress.toString());
-                if (newProgress !== null) {
-                  updateProgressMutation.mutate({
-                    challengeId: challenge.id,
-                    userId: challenge.createdBy,
-                    currentProgress: Number(newProgress),
-                  });
-                }
-              }}
+              onClick={() => setShowUpdateDialog(true)}
               disabled={updateProgressMutation.isPending}
               className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
             >
               更新进度
             </button>
+            
+            {showUpdateDialog && (
+              <UpdateProgressDialog
+                challenge={challenge}
+                currentProgress={myProgress}
+                onClose={() => setShowUpdateDialog(false)}
+                onUpdate={(progress) => {
+                  updateProgressMutation.mutate({
+                    challengeId: challenge.id,
+                    userId: challenge.createdBy,
+                    currentProgress: progress,
+                  });
+                }}
+              />
+            )}
             
             {totalProgress >= challenge.targetValue * 2 && (
               <button
@@ -318,6 +552,107 @@ function ChallengeCard({ challenge }: { challenge: any }) {
           </>
         )}
       </div>
+      
+      {/* 评论区 */}
+      <div className="mt-4 pt-4 border-t border-gray-200">
+        <button
+          onClick={() => setShowComments(!showComments)}
+          className="flex items-center gap-2 text-sm text-gray-600 hover:text-purple-600 transition-colors"
+        >
+          <span>💬</span>
+          <span>评论 ({comments?.length || 0})</span>
+          <span className="text-xs">{showComments ? '▲' : '▼'}</span>
+        </button>
+        
+        {showComments && (
+          <div className="mt-4 space-y-3">
+            {/* 评论列表 */}
+            {comments && comments.length > 0 && (
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {comments.map((comment: any) => (
+                  <div key={comment.id} className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="text-sm text-gray-600 mb-1">
+                          {comment.userId === challenge.createdBy ? '👦 我' : '👧 TA'}
+                          <span className="text-xs text-gray-400 ml-2">
+                            {new Date(comment.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="text-gray-800">{comment.content}</div>
+                      </div>
+                      {comment.userId === challenge.createdBy && (
+                        <button
+                          onClick={() => deleteCommentMutation.mutate({ id: comment.id })}
+                          className="text-red-500 hover:text-red-700 text-sm ml-2"
+                        >
+                          删除
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* 添加评论 */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="写下你的鼓励..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && commentText.trim()) {
+                    addCommentMutation.mutate({
+                      challengeId: challenge.id,
+                      content: commentText,
+                    });
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  if (commentText.trim()) {
+                    addCommentMutation.mutate({
+                      challengeId: challenge.id,
+                      content: commentText,
+                    });
+                  }
+                }}
+                disabled={!commentText.trim() || addCommentMutation.isPending}
+                className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50"
+              >
+                {addCommentMutation.isPending ? '发送中...' : '发送'}
+              </button>
+            </div>
+            
+            {/* 快捷鼓励语 */}
+            <div className="flex flex-wrap gap-2">
+              {['加油！💪', '你最棒！✨', '坚持住！🎉', '一起努力！❤️', '继续加油！🚀'].map((text) => (
+                <button
+                  key={text}
+                  onClick={() => {
+                    addCommentMutation.mutate({
+                      challengeId: challenge.id,
+                      content: text,
+                    });
+                  }}
+                  className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-full hover:bg-purple-50 hover:border-purple-300 transition-colors"
+                >
+                  {text}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* 庆祝动画 */}
+      {showCelebration && (
+        <CelebrationAnimation onClose={() => setShowCelebration(false)} />
+      )}
     </div>
   );
 }

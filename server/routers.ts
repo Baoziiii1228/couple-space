@@ -1782,6 +1782,36 @@ export const appRouter = router({
         await db.updateChallenge(input.id, { status: 'completed' });
         return { success: true };
       }),
+
+    // 添加评论
+    addComment: protectedProcedure
+      .input(z.object({
+        challengeId: z.number(),
+        content: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.createChallengeComment({
+          challengeId: input.challengeId,
+          userId: ctx.user.id,
+          content: input.content,
+        });
+        return { success: true };
+      }),
+
+    // 获取评论列表
+    getComments: protectedProcedure
+      .input(z.object({ challengeId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        return await db.getChallengeComments(input.challengeId);
+      }),
+
+    // 删除评论
+    deleteComment: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteChallengeComment(input.id);
+        return { success: true };
+      }),
   }),
 });
 
