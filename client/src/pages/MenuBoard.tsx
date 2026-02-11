@@ -163,9 +163,9 @@ export default function MenuBoard() {
   }, {} as Record<string, any[]>);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50">
+    <div className="min-h-screen gradient-warm-subtle">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-10">
+      <header className="sticky top-0 z-50 glass border-b border-white/20 dark:border-white/10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
@@ -174,12 +174,12 @@ export default function MenuBoard() {
               </button>
             </Link>
             <ChefHat className="w-6 h-6 text-orange-600" />
-            <h1 className="text-2xl font-bold text-gray-800">点菜板</h1>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">点菜板</h1>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setShowHistoryDialog(true)}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition flex items-center gap-2"
+              className="px-4 py-2 bg-white/50 dark:bg-white/10 hover:bg-white/70 dark:hover:bg-white/20 rounded-lg transition flex items-center gap-2 text-gray-800 dark:text-white"
             >
               <History className="w-4 h-4" />
               历史
@@ -203,7 +203,7 @@ export default function MenuBoard() {
             className={`flex-1 py-3 rounded-lg font-medium transition ${
               activeTab === "my"
                 ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg"
-                : "bg-white text-gray-600 hover:bg-gray-50"
+                : "glass text-gray-600 dark:text-gray-300 hover:bg-white/70 dark:hover:bg-white/20"
             }`}
           >
             我的菜单
@@ -227,7 +227,7 @@ export default function MenuBoard() {
               resetForm();
               setShowAddDialog(true);
             }}
-            className="w-full mb-6 py-4 bg-white border-2 border-dashed border-orange-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition flex items-center justify-center gap-2 text-orange-600 font-medium"
+            className="w-full mb-6 py-4 glass border-2 border-dashed border-orange-300 dark:border-orange-500/50 rounded-lg hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition flex items-center justify-center gap-2 text-orange-600 dark:text-orange-400 font-medium"
           >
             <Plus className="w-5 h-5" />
             添加菜品
@@ -241,8 +241,8 @@ export default function MenuBoard() {
             if (items.length === 0) return null;
 
             return (
-              <div key={zone.value} className="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div className={`bg-gradient-to-r ${zone.color} px-6 py-4 flex items-center gap-3`}>
+              <div key={zone.value} className="glass rounded-xl shadow-sm overflow-hidden">
+                <div className={`bg-gradient-to-r ${zone.color} dark:opacity-90 px-6 py-4 flex items-center gap-3`}>
                   <span className="text-3xl">{zone.emoji}</span>
                   <h2 className="text-xl font-bold text-gray-800">{zone.label}</h2>
                   <span className="text-sm text-gray-600">({items.length}道)</span>
@@ -253,24 +253,24 @@ export default function MenuBoard() {
                       key={item.id}
                       className={`p-4 rounded-lg border-2 transition cursor-pointer ${
                         selectedItems.includes(item.id)
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 hover:border-gray-300 bg-gray-50"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-gray-50 dark:bg-gray-800/50"
                       }`}
                       onClick={() => activeTab === "partner" && toggleSelectItem(item.id)}
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-bold text-gray-800 text-lg">{item.name}</h3>
+                        <h3 className="font-bold text-gray-800 dark:text-white text-lg">{item.name}</h3>
                         {activeTab === "my" && (
                           <div className="flex gap-1">
                             <button
                               onClick={() => handleEdit(item)}
-                              className="p-1 hover:bg-gray-200 rounded transition"
+                              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition"
                             >
                               <Edit2 className="w-4 h-4 text-blue-600" />
                             </button>
                             <button
                               onClick={() => handleDelete(item.id)}
-                              className="p-1 hover:bg-gray-200 rounded transition"
+                              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition"
                             >
                               <Trash2 className="w-4 h-4 text-red-600" />
                             </button>
@@ -278,7 +278,7 @@ export default function MenuBoard() {
                         )}
                       </div>
                       {item.category && (
-                        <span className="inline-block px-2 py-1 bg-white rounded text-xs text-gray-600 mb-2">
+                        <span className="inline-block px-2 py-1 bg-white dark:bg-gray-700 rounded text-xs text-gray-600 dark:text-gray-300 mb-2">
                           {item.category}
                         </span>
                       )}
@@ -292,9 +292,9 @@ export default function MenuBoard() {
                           />
                         ))}
                       </div>
-                      {item.notes && <p className="text-sm text-gray-600">{item.notes}</p>}
+                      {item.notes && <p className="text-sm text-gray-600 dark:text-gray-400">{item.notes}</p>}
                       {selectedItems.includes(item.id) && (
-                        <div className="mt-2 text-blue-600 font-medium text-sm">✓ 已选择</div>
+                        <div className="mt-2 text-blue-600 dark:text-blue-400 font-medium text-sm">✓ 已选择</div>
                       )}
                     </div>
                   ))}
@@ -306,9 +306,9 @@ export default function MenuBoard() {
 
         {/* 空状态 */}
         {currentItems.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-xl">
-            <ChefHat className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <p className="text-gray-500">
+          <div className="text-center py-12 glass rounded-xl">
+            <ChefHat className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+            <p className="text-gray-500 dark:text-gray-400">
               {activeTab === "my" ? "还没有添加菜品，快来添加吧！" : "TA还没有添加菜品"}
             </p>
           </div>
@@ -331,25 +331,25 @@ export default function MenuBoard() {
       {/* 添加/编辑菜品对话框 */}
       {showAddDialog && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold mb-4">{editingItem ? "编辑菜品" : "添加菜品"}</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">{editingItem ? "编辑菜品" : "添加菜品"}</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">菜品名称 *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">菜品名称 *</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg"
                   placeholder="例如：红烧肉"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">分区 *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">分区 *</label>
                 <select
                   value={zone}
                   onChange={(e) => setZone(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg"
                 >
                   {ZONES.map((z) => (
                     <option key={z.value} value={z.value}>
@@ -359,11 +359,11 @@ export default function MenuBoard() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">分类</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">分类</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg"
                 >
                   <option value="">选择分类</option>
                   {CATEGORIES.map((cat) => (
@@ -374,7 +374,7 @@ export default function MenuBoard() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">喜爱程度</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">喜爱程度</label>
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
@@ -392,11 +392,11 @@ export default function MenuBoard() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">备注</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">备注</label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg"
                   rows={3}
                   placeholder="例如：微辣、少糖"
                 />
@@ -408,7 +408,7 @@ export default function MenuBoard() {
                   setShowAddDialog(false);
                   resetForm();
                 }}
-                className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50 transition"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-300 bg-white dark:bg-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition"
               >
                 取消
               </button>
@@ -427,8 +427,8 @@ export default function MenuBoard() {
       {/* 随机点菜结果对话框 */}
       {showRandomDialog && randomResult && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
               <Dices className="w-6 h-6 text-purple-600" />
               随机点菜结果
             </h2>
@@ -442,7 +442,7 @@ export default function MenuBoard() {
                       <span className="text-xl">{zone.emoji}</span>
                       <span className="font-medium text-gray-700">{zone.label}：</span>
                     </div>
-                    <div className="font-bold text-gray-800 text-lg">{item.name}</div>
+                    <div className="font-bold text-gray-800 dark:text-gray-900 text-lg">{item.name}</div>
                     <div className="flex items-center gap-1 mt-1">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
@@ -489,7 +489,7 @@ export default function MenuBoard() {
       {showHistoryDialog && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
               <History className="w-6 h-6 text-blue-600" />
               点菜历史
             </h2>
