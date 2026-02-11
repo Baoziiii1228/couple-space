@@ -10,6 +10,19 @@ import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
 const quickEmojis = ["❤️", "😘", "🥰", "😍", "💕", "🤗", "😊", "🌹", "💋", "✨", "🎉", "👍"];
+
+const quickMessages = [
+  { label: "💕 我爱你", text: "我爱你❤️" },
+  { label: "🌹 想你了", text: "好想你呀~" },
+  { label: "😘 晚安", text: "晚安，做个好梦💤" },
+  { label: "🎁 惊喜", text: "给你准备了惊喜哦🎁" },
+  { label: "🍽️ 吃饭吗", text: "一起吃饭吗？" },
+  { label: "🎬 看电影", text: "一起看电影吗？" },
+  { label: "💪 加油", text: "加油！你最棒💪" },
+  { label: "🤗 抱抱", text: "给你一个大大的拥抱🤗" },
+  { label: "😊 开心", text: "今天好开心呀😊" },
+  { label: "🌟 你最棒", text: "你是最棒的🌟" },
+];
 const PAGE_SIZE = 20; // 每页加载20条消息
 
 export default function Messages() {
@@ -260,6 +273,25 @@ export default function Messages() {
               >
                 <Send className="h-4 w-4" />
               </Button>
+            </div>
+
+            {/* 快捷标签 */}
+            <div className="mt-3 space-y-2">
+              <div className="text-xs text-gray-500">快捷标签</div>
+              <div className="flex flex-wrap gap-2">
+                {quickMessages.map((msg, index) => (
+                  <Button
+                    key={index}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-7"
+                    onClick={() => setNewMessage(msg.text)}
+                  >
+                    {msg.label}
+                  </Button>
+                ))}
+              </div>
             </div>
 
             {/* 快捷表情 */}

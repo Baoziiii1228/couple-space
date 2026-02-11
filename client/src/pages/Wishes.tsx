@@ -19,6 +19,21 @@ const priorityConfig = {
   low: { label: "低", color: "text-green-500 dark:text-green-400", bg: "bg-green-100 dark:bg-green-900/30" },
 };
 
+const quickWishTags = [
+  { label: "🚗 想去旅行", text: "一起去旅行" },
+  { label: "📱 想买手机", text: "想买新手机" },
+  { label: "👗 想买衣服", text: "想买新衣服" },
+  { label: "🎮 想买游戏", text: "想买游戏" },
+  { label: "💍 想要戒指", text: "想要一枚戒指" },
+  { label: "🏠 想有自己的家", text: "想有一个属于我们的家" },
+  { label: "🐱 想养宠物", text: "想养一只宠物" },
+  { label: "📚 想学新技能", text: "想学习新技能" },
+  { label: "🎂 想吃大餐", text: "想吃一顿大餐" },
+  { label: "🌈 想实现梦想", text: "想实现我的梦想" },
+  { label: "🎬 看演唱会", text: "一起去看演唱会" },
+  { label: "🏖️ 去海边", text: "一起去海边度假" },
+];
+
 export default function Wishes() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [randomWish, setRandomWish] = useState<any>(null);
@@ -134,6 +149,23 @@ export default function Wishes() {
                       value={newWish.title}
                       onChange={(e) => setNewWish({ ...newWish, title: e.target.value })}
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>快捷标签</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {quickWishTags.map((tag, index) => (
+                        <Button
+                          key={index}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-7"
+                          onClick={() => setNewWish({ ...newWish, title: tag.text })}
+                        >
+                          {tag.label}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label>详细描述（可选）</Label>

@@ -9,6 +9,19 @@ import { useAuth } from "../_core/hooks/useAuth";
 import { useTheme } from "../contexts/ThemeContext";
 import { useLocation } from "wouter";
 
+const quickPromiseTags = [
+  { label: "💪 每天运动", text: "我承诺每天和TA一起运动" },
+  { label: "📚 一起学习", text: "我承诺和TA一起学习进步" },
+  { label: "🍽️ 一起做饭", text: "我承诺和TA一起做饭" },
+  { label: "🚗 一起旅行", text: "我承诺和TA一起去旅行" },
+  { label: "💰 一起存钱", text: "我承诺和TA一起存钱" },
+  { label: "🏠 一起打扫", text: "我承诺和TA一起打扫家务" },
+  { label: "📱 少玩手机", text: "我承诺少玩手机多陪伴TA" },
+  { label: "😊 保持开心", text: "我承诺保持开心的心态" },
+  { label: "💕 每天说爱你", text: "我承诺每天对TA说我爱你" },
+  { label: "🌟 互相支持", text: "我承诺永远支持TA" },
+];
+
 export default function Promises() {
   const { user } = useAuth();
   const { theme } = useTheme();
@@ -94,6 +107,23 @@ export default function Promises() {
                 <DialogTitle className="dark:text-white">许下承诺</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium dark:text-white">快捷标签</label>
+                  <div className="flex flex-wrap gap-2">
+                    {quickPromiseTags.map((tag, index) => (
+                      <Button
+                        key={index}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="text-xs h-7 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
+                        onClick={() => setContent(tag.text)}
+                      >
+                        {tag.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
                 <Textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}

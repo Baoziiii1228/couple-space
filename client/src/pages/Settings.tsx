@@ -11,6 +11,7 @@ import { motion } from "framer-motion";
 import { trpc } from "@/lib/trpc";
 import { ExportDataButtons } from "@/components/ExportDataButtons";
 import { ThemeColorPicker } from "@/components/ThemeColorPicker";
+import { MonthlyBackup } from "@/components/MonthlyBackup";
 
 export default function Settings() {
   const { user, loading, isAuthenticated } = useAuth();
@@ -199,6 +200,15 @@ export default function Settings() {
               <ExportDataButtons />
             </CardContent>
           </Card>
+        </motion.div>
+
+        {/* 按月备份 */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <MonthlyBackup />
         </motion.div>
 
         {/* 账户信息 */}

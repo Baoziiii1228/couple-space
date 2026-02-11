@@ -13,6 +13,21 @@ import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
+const quickFootprintTags = [
+  { label: "🍜 美食店", text: "美食店" },
+  { label: "☕ 咖啡厅", text: "咖啡厅" },
+  { label: "🎬 电影院", text: "电影院" },
+  { label: "🌞️ 公园", text: "公园" },
+  { label: "🏖️ 海滩", text: "海滩" },
+  { label: "⛰️ 山景", text: "山景" },
+  { label: "🏛️ 博物馆", text: "博物馆" },
+  { label: "🎡 游乐园", text: "游乐园" },
+  { label: "🛍️ 购物中心", text: "购物中心" },
+  { label: "🏨 酒店", text: "酒店" },
+  { label: "🏞️ 景区", text: "景区" },
+  { label: "🏛️ 古镇", text: "古镇" },
+];
+
 export default function Footprints() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [filterYear, setFilterYear] = useState<string>("all");
@@ -169,6 +184,23 @@ export default function Footprints() {
                 <DialogTitle>添加足迹</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>快捷标签</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {quickFootprintTags.map((tag, index) => (
+                      <Button
+                        key={index}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="text-xs h-7"
+                        onClick={() => setNewFootprint({ ...newFootprint, title: tag.text })}
+                      >
+                        {tag.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label>地点名称</Label>
                   <Input
