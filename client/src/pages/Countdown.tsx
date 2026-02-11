@@ -69,7 +69,7 @@ export default function Countdown() {
   };
 
   // 计算剩余天数
-  const calculateDaysLeft = (targetDate: string) => {
+  const calculateDaysLeft = (targetDate: string | Date) => {
     const target = new Date(targetDate);
     const now = new Date();
     const diff = Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
@@ -220,7 +220,7 @@ export default function Countdown() {
                     return (
                       <Card
                         key={countdown.id}
-                        className={`p-6 bg-gradient-to-br ${typeColors[type as keyof typeof typeColors]} text-white shadow-lg hover:shadow-xl transition-shadow dark:shadow-gray-900/50`}
+                        className={`p-6 bg-gradient-to-br ${typeColors[countdown.type as keyof typeof typeColors]} text-white shadow-lg hover:shadow-xl transition-shadow dark:shadow-gray-900/50`}
                       >
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex items-center gap-2">

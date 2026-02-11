@@ -102,7 +102,6 @@ export default function TodoList() {
       type: activeTab,
       title: newItem.title,
       description: newItem.description || undefined,
-      tags: newItem.tags.length > 0 ? newItem.tags : undefined,
     });
   };
 
@@ -429,7 +428,7 @@ export default function TodoList() {
                                     <Star
                                       key={s}
                                       className={`w-3.5 h-3.5 ${
-                                        s <= item.rating
+                                        s <= (item.rating ?? 0)
                                           ? "text-yellow-400 fill-yellow-400"
                                           : "text-gray-300"
                                       }`}

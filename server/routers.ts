@@ -845,7 +845,7 @@ export const appRouter = router({
   // ==================== 待办清单 ====================
   todoList: router({
     list: protectedProcedure
-      .input(z.object({ type: z.enum(["movie", "restaurant", "music", "book", "other"]).optional() }).optional())
+      .input(z.object({ type: z.enum(["movie", "restaurant", "music", "book", "tv", "travel", "activity", "other"]).optional() }).optional())
       .query(async ({ ctx, input }) => {
         const couple = await getUserCouple(ctx.user.id);
         return await db.getTodoListsByCoupleId(couple.id, input?.type);
@@ -853,7 +853,7 @@ export const appRouter = router({
 
     create: protectedProcedure
       .input(z.object({
-        type: z.enum(["movie", "restaurant", "music", "book", "other"]),
+        type: z.enum(["movie", "restaurant", "music", "book", "tv", "travel", "activity", "other"]),
         title: z.string(),
         description: z.string().optional(),
         imageUrl: z.string().optional(),

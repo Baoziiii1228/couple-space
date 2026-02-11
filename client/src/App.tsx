@@ -4,6 +4,7 @@ import { Route, Switch } from "wouter";
 import { lazy, Suspense } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 
 // 首页和登录页立即加载（关键路径）
 import Home from "./pages/Home";
@@ -82,6 +83,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <PWAInstallPrompt />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

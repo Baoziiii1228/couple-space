@@ -2,6 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Camera, BookOpen, Calendar, Star, MessageCircle, Smile, Gift, Clock, MapPin, Film, ArrowRight, Sun, Moon, Settings, History, Trophy, CheckSquare, Wallet } from "lucide-react";
+import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
 import { useState } from "react";
@@ -122,6 +123,7 @@ export default function Home() {
 
       {/* 顶部工具栏 */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+        <PWAInstallButton />
         <Button
           variant="ghost"
           size="icon"

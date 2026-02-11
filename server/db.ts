@@ -326,10 +326,10 @@ export async function getMessagesByCoupleId(coupleId: number, limit?: number, of
   if (!db) return [];
   let query = db.select().from(messages).where(eq(messages.coupleId, coupleId)).orderBy(desc(messages.createdAt));
   if (limit !== undefined) {
-    query = query.limit(limit);
+    query = query.limit(limit) as typeof query;
   }
   if (offset !== undefined) {
-    query = query.offset(offset);
+    query = query.offset(offset) as typeof query;
   }
   return await query;
 }
@@ -491,7 +491,7 @@ export async function createTodoList(data: InsertTodoList) {
   return result[0].insertId;
 }
 
-export async function getTodoListsByCoupleId(coupleId: number, type?: "movie" | "restaurant" | "music" | "book" | "other") {
+export async function getTodoListsByCoupleId(coupleId: number, type?: "movie" | "restaurant" | "music" | "book" | "tv" | "travel" | "activity" | "other") {
   const db = await getDb();
   if (!db) return [];
   const conditions = [eq(todoLists.coupleId, coupleId)];
