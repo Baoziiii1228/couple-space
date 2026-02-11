@@ -27,6 +27,8 @@ const Timeline = lazy(() => import("./pages/Timeline"));
 const Achievements = lazy(() => import("./pages/Achievements"));
 const HundredThings = lazy(() => import("./pages/HundredThings"));
 const Ledger = lazy(() => import("./pages/Ledger"));
+const Countdown = lazy(() => import("./pages/Countdown"));
+const Promises = lazy(() => import("./pages/Promises"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading 组件
@@ -64,6 +66,8 @@ function Router() {
         <Route path="/achievements" component={Achievements} />
         <Route path="/hundred-things" component={HundredThings} />
         <Route path="/ledger" component={Ledger} />
+        <Route path="/countdown" component={Countdown} />
+        <Route path="/promises" component={Promises} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

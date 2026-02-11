@@ -36,6 +36,13 @@
       "when": 1770571388739,
       "tag": "0004_tearful_amazoness",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1770796208715,
+      "tag": "0005_purple_lightspeed",
+      "breakpoints": true
     }
   ]
 }

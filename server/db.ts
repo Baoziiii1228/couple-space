@@ -21,7 +21,9 @@ import {
   achievements, InsertAchievement,
   hundredThings, InsertHundredThing,
   ledgerRecords, InsertLedgerRecord,
-  gameRecords, InsertGameRecord
+  gameRecords, InsertGameRecord,
+  countdowns, InsertCountdown,
+  promises, InsertPromise
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -822,4 +824,62 @@ export async function createGameRecord(data: InsertGameRecord) {
   if (!db) return 0;
   const result = await db.insert(gameRecords).values(data);
   return result[0].insertId;
+}
+
+// ==================== 倒计时 ====================
+
+export async function getCountdownsByCoupleId(coupleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(countdowns)
+    .where(eq(countdowns.coupleId, coupleId))
+    .orderBy(asc(countdowns.targetDate));
+}
+
+export async function createCountdown(data: InsertCountdown) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(countdowns).values(data);
+  return result[0].insertId;
+}
+
+export async function updateCountdown(id: number, data: Partial<InsertCountdown>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(countdowns).set(data).where(eq(countdowns.id, id));
+}
+
+export async function deleteCountdown(id: number, coupleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(countdowns).where(and(eq(countdowns.id, id), eq(countdowns.coupleId, coupleId)));
+}
+
+// ==================== 承诺 ====================
+
+export async function getPromisesByCoupleId(coupleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(promises)
+    .where(eq(promises.coupleId, coupleId))
+    .orderBy(desc(promises.createdAt));
+}
+
+export async function createPromise(data: InsertPromise) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(promises).values(data);
+  return result[0].insertId;
+}
+
+export async function updatePromise(id: number, data: Partial<InsertPromise>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(promises).set(data).where(eq(promises.id, id));
+}
+
+export async function deletePromise(id: number, coupleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(promises).where(and(eq(promises.id, id), eq(promises.coupleId, coupleId)));
 }
