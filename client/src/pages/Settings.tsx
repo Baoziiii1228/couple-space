@@ -3,11 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Sun, Moon, Image, Bell, Shield, User } from "lucide-react";
+import { ArrowLeft, Sun, Moon, Image, Bell, Shield, User, Download, FileJson, FileText } from "lucide-react";
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { motion } from "framer-motion";
+import { trpc } from "@/lib/trpc";
+import { ExportDataButtons } from "@/components/ExportDataButtons";
+import { ThemeColorPicker } from "@/components/ThemeColorPicker";
 
 export default function Settings() {
   const { user, loading, isAuthenticated } = useAuth();
@@ -68,6 +71,15 @@ export default function Settings() {
       </header>
 
       <main className="container py-8 space-y-6">
+        {/* 主题颜色 */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+        >
+          <ThemeColorPicker />
+        </motion.div>
+
         {/* 外观设置 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -163,6 +175,28 @@ export default function Settings() {
                   onCheckedChange={setEnableNotifications}
                 />
               </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* 数据导出 */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+        >
+          <Card className="rounded-2xl border-0 glass-ios dark:bg-slate-800/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 dark:text-slate-200">
+                <Download className="w-5 h-5" />
+                数据导出
+              </CardTitle>
+              <CardDescription className="dark:text-slate-400">
+                导出你的所有数据作为备份
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <ExportDataButtons />
             </CardContent>
           </Card>
         </motion.div>

@@ -134,6 +134,7 @@ export const tasks = mysqlTable("tasks", {
   title: varchar("title", { length: 200 }).notNull(),
   description: text("description"),
   category: varchar("category", { length: 50 }),
+  priority: varchar("priority", { length: 20 }).default("medium"),
   isPreset: boolean("isPreset").default(false).notNull(),
   isCompleted: boolean("isCompleted").default(false).notNull(),
   completedAt: timestamp("completedAt"),

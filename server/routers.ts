@@ -10,6 +10,7 @@ import bcrypt from "bcryptjs";
 import { authService } from "./_core/auth";
 import { sendVerificationCode } from "./_core/email";
 import { uploadFile, getStorageInfo } from "./cloudStorage";
+import { getDashboardStats } from "./stats";
 
 // 生成邀请码
 function generateInviteCode(): string {
@@ -589,6 +590,7 @@ export const appRouter = router({
         title: z.string(),
         description: z.string().optional(),
         category: z.string().optional(),
+        priority: z.enum(["high", "medium", "low"]).optional(),
         startTime: z.string().optional(),
         deadline: z.string().optional(),
       }))
@@ -599,6 +601,7 @@ export const appRouter = router({
           title: input.title,
           description: input.description ?? null,
           category: input.category ?? null,
+          priority: input.priority ?? "medium",
           startTime: input.startTime ? new Date(input.startTime) : null,
           deadline: input.deadline ? new Date(input.deadline) : null,
         });
@@ -1401,6 +1404,15 @@ export const appRouter = router({
         await db.deletePromise(input.id, couple.id);
         return { success: true };
       }),
+  }),
+
+  // 统计数据
+  stats: router({
+    dashboard: protectedProcedure.query(async ({ ctx }) => {
+      const couple = await getUserCouple(ctx.user.id);
+      const stats = await getDashboardStats(couple.id);
+      return stats;
+    }),
   }),
 });
 
