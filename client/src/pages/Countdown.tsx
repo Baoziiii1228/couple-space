@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { trpc } from "../lib/trpc";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -23,16 +23,25 @@ export default function Countdown() {
   const [emoji, setEmoji] = useState("❤️");
 
   const { data: countdowns = [], refetch } = trpc.countdown.list.useQuery();
-  const createMutation = trpc.countdown.create.useMutation({
-    onSuccess: () => {
+  const createMutation = trpc.countdown.create.useMutation();
+  const deleteMutation = trpc.countdown.delete.useMutation();
+
+  // React Query v5: 使用 useEffect 替代 onSuccess
+  useEffect(() => {
+    if (createMutation.isSuccess) {
       refetch();
       setIsOpen(false);
       resetForm();
-    },
-  });
-  const deleteMutation = trpc.countdown.delete.useMutation({
-    onSuccess: () => refetch(),
-  });
+      createMutation.reset();
+    }
+  }, [createMutation.isSuccess]);
+
+  useEffect(() => {
+    if (deleteMutation.isSuccess) {
+      refetch();
+      deleteMutation.reset();
+    }
+  }, [deleteMutation.isSuccess]);
 
   const resetForm = () => {
     setTitle("");

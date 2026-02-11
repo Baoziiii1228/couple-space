@@ -5,53 +5,66 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Plus, Film, Utensils, Check, Trash2, Star, Music, BookOpen } from "lucide-react";
+import { ArrowLeft, Plus, Film, Utensils, Check, Trash2, Star, Music, BookOpen, Tv, Plane, PartyPopper, Tag, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 
-type ListType = "movie" | "restaurant" | "music" | "book";
+type ListType = "tv" | "restaurant" | "music" | "book" | "travel" | "activity";
 
 const tabConfig: Record<ListType, { icon: any; label: string; addLabel: string; verb: string; placeholder: string; descPlaceholder: string }> = {
-  movie: { icon: Film, label: "电影", addLabel: "想看的电影", verb: "看", placeholder: "例如：你的名字", descPlaceholder: "为什么想看这部电影..." },
+  tv: { icon: Tv, label: "影视", addLabel: "想看的影视", verb: "看", placeholder: "例如：你的名字、甄嬛传", descPlaceholder: "为什么想看..." },
   restaurant: { icon: Utensils, label: "美食", addLabel: "想吃的餐厅", verb: "吃", placeholder: "例如：海底捞", descPlaceholder: "推荐菜品、地址等..." },
   music: { icon: Music, label: "音乐", addLabel: "想听的歌曲", verb: "听", placeholder: "例如：晴天 - 周杰伦", descPlaceholder: "为什么推荐这首歌..." },
   book: { icon: BookOpen, label: "书籍", addLabel: "想看的书", verb: "读", placeholder: "例如：小王子", descPlaceholder: "推荐理由..." },
+  travel: { icon: Plane, label: "旅行", addLabel: "想去的地方", verb: "去", placeholder: "例如：巴黎、马尔代夫", descPlaceholder: "旅行计划、预算等..." },
+  activity: { icon: PartyPopper, label: "活动", addLabel: "想做的活动", verb: "做", placeholder: "例如：蹦极、潜水", descPlaceholder: "活动详情、注意事项..." },
 };
 
 export default function TodoList() {
-  const [activeTab, setActiveTab] = useState<ListType>("movie");
+  const [activeTab, setActiveTab] = useState<ListType>("tv");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [ratingItem, setRatingItem] = useState<{ id: number; rating: number } | null>(null);
   const [newItem, setNewItem] = useState({
     title: "",
     description: "",
-    type: "movie" as ListType,
+    type: "tv" as ListType,
+    tags: [] as string[],
   });
+  const [tagInput, setTagInput] = useState("");
 
-  const { data: movies, refetch: refetchMovies } = trpc.todoList.list.useQuery({ type: "movie" });
+  const { data: tvShows, refetch: refetchTv } = trpc.todoList.list.useQuery({ type: "tv" });
   const { data: restaurants, refetch: refetchRestaurants } = trpc.todoList.list.useQuery({ type: "restaurant" });
   const { data: music, refetch: refetchMusic } = trpc.todoList.list.useQuery({ type: "music" });
   const { data: books, refetch: refetchBooks } = trpc.todoList.list.useQuery({ type: "book" });
+  const { data: travels, refetch: refetchTravel } = trpc.todoList.list.useQuery({ type: "travel" });
+  const { data: activities, refetch: refetchActivity } = trpc.todoList.list.useQuery({ type: "activity" });
 
   const refetchCurrent = () => {
-    if (activeTab === "movie") refetchMovies();
+    if (activeTab === "tv") refetchTv();
     else if (activeTab === "restaurant") refetchRestaurants();
     else if (activeTab === "music") refetchMusic();
-    else refetchBooks();
+    else if (activeTab === "book") refetchBooks();
+    else if (activeTab === "travel") refetchTravel();
+    else refetchActivity();
   };
 
-  const createItem = trpc.todoList.create.useMutation({
-    onSuccess: () => {
+  const createItem = trpc.todoList.create.useMutation();
+
+  useEffect(() => {
+    if (createItem.isSuccess) {
       toast.success("已添加！");
       setIsCreateOpen(false);
-      setNewItem({ title: "", description: "", type: activeTab });
+      setNewItem({ title: "", description: "", type: activeTab, tags: [] });
       refetchCurrent();
-    },
-    onError: (err) => toast.error(err.message),
-  });
+      createItem.reset();
+    }
+    if (createItem.isError) {
+      toast.error(createItem.error.message);
+    }
+  }, [createItem.isSuccess, createItem.isError]);
 
   const completeItem = trpc.todoList.complete.useMutation({
     onSuccess: () => {
@@ -89,11 +102,24 @@ export default function TodoList() {
       type: activeTab,
       title: newItem.title,
       description: newItem.description || undefined,
+      tags: newItem.tags.length > 0 ? newItem.tags : undefined,
     });
   };
 
+  const handleAddTag = () => {
+    if (tagInput.trim() && !newItem.tags.includes(tagInput.trim())) {
+      setNewItem({ ...newItem, tags: [...newItem.tags, tagInput.trim()] });
+      setTagInput("");
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setNewItem({ ...newItem, tags: newItem.tags.filter(t => t !== tag) });
+  };
+
   const handleOpenCreate = () => {
-    setNewItem({ ...newItem, type: activeTab });
+    setNewItem({ title: "", description: "", type: activeTab, tags: [] });
+    setTagInput("");
     setIsCreateOpen(true);
   };
 
@@ -122,10 +148,12 @@ export default function TodoList() {
 
   const getList = (type: ListType) => {
     switch (type) {
-      case "movie": return movies;
+      case "tv": return tvShows;
       case "restaurant": return restaurants;
       case "music": return music;
       case "book": return books;
+      case "travel": return travels;
+      case "activity": return activities;
     }
   };
 
@@ -173,6 +201,42 @@ export default function TodoList() {
                     value={newItem.description}
                     onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1">
+                    <Tag className="w-3 h-3" />
+                    标签（可选）
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="例如：经典、必看、高分"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                    />
+                    <Button type="button" variant="outline" onClick={handleAddTag}>
+                      添加
+                    </Button>
+                  </div>
+                  {newItem.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {newItem.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400"
+                        >
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTag(tag)}
+                            className="hover:text-pink-600 dark:hover:text-pink-300"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <Button className="w-full" onClick={handleCreate} disabled={createItem.isPending}>
                   {createItem.isPending ? "添加中..." : "添加"}
@@ -236,7 +300,7 @@ export default function TodoList() {
 
       <main className="container py-6">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ListType)}>
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 mb-6">
             {(Object.entries(tabConfig) as [ListType, typeof tabConfig[ListType]][]).map(([key, cfg]) => (
               <TabsTrigger key={key} value={key} className="gap-1 text-xs sm:text-sm">
                 <cfg.icon className="w-4 h-4" />
@@ -303,6 +367,18 @@ export default function TodoList() {
                                 {item.description && (
                                   <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
                                 )}
+                                {item.tags && item.tags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    {item.tags.map((tag: string) => (
+                                      <span
+                                        key={tag}
+                                        className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400"
+                                      >
+                                        {tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                               <Button
                                 variant="ghost"
@@ -333,6 +409,18 @@ export default function TodoList() {
                                 <h3 className="font-medium text-muted-foreground">{item.title}</h3>
                                 {item.description && (
                                   <p className="text-sm text-muted-foreground/70 mt-1">{item.description}</p>
+                                )}
+                                {item.tags && item.tags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    {item.tags.map((tag: string) => (
+                                      <span
+                                        key={tag}
+                                        className="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-pink-100/50 text-pink-800/70 dark:bg-pink-900/20 dark:text-pink-400/70"
+                                      >
+                                        {tag}
+                                      </span>
+                                    ))}
+                                  </div>
                                 )}
                               </div>
                               {item.rating ? (

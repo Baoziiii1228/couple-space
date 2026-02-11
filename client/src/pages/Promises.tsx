@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "../lib/trpc";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -17,22 +17,29 @@ export default function Promises() {
   const [content, setContent] = useState("");
 
   const { data: promises = [], refetch } = trpc.promise.list.useQuery();
-  const createMutation = trpc.promise.create.useMutation({
-    onSuccess: () => {
+  const createMutation = trpc.promise.create.useMutation();
+  const completeMutation = trpc.promise.complete.useMutation();
+  const confirmMutation = trpc.promise.confirm.useMutation();
+  const deleteMutation = trpc.promise.delete.useMutation();
+
+  // React Query v5: 使用 useEffect 替代 onSuccess
+  useEffect(() => {
+    if (createMutation.isSuccess) {
       refetch();
       setIsOpen(false);
       setContent("");
-    },
-  });
-  const completeMutation = trpc.promise.complete.useMutation({
-    onSuccess: () => refetch(),
-  });
-  const confirmMutation = trpc.promise.confirm.useMutation({
-    onSuccess: () => refetch(),
-  });
-  const deleteMutation = trpc.promise.delete.useMutation({
-    onSuccess: () => refetch(),
-  });
+      createMutation.reset();
+    }
+  }, [createMutation.isSuccess]);
+
+  useEffect(() => {
+    if (completeMutation.isSuccess || confirmMutation.isSuccess || deleteMutation.isSuccess) {
+      refetch();
+      completeMutation.reset();
+      confirmMutation.reset();
+      deleteMutation.reset();
+    }
+  }, [completeMutation.isSuccess, confirmMutation.isSuccess, deleteMutation.isSuccess]);
 
   const handleCreate = () => {
     if (!content.trim()) return;
