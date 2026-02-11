@@ -1,5 +1,5 @@
 import { Card, CardContent } from "./ui/card";
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface StatsCardProps {
@@ -9,9 +9,13 @@ interface StatsCardProps {
   subtitle?: string;
   color: string;
   delay?: number;
+  trend?: {
+    direction: 'up' | 'down' | 'neutral';
+    label: string;
+  };
 }
 
-export function StatsCard({ icon: Icon, title, value, subtitle, color, delay = 0 }: StatsCardProps) {
+export function StatsCard({ icon: Icon, title, value, subtitle, color, delay = 0, trend }: StatsCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -26,7 +30,23 @@ export function StatsCard({ icon: Icon, title, value, subtitle, color, delay = 0
             </div>
             <div className="flex-1">
               <p className="text-sm text-muted-foreground">{title}</p>
-              <p className="text-2xl font-bold">{value}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-2xl font-bold">{value}</p>
+                {trend && trend.direction !== 'neutral' && (
+                  <div className={`flex items-center gap-0.5 text-xs ${
+                    trend.direction === 'up' 
+                      ? 'text-green-500 dark:text-green-400' 
+                      : 'text-red-500 dark:text-red-400'
+                  }`}>
+                    {trend.direction === 'up' ? (
+                      <TrendingUp className="w-3 h-3" />
+                    ) : (
+                      <TrendingDown className="w-3 h-3" />
+                    )}
+                    <span>{trend.label}</span>
+                  </div>
+                )}
+              </div>
               {subtitle && (
                 <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
               )}

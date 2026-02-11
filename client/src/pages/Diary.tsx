@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, BookOpen, Heart, MessageCircle, Trash2, Search, X, Send } from "lucide-react";
+import { ArrowLeft, Plus, BookOpen, Heart, MessageCircle, Trash2, Search, X, Send, CheckSquare, Square, Download } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState, useMemo } from "react";
@@ -62,6 +62,8 @@ export default function Diary() {
   const [expandedDiary, setExpandedDiary] = useState<number | null>(null);
   const [commentText, setCommentText] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [selectedDiaries, setSelectedDiaries] = useState<Set<number>>(new Set());
 
   const { data: diaries, refetch } = trpc.diary.list.useQuery();
 
@@ -111,6 +113,110 @@ export default function Diary() {
     addComment.mutate({ diaryId, content: commentText.trim() });
   };
 
+  // 批量操作相关函数
+  const toggleBatchMode = () => {
+    setIsBatchMode(!isBatchMode);
+    setSelectedDiaries(new Set());
+  };
+
+  const toggleDiarySelection = (diaryId: number) => {
+    const newSelected = new Set(selectedDiaries);
+    if (newSelected.has(diaryId)) {
+      newSelected.delete(diaryId);
+    } else {
+      newSelected.add(diaryId);
+    }
+    setSelectedDiaries(newSelected);
+  };
+
+  const selectAllDiaries = () => {
+    if (filteredDiaries) {
+      setSelectedDiaries(new Set(filteredDiaries.map(d => d.id)));
+    }
+  };
+
+  const deselectAllDiaries = () => {
+    setSelectedDiaries(new Set());
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedDiaries.size === 0) {
+      toast.error("请先选择要删除的日记");
+      return;
+    }
+
+    if (!confirm(`确定要删除选中的 ${selectedDiaries.size} 篇日记吗？删除后无法恢复。`)) {
+      return;
+    }
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const diaryId of Array.from(selectedDiaries)) {
+      try {
+        await deleteDiary.mutateAsync({ id: diaryId });
+        successCount++;
+      } catch (err) {
+        failCount++;
+      }
+    }
+
+    if (successCount > 0) {
+      toast.success(`成功删除 ${successCount} 篇日记`);
+    }
+    if (failCount > 0) {
+      toast.error(`${failCount} 篇日记删除失败`);
+    }
+
+    setSelectedDiaries(new Set());
+    setIsBatchMode(false);
+  };
+
+  const handleBatchExport = () => {
+    if (selectedDiaries.size === 0) {
+      toast.error("请先选择要导出的日记");
+      return;
+    }
+
+    if (!diaries) return;
+
+    const selectedDiaryData = diaries.filter(d => selectedDiaries.has(d.id));
+    
+    // 生成 Markdown 格式
+    let markdown = `# 我的恋爱日记\n\n`;
+    markdown += `导出时间：${format(new Date(), 'yyyy年MM月dd日 HH:mm', { locale: zhCN })}\n\n`;
+    markdown += `共 ${selectedDiaryData.length} 篇日记\n\n`;
+    markdown += `---\n\n`;
+
+    selectedDiaryData.forEach((diary, index) => {
+      markdown += `## ${index + 1}. ${diary.title || '无标题'}\n\n`;
+      markdown += `**日期**：${format(new Date(diary.createdAt), 'yyyy年MM月dd日', { locale: zhCN })}\n\n`;
+      if (diary.mood) {
+        const moodLabel = moods.find(m => m.value === diary.mood)?.label || diary.mood;
+        markdown += `**心情**：${moodLabel}\n\n`;
+      }
+      if (diary.weather) {
+        const weatherLabel = weathers.find(w => w.value === diary.weather)?.label || diary.weather;
+        markdown += `**天气**：${weatherLabel}\n\n`;
+      }
+      markdown += `${diary.content}\n\n`;
+      markdown += `---\n\n`;
+    });
+
+    // 下载文件
+    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `日记导出-${format(new Date(), 'yyyyMMdd')}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success(`已导出 ${selectedDiaries.size} 篇日记`);
+  };
+
   // 搜索和筛选
   const filteredDiaries = useMemo(() => {
     if (!diaries) return [];
@@ -136,9 +242,64 @@ export default function Diary() {
             <h1 className="font-semibold">恋爱日记</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => setShowSearch(!showSearch)}>
-              <Search className="w-4 h-4" />
-            </Button>
+            {isBatchMode ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1"
+                  onClick={selectedDiaries.size === filteredDiaries.length ? deselectAllDiaries : selectAllDiaries}
+                >
+                  {selectedDiaries.size === filteredDiaries.length ? (
+                    <Square className="w-4 h-4" />
+                  ) : (
+                    <CheckSquare className="w-4 h-4" />
+                  )}
+                  {selectedDiaries.size === filteredDiaries.length ? "取消全选" : "全选"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1"
+                  onClick={handleBatchExport}
+                  disabled={selectedDiaries.size === 0}
+                >
+                  <Download className="w-4 h-4" />
+                  导出 ({selectedDiaries.size})
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 text-destructive"
+                  onClick={handleBatchDelete}
+                  disabled={selectedDiaries.size === 0 || deleteDiary.isPending}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  删除 ({selectedDiaries.size})
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleBatchMode}
+                >
+                  取消
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleBatchMode}
+                  disabled={!diaries || diaries.length === 0}
+                >
+                  <CheckSquare className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setShowSearch(!showSearch)}>
+                  <Search className="w-4 h-4" />
+                </Button>
+              </>
+            )}
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="gap-1">
@@ -287,9 +448,27 @@ export default function Diary() {
         {filteredDiaries.length > 0 ? (
           <div className="space-y-4 max-w-2xl mx-auto">
             {filteredDiaries.map((diary) => (
-              <Card key={diary.id} className="glass border-white/40 dark:border-white/20">
+              <Card 
+                key={diary.id} 
+                className={`glass border-white/40 dark:border-white/20 transition-all ${
+                  isBatchMode && selectedDiaries.has(diary.id) 
+                    ? 'ring-2 ring-primary' 
+                    : ''
+                }`}
+                onClick={() => isBatchMode && toggleDiarySelection(diary.id)}
+                style={{ cursor: isBatchMode ? 'pointer' : 'default' }}
+              >
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-3">
+                    {isBatchMode && (
+                      <div className="mr-3 mt-1">
+                        <div className="w-5 h-5 rounded border-2 border-primary flex items-center justify-center">
+                          {selectedDiaries.has(diary.id) && (
+                            <CheckSquare className="w-4 h-4 text-primary" />
+                          )}
+                        </div>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${diary.isOwn ? 'bg-primary/10' : 'bg-accent/10'}`}>
                         {diary.isOwn ? (

@@ -280,6 +280,10 @@ export default function Dashboard() {
                 value={stats.photosCount}
                 color="text-pink-500"
                 delay={0}
+                trend={{
+                  direction: stats.thisWeekPhotos > 0 ? 'up' : 'neutral',
+                  label: `本周+${stats.thisWeekPhotos}`
+                }}
               />
               <StatsCard
                 icon={BookOpen}
@@ -287,6 +291,10 @@ export default function Dashboard() {
                 value={stats.diariesCount}
                 color="text-orange-500"
                 delay={0.05}
+                trend={{
+                  direction: stats.thisWeekDiaries > 0 ? 'up' : 'neutral',
+                  label: `本周+${stats.thisWeekDiaries}`
+                }}
               />
               <StatsCard
                 icon={MessageCircle}
@@ -294,6 +302,10 @@ export default function Dashboard() {
                 value={stats.messagesCount}
                 color="text-green-500"
                 delay={0.1}
+                trend={{
+                  direction: stats.thisWeekMessages > 0 ? 'up' : 'neutral',
+                  label: `本周+${stats.thisWeekMessages}`
+                }}
               />
               <StatsCard
                 icon={Star}
@@ -309,6 +321,10 @@ export default function Dashboard() {
                 value={stats.wishesCount}
                 color="text-purple-500"
                 delay={0.2}
+                trend={{
+                  direction: stats.thisWeekWishes > 0 ? 'up' : 'neutral',
+                  label: `本周+${stats.thisWeekWishes}`
+                }}
               />
               <StatsCard
                 icon={MapPin}
@@ -316,6 +332,10 @@ export default function Dashboard() {
                 value={stats.footprintsCount}
                 color="text-teal-500"
                 delay={0.25}
+                trend={{
+                  direction: stats.thisWeekFootprints > 0 ? 'up' : 'neutral',
+                  label: `本周+${stats.thisWeekFootprints}`
+                }}
               />
               <StatsCard
                 icon={Trophy}
