@@ -30,6 +30,24 @@ const weathers = [
   { value: "snowy", label: "❄️ 雪天" },
 ];
 
+const quickTags = [
+  { label: "💑 约会", text: "今天和TA一起约会" },
+  { label: "🍽️ 美食", text: "今天吃了好吃的" },
+  { label: "🎬 电影", text: "今天一起看了电影" },
+  { label: "🎮 游戏", text: "今天一起玩游戏" },
+  { label: "🚗 旅行", text: "今天一起去旅行" },
+  { label: "🎁 礼物", text: "今天收到了礼物" },
+  { label: "💪 运动", text: "今天一起运动" },
+  { label: "📚 学习", text: "今天一起学习" },
+  { label: "🏠 宅家", text: "今天在家待了一天" },
+  { label: "😴 休息", text: "今天好好休息了" },
+  { label: "💼 工作", text: "今天工作很忙" },
+  { label: "🎉 庆祝", text: "今天有值得庆祝的事" },
+  { label: "😢 想念", text: "今天很想TA" },
+  { label: "💕 表白", text: "今天对TA说了心里话" },
+  { label: "🌙 晚安", text: "晚安，好梦" },
+];
+
 export default function Diary() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newDiary, setNewDiary] = useState({
@@ -170,9 +188,32 @@ export default function Diary() {
                     </div>
                   </div>
                   <div className="space-y-2">
+                    <Label>快捷标签</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {quickTags.map((tag, index) => (
+                        <Button
+                          key={index}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => {
+                            const currentContent = newDiary.content;
+                            const newContent = currentContent
+                              ? currentContent + "\n" + tag.text
+                              : tag.text;
+                            setNewDiary({ ...newDiary, content: newContent });
+                          }}
+                        >
+                          {tag.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
                     <Label>内容</Label>
                     <Textarea
-                      placeholder="记录今天的故事..."
+                      placeholder="记录今天的故事...\n\n💡 提示：点击上方快捷标签可以快速添加内容"
                       rows={6}
                       value={newDiary.content}
                       onChange={(e) => setNewDiary({ ...newDiary, content: e.target.value })}
