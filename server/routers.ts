@@ -1414,6 +1414,40 @@ export const appRouter = router({
       return stats;
     }),
   }),
+
+  // 经期记录
+  periodTracker: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getPeriodRecordsByUserId(ctx.user.id);
+    }),
+
+    create: protectedProcedure
+      .input(z.object({
+        startDate: z.string(),
+        endDate: z.string().optional(),
+        periodLength: z.number().optional(),
+        symptoms: z.array(z.string()).optional(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const id = await db.createPeriodRecord({
+          userId: ctx.user.id,
+          startDate: new Date(input.startDate),
+          endDate: input.endDate ? new Date(input.endDate) : null,
+          periodLength: input.periodLength ?? null,
+          symptoms: input.symptoms ?? null,
+          notes: input.notes ?? null,
+        });
+        return { id };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deletePeriodRecord(input.id, ctx.user.id);
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

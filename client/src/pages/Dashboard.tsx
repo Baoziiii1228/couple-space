@@ -16,6 +16,9 @@ import { motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
 import { StatsCard } from "@/components/StatsCard";
 import { GlobalSearch } from "@/components/GlobalSearch";
+import { DataCharts } from "@/components/DataCharts";
+import { SmartReminders } from "@/components/SmartReminders";
+import { AnnualReport } from "@/components/AnnualReport";
 import { Search } from "lucide-react";
 import { useState } from "react";
 
@@ -36,6 +39,7 @@ const navItems = [
   { icon: Wallet, title: "账本", path: "/ledger", color: "text-lime-500 dark:text-lime-400" },
   { icon: Timer, title: "倒计时", path: "/countdown", color: "text-fuchsia-500 dark:text-fuchsia-400" },
   { icon: Handshake, title: "承诺", path: "/promises", color: "text-sky-500 dark:text-sky-400" },
+  { icon: Heart, title: "经期", path: "/period-tracker", color: "text-pink-600 dark:text-pink-400" },
 ];
 
 export default function Dashboard() {
@@ -371,10 +375,34 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
-      </main>
 
-      {/* 全局搜索 */}
-      <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
+        {/* 数据可视化图表 */}
+        {stats && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <h2 className="text-lg font-semibold mb-4">📊 数据可视化</h2>
+            <DataCharts />
+          </motion.div>
+        )}
+
+        {/* 年度报告 */}
+        {stats && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <h2 className="text-lg font-semibold mb-4">🎉 年度报告</h2>
+            <AnnualReport />
+          </motion.div>
+        )}
+
+        <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
+        <SmartReminders />
+      </main>
     </div>
   );
 }

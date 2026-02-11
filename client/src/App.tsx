@@ -30,6 +30,7 @@ const HundredThings = lazy(() => import("./pages/HundredThings"));
 const Ledger = lazy(() => import("./pages/Ledger"));
 const Countdown = lazy(() => import("./pages/Countdown"));
 const Promises = lazy(() => import("./pages/Promises"));
+const PeriodTracker = lazy(() => import("./pages/PeriodTracker"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading 组件
@@ -69,6 +70,7 @@ function Router() {
         <Route path="/ledger" component={Ledger} />
         <Route path="/countdown" component={Countdown} />
         <Route path="/promises" component={Promises} />
+        <Route path="/period-tracker" component={PeriodTracker} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

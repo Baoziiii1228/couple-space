@@ -23,7 +23,8 @@ import {
   ledgerRecords, InsertLedgerRecord,
   gameRecords, InsertGameRecord,
   countdowns, InsertCountdown,
-  promises, InsertPromise
+  promises, InsertPromise,
+  periodRecords, InsertPeriodRecord
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -882,4 +883,33 @@ export async function deletePromise(id: number, coupleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(promises).where(and(eq(promises.id, id), eq(promises.coupleId, coupleId)));
+}
+
+// ==================== 经期记录 ====================
+
+export async function getPeriodRecordsByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(periodRecords)
+    .where(eq(periodRecords.userId, userId))
+    .orderBy(desc(periodRecords.startDate));
+}
+
+export async function createPeriodRecord(data: InsertPeriodRecord) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(periodRecords).values(data);
+  return result[0].insertId;
+}
+
+export async function updatePeriodRecord(id: number, data: Partial<InsertPeriodRecord>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(periodRecords).set(data).where(eq(periodRecords.id, id));
+}
+
+export async function deletePeriodRecord(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(periodRecords).where(and(eq(periodRecords.id, id), eq(periodRecords.userId, userId)));
 }
