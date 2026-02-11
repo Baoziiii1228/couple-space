@@ -342,7 +342,60 @@ export default function Ledger() {
         {categoryStats.length > 0 && (
           <Card className="glass border-white/40 dark:border-white/20">
             <CardContent className="p-4">
-              <h3 className="font-semibold mb-3">支出分类</h3>
+              <h3 className="font-semibold mb-3">支出分类统计</h3>
+              
+              {/* 饼图可视化 */}
+              <div className="flex items-center justify-center mb-4">
+                <div className="relative w-48 h-48">
+                  <svg viewBox="0 0 100 100" className="transform -rotate-90">
+                    {(() => {
+                      let currentAngle = 0;
+                      const colors = [
+                        '#f97316', '#3b82f6', '#ec4899', '#a855f7', '#06b6d4',
+                        '#ef4444', '#22c55e', '#14b8a6', '#6366f1', '#6b7280'
+                      ];
+                      return categoryStats.map((cat, index) => {
+                        const percentage = stats?.totalExpense ? (cat.amount / stats.totalExpense) : 0;
+                        const angle = percentage * 360;
+                        const largeArcFlag = angle > 180 ? 1 : 0;
+                        
+                        const startX = 50 + 40 * Math.cos((currentAngle * Math.PI) / 180);
+                        const startY = 50 + 40 * Math.sin((currentAngle * Math.PI) / 180);
+                        const endX = 50 + 40 * Math.cos(((currentAngle + angle) * Math.PI) / 180);
+                        const endY = 50 + 40 * Math.sin(((currentAngle + angle) * Math.PI) / 180);
+                        
+                        const path = [
+                          `M 50 50`,
+                          `L ${startX} ${startY}`,
+                          `A 40 40 0 ${largeArcFlag} 1 ${endX} ${endY}`,
+                          `Z`
+                        ].join(' ');
+                        
+                        currentAngle += angle;
+                        
+                        return (
+                          <path
+                            key={cat.category}
+                            d={path}
+                            fill={colors[index % colors.length]}
+                            opacity="0.8"
+                            className="transition-opacity hover:opacity-100"
+                          />
+                        );
+                      });
+                    })()}
+                    <circle cx="50" cy="50" r="20" fill="currentColor" className="text-background" />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground">总支出</p>
+                      <p className="text-sm font-bold">￥{(stats?.totalExpense ?? 0).toFixed(0)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* 分类列表 */}
               <div className="space-y-2">
                 {categoryStats.map((cat) => {
                   const percentage = stats?.totalExpense ? (cat.amount / stats.totalExpense * 100) : 0;
@@ -355,7 +408,8 @@ export default function Ledger() {
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
-                      <span className="text-sm font-medium w-20 text-right">¥{cat.amount.toFixed(2)}</span>
+                      <span className="text-xs text-muted-foreground w-12">{percentage.toFixed(1)}%</span>
+                      <span className="text-sm font-medium w-20 text-right">￥{cat.amount.toFixed(2)}</span>
                     </div>
                   );
                 })}

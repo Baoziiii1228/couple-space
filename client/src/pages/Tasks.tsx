@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Plus, Star, Check, Trash2, Filter } from "lucide-react";
+import { ArrowLeft, Plus, Star, Check, Trash2, Filter, Search, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState, useMemo } from "react";
@@ -44,8 +44,11 @@ const presetTasks = [
 export default function Tasks() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState("");
   const [showFilter, setShowFilter] = useState(false);
-  const [newTask, setNewTask] = useState({ title: "", description: "", category: "其他" });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "completed">("all");
+  const [newTask, setNewTask] = useState({ title: "", description: "", category: "其他", priority: "medium" as "high" | "medium" | "low" });
 
   const { data: tasks, refetch } = trpc.task.list.useQuery();
 
@@ -53,7 +56,7 @@ export default function Tasks() {
     onSuccess: () => {
       toast.success("任务添加成功！");
       setIsCreateOpen(false);
-      setNewTask({ title: "", description: "", category: "其他" });
+      setNewTask({ title: "", description: "", category: "其他", priority: "medium" });
       refetch();
     },
     onError: (err) => toast.error(err.message),
@@ -89,12 +92,38 @@ export default function Tasks() {
     createTask.mutate({ title: preset.title, description: "", category: preset.category });
   };
 
-  // 按分类筛选
+  // 按搜索、分类、优先级和状态筛选
   const filteredTasks = useMemo(() => {
     if (!tasks) return [];
-    if (!activeFilter) return tasks;
-    return tasks.filter(t => t.category === activeFilter);
-  }, [tasks, activeFilter]);
+    let filtered = tasks;
+    
+    // 搜索过滤
+    if (searchQuery) {
+      filtered = filtered.filter(t => 
+        t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    }
+    
+    // 分类过滤
+    if (activeFilter) {
+      filtered = filtered.filter(t => t.category === activeFilter);
+    }
+    
+    // 优先级过滤
+    if (priorityFilter) {
+      filtered = filtered.filter(t => t.priority === priorityFilter);
+    }
+    
+    // 状态过滤
+    if (statusFilter === "pending") {
+      filtered = filtered.filter(t => !t.isCompleted);
+    } else if (statusFilter === "completed") {
+      filtered = filtered.filter(t => t.isCompleted);
+    }
+    
+    return filtered;
+  }, [tasks, searchQuery, activeFilter, priorityFilter, statusFilter]);
 
   const stats = useMemo(() => {
     if (!tasks) return { total: 0, completed: 0, progress: 0 };
@@ -184,6 +213,41 @@ export default function Tasks() {
                     </div>
                   </div>
                   <div className="space-y-2">
+                    <Label>优先级</Label>
+                    <div className="flex gap-2">
+                      <button
+                        className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${
+                          newTask.priority === "high"
+                            ? "bg-red-500 text-white"
+                            : "bg-secondary/50 hover:bg-secondary"
+                        }`}
+                        onClick={() => setNewTask({ ...newTask, priority: "high" })}
+                      >
+                        🔥 紧急
+                      </button>
+                      <button
+                        className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${
+                          newTask.priority === "medium"
+                            ? "bg-yellow-500 text-white"
+                            : "bg-secondary/50 hover:bg-secondary"
+                        }`}
+                        onClick={() => setNewTask({ ...newTask, priority: "medium" })}
+                      >
+                        ⏰ 一般
+                      </button>
+                      <button
+                        className={`flex-1 px-3 py-2 rounded-lg text-sm transition-all ${
+                          newTask.priority === "low"
+                            ? "bg-blue-500 text-white"
+                            : "bg-secondary/50 hover:bg-secondary"
+                        }`}
+                        onClick={() => setNewTask({ ...newTask, priority: "low" })}
+                      >
+                        🌿 缓慢
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
                     <Label>描述（可选）</Label>
                     <Textarea
                       placeholder="任务详情..."
@@ -235,10 +299,72 @@ export default function Tasks() {
           </CardContent>
         </Card>
 
-        {/* 分类筛选栏 */}
+        {/* 搜索和筛选栏 */}
         {showFilter && (
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => {
+          <div className="space-y-3">
+            {/* 搜索框 */}
+            <div>
+              <p className="text-sm font-medium mb-2">搜索任务</p>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="搜索任务名称或描述..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-9"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {/* 状态筛选 */}
+            <div>
+              <p className="text-sm font-medium mb-2">任务状态</p>
+              <div className="flex gap-2">
+                <button
+                  className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                    statusFilter === "all"
+                      ? "bg-primary text-primary-foreground shadow-md"
+                      : "bg-secondary/50 hover:bg-secondary text-foreground"
+                  }`}
+                  onClick={() => setStatusFilter("all")}
+                >
+                  📋 全部
+                </button>
+                <button
+                  className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                    statusFilter === "pending"
+                      ? "bg-primary text-primary-foreground shadow-md"
+                      : "bg-secondary/50 hover:bg-secondary text-foreground"
+                  }`}
+                  onClick={() => setStatusFilter("pending")}
+                >
+                  ⏳ 进行中
+                </button>
+                <button
+                  className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                    statusFilter === "completed"
+                      ? "bg-green-500 text-white shadow-md"
+                      : "bg-secondary/50 hover:bg-secondary text-foreground"
+                  }`}
+                  onClick={() => setStatusFilter("completed")}
+                >
+                  ✅ 已完成
+                </button>
+              </div>
+            </div>
+            
+            <div>
+              <p className="text-sm font-medium mb-2">分类筛选</p>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((cat) => {
               const catStat = cat.value ? categoryStats[cat.value] : null;
               return (
                 <button
@@ -256,7 +382,54 @@ export default function Tasks() {
                   )}
                 </button>
               );
-            })}
+                })}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-2">优先级筛选</p>
+              <div className="flex gap-2">
+                <button
+                  className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                    priorityFilter === ""
+                      ? "bg-primary text-primary-foreground shadow-md"
+                      : "bg-secondary/50 hover:bg-secondary text-foreground"
+                  }`}
+                  onClick={() => setPriorityFilter("")}
+                >
+                  📊 全部
+                </button>
+                <button
+                  className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                    priorityFilter === "high"
+                      ? "bg-red-500 text-white shadow-md"
+                      : "bg-secondary/50 hover:bg-secondary text-foreground"
+                  }`}
+                  onClick={() => setPriorityFilter("high")}
+                >
+                  🔥 紧急
+                </button>
+                <button
+                  className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                    priorityFilter === "medium"
+                      ? "bg-yellow-500 text-white shadow-md"
+                      : "bg-secondary/50 hover:bg-secondary text-foreground"
+                  }`}
+                  onClick={() => setPriorityFilter("medium")}
+                >
+                  ⏰ 一般
+                </button>
+                <button
+                  className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                    priorityFilter === "low"
+                      ? "bg-blue-500 text-white shadow-md"
+                      : "bg-secondary/50 hover:bg-secondary text-foreground"
+                  }`}
+                  onClick={() => setPriorityFilter("low")}
+                >
+                  🌿 缓慢
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -277,8 +450,19 @@ export default function Tasks() {
                       <Check className="w-4 h-4 text-primary opacity-0 hover:opacity-100" />
                     </button>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-medium text-foreground">{task.title}</h3>
+                        {task.priority && (
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            task.priority === "high" ? "bg-red-500/20 text-red-600 dark:text-red-400" :
+                            task.priority === "medium" ? "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400" :
+                            "bg-blue-500/20 text-blue-600 dark:text-blue-400"
+                          }`}>
+                            {task.priority === "high" ? "🔥 紧急" :
+                             task.priority === "medium" ? "⏰ 一般" :
+                             "🌿 缓慢"}
+                          </span>
+                        )}
                         {task.category && (
                           <span className="text-xs px-2 py-0.5 rounded-full bg-secondary/50 text-muted-foreground">
                             {getCategoryEmoji(task.category)} {task.category}

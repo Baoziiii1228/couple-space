@@ -4,6 +4,7 @@ import { Route, Switch } from "wouter";
 import { lazy, Suspense } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 
 // 首页和登录页立即加载（关键路径）
 import Home from "./pages/Home";
@@ -29,6 +30,7 @@ const HundredThings = lazy(() => import("./pages/HundredThings"));
 const Ledger = lazy(() => import("./pages/Ledger"));
 const Countdown = lazy(() => import("./pages/Countdown"));
 const Promises = lazy(() => import("./pages/Promises"));
+const PeriodTracker = lazy(() => import("./pages/PeriodTracker"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading 组件
@@ -68,6 +70,7 @@ function Router() {
         <Route path="/ledger" component={Ledger} />
         <Route path="/countdown" component={Countdown} />
         <Route path="/promises" component={Promises} />
+        <Route path="/period-tracker" component={PeriodTracker} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
@@ -82,6 +85,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <PWAInstallPrompt />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

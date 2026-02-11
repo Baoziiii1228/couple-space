@@ -1,13 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { trpc } from "../lib/trpc";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Textarea } from "../components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
-import { Plus, Check, CheckCheck, Trash2, Heart, ArrowLeft } from "lucide-react";
+import { Plus, Check, CheckCheck, Trash2, Heart, ArrowLeft, TrendingUp } from "lucide-react";
 import { useAuth } from "../_core/hooks/useAuth";
 import { useTheme } from "../contexts/ThemeContext";
 import { useLocation } from "wouter";
+
+const quickPromiseTags = [
+  { label: "💪 每天运动", text: "我承诺每天和TA一起运动" },
+  { label: "📚 一起学习", text: "我承诺和TA一起学习进步" },
+  { label: "🍽️ 一起做饭", text: "我承诺和TA一起做饭" },
+  { label: "🚗 一起旅行", text: "我承诺和TA一起去旅行" },
+  { label: "💰 一起存钱", text: "我承诺和TA一起存钱" },
+  { label: "🏠 一起打扫", text: "我承诺和TA一起打扫家务" },
+  { label: "📱 少玩手机", text: "我承诺少玩手机多陪伴TA" },
+  { label: "😊 保持开心", text: "我承诺保持开心的心态" },
+  { label: "💕 每天说爱你", text: "我承诺每天对TA说我爱你" },
+  { label: "🌟 互相支持", text: "我承诺永远支持TA" },
+];
 
 export default function Promises() {
   const { user } = useAuth();
@@ -17,22 +30,29 @@ export default function Promises() {
   const [content, setContent] = useState("");
 
   const { data: promises = [], refetch } = trpc.promise.list.useQuery();
-  const createMutation = trpc.promise.create.useMutation({
-    onSuccess: () => {
+  const createMutation = trpc.promise.create.useMutation();
+  const completeMutation = trpc.promise.complete.useMutation();
+  const confirmMutation = trpc.promise.confirm.useMutation();
+  const deleteMutation = trpc.promise.delete.useMutation();
+
+  // React Query v5: 使用 useEffect 替代 onSuccess
+  useEffect(() => {
+    if (createMutation.isSuccess) {
       refetch();
       setIsOpen(false);
       setContent("");
-    },
-  });
-  const completeMutation = trpc.promise.complete.useMutation({
-    onSuccess: () => refetch(),
-  });
-  const confirmMutation = trpc.promise.confirm.useMutation({
-    onSuccess: () => refetch(),
-  });
-  const deleteMutation = trpc.promise.delete.useMutation({
-    onSuccess: () => refetch(),
-  });
+      createMutation.reset();
+    }
+  }, [createMutation.isSuccess]);
+
+  useEffect(() => {
+    if (completeMutation.isSuccess || confirmMutation.isSuccess || deleteMutation.isSuccess) {
+      refetch();
+      completeMutation.reset();
+      confirmMutation.reset();
+      deleteMutation.reset();
+    }
+  }, [completeMutation.isSuccess, confirmMutation.isSuccess, deleteMutation.isSuccess]);
 
   const handleCreate = () => {
     if (!content.trim()) return;
@@ -41,6 +61,25 @@ export default function Promises() {
 
   const myPromises = promises.filter((p) => p.isOwn);
   const theirPromises = promises.filter((p) => !p.isOwn);
+
+  // 计算承诺统计
+  const myStats = useMemo(() => {
+    const total = myPromises.length;
+    const pending = myPromises.filter(p => p.status === 'pending').length;
+    const completed = myPromises.filter(p => p.status === 'completed').length;
+    const confirmed = myPromises.filter(p => p.status === 'confirmed').length;
+    const progress = total > 0 ? ((completed + confirmed) / total * 100) : 0;
+    return { total, pending, completed, confirmed, progress };
+  }, [myPromises]);
+
+  const theirStats = useMemo(() => {
+    const total = theirPromises.length;
+    const pending = theirPromises.filter(p => p.status === 'pending').length;
+    const completed = theirPromises.filter(p => p.status === 'completed').length;
+    const confirmed = theirPromises.filter(p => p.status === 'confirmed').length;
+    const progress = total > 0 ? ((completed + confirmed) / total * 100) : 0;
+    return { total, pending, completed, confirmed, progress };
+  }, [theirPromises]);
 
   const getStatusBadge = (status: string) => {
     const badges = {
@@ -87,6 +126,23 @@ export default function Promises() {
                 <DialogTitle className="dark:text-white">许下承诺</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium dark:text-white">快捷标签</label>
+                  <div className="flex flex-wrap gap-2">
+                    {quickPromiseTags.map((tag, index) => (
+                      <Button
+                        key={index}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="text-xs h-7 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
+                        onClick={() => setContent(tag.text)}
+                      >
+                        {tag.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
                 <Textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -105,6 +161,75 @@ export default function Promises() {
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* 统计概览 */}
+        {promises.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+            {/* 我的统计 */}
+            <Card className="p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-800 dark:text-gray-200">我的承诺进度</h3>
+                <span className="text-2xl font-bold text-pink-500 dark:text-pink-400">{Math.round(myStats.progress)}%</span>
+              </div>
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">总计</span>
+                  <span className="font-medium text-gray-800 dark:text-gray-200">{myStats.total} 个</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">进行中</span>
+                  <span className="font-medium text-yellow-600 dark:text-yellow-400">{myStats.pending} 个</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">已完成</span>
+                  <span className="font-medium text-blue-600 dark:text-blue-400">{myStats.completed} 个</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">已兑现</span>
+                  <span className="font-medium text-green-600 dark:text-green-400">{myStats.confirmed} 个</span>
+                </div>
+              </div>
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-500"
+                  style={{ width: `${myStats.progress}%` }}
+                />
+              </div>
+            </Card>
+
+            {/* TA的统计 */}
+            <Card className="p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-800 dark:text-gray-200">TA的承诺进度</h3>
+                <span className="text-2xl font-bold text-purple-500 dark:text-purple-400">{Math.round(theirStats.progress)}%</span>
+              </div>
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">总计</span>
+                  <span className="font-medium text-gray-800 dark:text-gray-200">{theirStats.total} 个</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">进行中</span>
+                  <span className="font-medium text-yellow-600 dark:text-yellow-400">{theirStats.pending} 个</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">已完成</span>
+                  <span className="font-medium text-blue-600 dark:text-blue-400">{theirStats.completed} 个</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">已兑现</span>
+                  <span className="font-medium text-green-600 dark:text-green-400">{theirStats.confirmed} 个</span>
+                </div>
+              </div>
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500"
+                  style={{ width: `${theirStats.progress}%` }}
+                />
+              </div>
+            </Card>
+          </div>
+        )}
 
         {/* Promises Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

@@ -10,6 +10,7 @@ import bcrypt from "bcryptjs";
 import { authService } from "./_core/auth";
 import { sendVerificationCode } from "./_core/email";
 import { uploadFile, getStorageInfo } from "./cloudStorage";
+import { getDashboardStats } from "./stats";
 
 // 生成邀请码
 function generateInviteCode(): string {
@@ -589,6 +590,7 @@ export const appRouter = router({
         title: z.string(),
         description: z.string().optional(),
         category: z.string().optional(),
+        priority: z.enum(["high", "medium", "low"]).optional(),
         startTime: z.string().optional(),
         deadline: z.string().optional(),
       }))
@@ -599,6 +601,7 @@ export const appRouter = router({
           title: input.title,
           description: input.description ?? null,
           category: input.category ?? null,
+          priority: input.priority ?? "medium",
           startTime: input.startTime ? new Date(input.startTime) : null,
           deadline: input.deadline ? new Date(input.deadline) : null,
         });
@@ -845,7 +848,7 @@ export const appRouter = router({
   // ==================== 待办清单 ====================
   todoList: router({
     list: protectedProcedure
-      .input(z.object({ type: z.enum(["movie", "restaurant", "music", "book", "other"]).optional() }).optional())
+      .input(z.object({ type: z.enum(["movie", "restaurant", "music", "book", "tv", "travel", "activity", "other"]).optional() }).optional())
       .query(async ({ ctx, input }) => {
         const couple = await getUserCouple(ctx.user.id);
         return await db.getTodoListsByCoupleId(couple.id, input?.type);
@@ -853,7 +856,7 @@ export const appRouter = router({
 
     create: protectedProcedure
       .input(z.object({
-        type: z.enum(["movie", "restaurant", "music", "book", "other"]),
+        type: z.enum(["movie", "restaurant", "music", "book", "tv", "travel", "activity", "other"]),
         title: z.string(),
         description: z.string().optional(),
         imageUrl: z.string().optional(),
@@ -1399,6 +1402,49 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const couple = await getUserCouple(ctx.user.id);
         await db.deletePromise(input.id, couple.id);
+        return { success: true };
+      }),
+  }),
+
+  // 统计数据
+  stats: router({
+    dashboard: protectedProcedure.query(async ({ ctx }) => {
+      const couple = await getUserCouple(ctx.user.id);
+      const stats = await getDashboardStats(couple.id);
+      return stats;
+    }),
+  }),
+
+  // 经期记录
+  periodTracker: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getPeriodRecordsByUserId(ctx.user.id);
+    }),
+
+    create: protectedProcedure
+      .input(z.object({
+        startDate: z.string(),
+        endDate: z.string().optional(),
+        periodLength: z.number().optional(),
+        symptoms: z.array(z.string()).optional(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const id = await db.createPeriodRecord({
+          userId: ctx.user.id,
+          startDate: new Date(input.startDate),
+          endDate: input.endDate ? new Date(input.endDate) : null,
+          periodLength: input.periodLength ?? null,
+          symptoms: input.symptoms ?? null,
+          notes: input.notes ?? null,
+        });
+        return { id };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deletePeriodRecord(input.id, ctx.user.id);
         return { success: true };
       }),
   }),

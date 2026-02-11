@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { trpc } from "../lib/trpc";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -23,16 +23,25 @@ export default function Countdown() {
   const [emoji, setEmoji] = useState("❤️");
 
   const { data: countdowns = [], refetch } = trpc.countdown.list.useQuery();
-  const createMutation = trpc.countdown.create.useMutation({
-    onSuccess: () => {
+  const createMutation = trpc.countdown.create.useMutation();
+  const deleteMutation = trpc.countdown.delete.useMutation();
+
+  // React Query v5: 使用 useEffect 替代 onSuccess
+  useEffect(() => {
+    if (createMutation.isSuccess) {
       refetch();
       setIsOpen(false);
       resetForm();
-    },
-  });
-  const deleteMutation = trpc.countdown.delete.useMutation({
-    onSuccess: () => refetch(),
-  });
+      createMutation.reset();
+    }
+  }, [createMutation.isSuccess]);
+
+  useEffect(() => {
+    if (deleteMutation.isSuccess) {
+      refetch();
+      deleteMutation.reset();
+    }
+  }, [deleteMutation.isSuccess]);
 
   const resetForm = () => {
     setTitle("");
@@ -60,7 +69,7 @@ export default function Countdown() {
   };
 
   // 计算剩余天数
-  const calculateDaysLeft = (targetDate: string) => {
+  const calculateDaysLeft = (targetDate: string | Date) => {
     const target = new Date(targetDate);
     const now = new Date();
     const diff = Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
@@ -211,7 +220,7 @@ export default function Countdown() {
                     return (
                       <Card
                         key={countdown.id}
-                        className={`p-6 bg-gradient-to-br ${typeColors[type as keyof typeof typeColors]} text-white shadow-lg hover:shadow-xl transition-shadow dark:shadow-gray-900/50`}
+                        className={`p-6 bg-gradient-to-br ${typeColors[countdown.type as keyof typeof typeColors]} text-white shadow-lg hover:shadow-xl transition-shadow dark:shadow-gray-900/50`}
                       >
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex items-center gap-2">

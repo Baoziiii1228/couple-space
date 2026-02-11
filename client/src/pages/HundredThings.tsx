@@ -93,24 +93,74 @@ export default function HundredThings() {
         <Card className="glass overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-pink-500/10 to-purple-500/10" />
           <CardContent className="relative p-6">
-            <div className="text-center mb-4">
-              <h2 className="text-3xl font-bold text-primary">
-                {stats?.completed || 0} <span className="text-lg text-muted-foreground">/ {stats?.total || 0}</span>
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">{year} 年我们一起完成的事</p>
+            <div className="flex items-center justify-center gap-8">
+              {/* 环形进度图 */}
+              <div className="relative w-40 h-40">
+                <svg viewBox="0 0 100 100" className="transform -rotate-90">
+                  {/* 背景圆环 */}
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    className="text-muted/20"
+                  />
+                  {/* 进度圆环 */}
+                  <motion.circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="none"
+                    stroke="url(#gradient)"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 40}`}
+                    initial={{ strokeDashoffset: 2 * Math.PI * 40 }}
+                    animate={{ strokeDashoffset: 2 * Math.PI * 40 * (1 - progress) }}
+                    transition={{ duration: 1.5, ease: "easeOut" }}
+                  />
+                  <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#fb7185" />
+                      <stop offset="50%" stopColor="#ec4899" />
+                      <stop offset="100%" stopColor="#a855f7" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-3xl font-bold text-primary">{Math.round(progress * 100)}%</span>
+                  <span className="text-xs text-muted-foreground mt-1">完成度</span>
+                </div>
+              </div>
+              
+              {/* 统计信息 */}
+              <div className="space-y-3">
+                <div>
+                  <h2 className="text-3xl font-bold text-primary">
+                    {stats?.completed || 0} <span className="text-lg text-muted-foreground">/ {stats?.total || 0}</span>
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-1">{year} 年我们一起完成的事</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="bg-primary/5 rounded-lg p-2">
+                    <p className="text-muted-foreground text-xs">待完成</p>
+                    <p className="font-semibold text-orange-500">{(stats?.total || 0) - (stats?.completed || 0)} 件</p>
+                  </div>
+                  <div className="bg-primary/5 rounded-lg p-2">
+                    <p className="text-muted-foreground text-xs">已完成</p>
+                    <p className="font-semibold text-green-500">{stats?.completed || 0} 件</p>
+                  </div>
+                </div>
+                {progress >= 1 && (
+                  <div className="flex items-center gap-1 text-sm font-medium text-green-600 dark:text-green-400">
+                    <Sparkles className="w-4 h-4" />
+                    <span>全部完成！</span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="h-4 bg-muted/50 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-gradient-to-r from-rose-400 via-pink-500 to-purple-500 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${progress * 100}%` }}
-                transition={{ duration: 1, ease: "easeOut" }}
-              />
-            </div>
-            <p className="text-center text-sm text-muted-foreground mt-2">
-              {Math.round(progress * 100)}% 完成
-              {progress >= 1 && " 🎉 全部完成！"}
-            </p>
           </CardContent>
         </Card>
 

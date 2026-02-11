@@ -134,6 +134,7 @@ export const tasks = mysqlTable("tasks", {
   title: varchar("title", { length: 200 }).notNull(),
   description: text("description"),
   category: varchar("category", { length: 50 }),
+  priority: varchar("priority", { length: 20 }).default("medium"),
   isPreset: boolean("isPreset").default(false).notNull(),
   isCompleted: boolean("isCompleted").default(false).notNull(),
   completedAt: timestamp("completedAt"),
@@ -387,3 +388,21 @@ export const promises = mysqlTable("promises", {
 
 export type Promise = typeof promises.$inferSelect;
 export type InsertPromise = typeof promises.$inferInsert;
+
+// ==================== 经期记录 ====================
+
+export const periodRecords = mysqlTable("periodRecords", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  startDate: timestamp("startDate").notNull(),
+  endDate: timestamp("endDate"),
+  cycleLength: int("cycleLength"), // 周期长度（天）
+  periodLength: int("periodLength"), // 经期长度（天）
+  symptoms: json("symptoms").$type<string[]>(), // 症状列表
+  notes: text("notes"), // 备注
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PeriodRecord = typeof periodRecords.$inferSelect;
+export type InsertPeriodRecord = typeof periodRecords.$inferInsert;

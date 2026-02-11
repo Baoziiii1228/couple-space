@@ -14,6 +14,13 @@ import ScreenLock from "@/components/ScreenLock";
 import Countdown from "@/components/Countdown";
 import { motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
+import { StatsCard } from "@/components/StatsCard";
+import { GlobalSearch } from "@/components/GlobalSearch";
+import { DataCharts } from "@/components/DataCharts";
+import { SmartReminders } from "@/components/SmartReminders";
+import { AnnualReport } from "@/components/AnnualReport";
+import { Search } from "lucide-react";
+import { useState } from "react";
 
 const navItems = [
   { icon: Camera, title: "相册", path: "/albums", color: "text-pink-500 dark:text-pink-400" },
@@ -32,18 +39,23 @@ const navItems = [
   { icon: Wallet, title: "账本", path: "/ledger", color: "text-lime-500 dark:text-lime-400" },
   { icon: Timer, title: "倒计时", path: "/countdown", color: "text-fuchsia-500 dark:text-fuchsia-400" },
   { icon: Handshake, title: "承诺", path: "/promises", color: "text-sky-500 dark:text-sky-400" },
+  { icon: Heart, title: "经期", path: "/period-tracker", color: "text-pink-600 dark:text-pink-400" },
 ];
 
 export default function Dashboard() {
   const { user, logout, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [, setLocation] = useLocation();
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const { data: coupleStatus } = trpc.couple.getStatus.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
   const { data: dailyQuote } = trpc.message.getDailyQuote.useQuery();
+  const { data: stats } = trpc.stats.dashboard.useQuery(undefined, {
+    enabled: coupleStatus?.status === "paired",
+  });
   const { data: anniversaries } = trpc.anniversary.list.useQuery(undefined, {
     enabled: coupleStatus?.status === "paired",
   });
@@ -141,6 +153,9 @@ export default function Dashboard() {
             <span className="font-semibold">Couple Space</span>
           </Link>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)}>
+              <Search className="w-5 h-5" />
+            </Button>
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
               {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </Button>
@@ -254,6 +269,94 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
+        {/* 数据统计 */}
+        {stats && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">我们的数据</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              <StatsCard
+                icon={Camera}
+                title="照片"
+                value={stats.photosCount}
+                color="text-pink-500"
+                delay={0}
+                trend={{
+                  direction: stats.thisWeekPhotos > 0 ? 'up' : 'neutral',
+                  label: `本周+${stats.thisWeekPhotos}`
+                }}
+              />
+              <StatsCard
+                icon={BookOpen}
+                title="日记"
+                value={stats.diariesCount}
+                color="text-orange-500"
+                delay={0.05}
+                trend={{
+                  direction: stats.thisWeekDiaries > 0 ? 'up' : 'neutral',
+                  label: `本周+${stats.thisWeekDiaries}`
+                }}
+              />
+              <StatsCard
+                icon={MessageCircle}
+                title="消息"
+                value={stats.messagesCount}
+                color="text-green-500"
+                delay={0.1}
+                trend={{
+                  direction: stats.thisWeekMessages > 0 ? 'up' : 'neutral',
+                  label: `本周+${stats.thisWeekMessages}`
+                }}
+              />
+              <StatsCard
+                icon={Star}
+                title="任务"
+                value={`${stats.completedTasksCount}/${stats.tasksCount}`}
+                subtitle="已完成"
+                color="text-yellow-500"
+                delay={0.15}
+              />
+              <StatsCard
+                icon={Gift}
+                title="愿望"
+                value={stats.wishesCount}
+                color="text-purple-500"
+                delay={0.2}
+                trend={{
+                  direction: stats.thisWeekWishes > 0 ? 'up' : 'neutral',
+                  label: `本周+${stats.thisWeekWishes}`
+                }}
+              />
+              <StatsCard
+                icon={MapPin}
+                title="足迹"
+                value={stats.footprintsCount}
+                color="text-teal-500"
+                delay={0.25}
+                trend={{
+                  direction: stats.thisWeekFootprints > 0 ? 'up' : 'neutral',
+                  label: `本周+${stats.thisWeekFootprints}`
+                }}
+              />
+              <StatsCard
+                icon={Trophy}
+                title="成就"
+                value={`${stats.unlockedAchievementsCount}/${stats.achievementsCount}`}
+                subtitle="已解锁"
+                color="text-amber-500"
+                delay={0.3}
+              />
+              <StatsCard
+                icon={Wallet}
+                title="账本"
+                value={`¥${(stats.totalIncome - stats.totalExpense).toFixed(2)}`}
+                subtitle="净资产"
+                color="text-lime-500"
+                delay={0.35}
+              />
+            </div>
+          </div>
+        )}
+
         {/* 每日情话 */}
         {dailyQuote && (
           <Card className="glass">
@@ -292,6 +395,33 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
+
+        {/* 数据可视化图表 */}
+        {stats && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <h2 className="text-lg font-semibold mb-4">📊 数据可视化</h2>
+            <DataCharts />
+          </motion.div>
+        )}
+
+        {/* 年度报告 */}
+        {stats && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <h2 className="text-lg font-semibold mb-4">🎉 年度报告</h2>
+            <AnnualReport />
+          </motion.div>
+        )}
+
+        <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
+        <SmartReminders />
       </main>
     </div>
   );

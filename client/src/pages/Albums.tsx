@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Plus, Image, X, Upload, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Image, X, Upload, Loader2, Trash2, Download, CheckSquare, Square } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { useState, useRef } from "react";
@@ -17,6 +17,8 @@ export default function Albums() {
   const [newAlbum, setNewAlbum] = useState({ name: "", description: "" });
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState<Set<number>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -36,6 +38,14 @@ export default function Albums() {
 
   const uploadPhoto = trpc.photo.upload.useMutation({
     onSuccess: () => {
+      refetchPhotos();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const deletePhoto = trpc.photo.delete.useMutation({
+    onSuccess: () => {
+      toast.success("照片删除成功！");
       refetchPhotos();
     },
     onError: (err) => toast.error(err.message),
@@ -135,6 +145,99 @@ export default function Albums() {
     });
   };
 
+  // 批量操作相关函数
+  const toggleBatchMode = () => {
+    setIsBatchMode(!isBatchMode);
+    setSelectedPhotos(new Set());
+  };
+
+  const togglePhotoSelection = (photoId: number) => {
+    const newSelected = new Set(selectedPhotos);
+    if (newSelected.has(photoId)) {
+      newSelected.delete(photoId);
+    } else {
+      newSelected.add(photoId);
+    }
+    setSelectedPhotos(newSelected);
+  };
+
+  const selectAllPhotos = () => {
+    if (photos) {
+      setSelectedPhotos(new Set(photos.map(p => p.id)));
+    }
+  };
+
+  const deselectAllPhotos = () => {
+    setSelectedPhotos(new Set());
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedPhotos.size === 0) {
+      toast.error("请先选择要删除的照片");
+      return;
+    }
+
+    if (!confirm(`确定要删除选中的 ${selectedPhotos.size} 张照片吗？删除后无法恢复。`)) {
+      return;
+    }
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const photoId of Array.from(selectedPhotos)) {
+      try {
+        await deletePhoto.mutateAsync({ id: photoId });
+        successCount++;
+      } catch (err) {
+        failCount++;
+      }
+    }
+
+    if (successCount > 0) {
+      toast.success(`成功删除 ${successCount} 张照片`);
+    }
+    if (failCount > 0) {
+      toast.error(`${failCount} 张照片删除失败`);
+    }
+
+    setSelectedPhotos(new Set());
+    setIsBatchMode(false);
+  };
+
+  const handleBatchDownload = async () => {
+    if (selectedPhotos.size === 0) {
+      toast.error("请先选择要下载的照片");
+      return;
+    }
+
+    if (!photos) return;
+
+    toast.info(`开始下载 ${selectedPhotos.size} 张照片...`);
+
+    for (const photoId of Array.from(selectedPhotos)) {
+      const photo = photos.find(p => p.id === photoId);
+      if (!photo) continue;
+
+      try {
+        // 创建一个隐藏的 a 标签来下载
+        const link = document.createElement('a');
+        link.href = photo.url;
+        link.download = `photo-${photo.id}.jpg`;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // 添加延迟避免浏览器阻止多个下载
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (err) {
+        console.error('Download failed:', err);
+      }
+    }
+
+    toast.success(`已开始下载 ${selectedPhotos.size} 张照片`);
+  };
+
   return (
     <div className="min-h-screen bg-background gradient-warm-subtle">
       {/* Hidden file input */}
@@ -159,20 +262,77 @@ export default function Albums() {
             <h1 className="font-semibold">情侣相册</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1 bg-white/50 dark:bg-white/10"
-              onClick={handleUploadClick}
-              disabled={isUploading}
-            >
-              {isUploading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Upload className="w-4 h-4" />
-              )}
-              {isUploading ? "上传中..." : "上传照片"}
-            </Button>
+            {isBatchMode ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 bg-white/50 dark:bg-white/10"
+                  onClick={selectedPhotos.size === photos?.length ? deselectAllPhotos : selectAllPhotos}
+                >
+                  {selectedPhotos.size === photos?.length ? (
+                    <Square className="w-4 h-4" />
+                  ) : (
+                    <CheckSquare className="w-4 h-4" />
+                  )}
+                  {selectedPhotos.size === photos?.length ? "取消全选" : "全选"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 bg-white/50 dark:bg-white/10"
+                  onClick={handleBatchDownload}
+                  disabled={selectedPhotos.size === 0}
+                >
+                  <Download className="w-4 h-4" />
+                  下载 ({selectedPhotos.size})
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 bg-white/50 dark:bg-white/10 text-destructive"
+                  onClick={handleBatchDelete}
+                  disabled={selectedPhotos.size === 0 || deletePhoto.isPending}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  删除 ({selectedPhotos.size})
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleBatchMode}
+                >
+                  取消
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 bg-white/50 dark:bg-white/10"
+                  onClick={toggleBatchMode}
+                  disabled={!photos || photos.length === 0}
+                >
+                  <CheckSquare className="w-4 h-4" />
+                  批量操作
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 bg-white/50 dark:bg-white/10"
+                  onClick={handleUploadClick}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4" />
+                  )}
+                  {isUploading ? "上传中..." : "上传照片"}
+                </Button>
+              </>
+            )}
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="gap-1">
@@ -252,10 +412,29 @@ export default function Albums() {
               {photos.map((photo) => (
                 <div
                   key={photo.id}
-                  className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => setSelectedPhoto(photo.url)}
+                  className="relative aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => {
+                    if (isBatchMode) {
+                      togglePhotoSelection(photo.id);
+                    } else {
+                      setSelectedPhoto(photo.url);
+                    }
+                  }}
                 >
                   <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                  {isBatchMode && (
+                    <div className="absolute top-2 right-2 z-10">
+                      <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center ${
+                        selectedPhotos.has(photo.id)
+                          ? 'bg-primary border-primary'
+                          : 'bg-white/80 dark:bg-black/80 border-white dark:border-gray-600'
+                      }`}>
+                        {selectedPhotos.has(photo.id) && (
+                          <CheckSquare className="w-4 h-4 text-white" />
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
