@@ -17,6 +17,21 @@ import Countdown from "@/components/Countdown";
 
 const emojiOptions = ["💕", "💍", "🎂", "🎄", "🎁", "🌹", "✈️", "🏠", "👶", "🎓"];
 
+// 预设节假日和重要日期
+const presetDates = [
+  { title: "元旦", date: "01-01", emoji: "🎉" },
+  { title: "情人节", date: "02-14", emoji: "💕" },
+  { title: "白色情人节", date: "03-14", emoji: "🤍" },
+  { title: "劳动节", date: "05-01", emoji: "🎊" },
+  { title: "520表白日", date: "05-20", emoji: "💖" },
+  { title: "儿童节", date: "06-01", emoji: "👶" },
+  { title: "国庆节", date: "10-01", emoji: "🇨🇳" },
+  { title: "万圣节", date: "10-31", emoji: "🎃" },
+  { title: "双十一", date: "11-11", emoji: "🛒" },
+  { title: "圣诞节", date: "12-25", emoji: "🎄" },
+  { title: "跨年夜", date: "12-31", emoji: "🎆" },
+];
+
 // 预设渐变颜色
 const presetGradients = [
   { name: "玫瑰金", value: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" },
@@ -300,6 +315,33 @@ export default function Anniversary() {
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
         />
       </div>
+      
+      {/* 快速选择预设日期 */}
+      <div className="space-y-2">
+        <Label className="text-sm text-muted-foreground">快速选择节日</Label>
+        <div className="grid grid-cols-3 gap-2">
+          {presetDates.map((preset) => (
+            <button
+              key={preset.title}
+              type="button"
+              className="px-3 py-2 text-sm rounded-lg glass hover:bg-white/70 dark:hover:bg-white/20 transition-all flex items-center justify-center gap-1"
+              onClick={() => {
+                const currentYear = new Date().getFullYear();
+                setFormData({ 
+                  ...formData, 
+                  title: preset.title,
+                  date: `${currentYear}-${preset.date}`,
+                  emoji: preset.emoji
+                });
+              }}
+            >
+              <span>{preset.emoji}</span>
+              <span>{preset.title}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      
       <div className="space-y-2">
         <Label>日期</Label>
         <Input
