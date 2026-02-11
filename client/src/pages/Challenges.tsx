@@ -102,12 +102,12 @@ function CreateChallengeDialog({ onClose, onSuccess }: { onClose: () => void; on
   
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-gray-800">创建挑战</h2>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">创建挑战</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl"
+            className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 text-2xl"
           >
             ×
           </button>
@@ -116,7 +116,7 @@ function CreateChallengeDialog({ onClose, onSuccess }: { onClose: () => void; on
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* 挑战类型 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               挑战类型
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -128,7 +128,7 @@ function CreateChallengeDialog({ onClose, onSuccess }: { onClose: () => void; on
                   className={`p-3 rounded-xl border-2 transition-all ${
                     type === t.id
                       ? `border-transparent bg-gradient-to-br ${t.color} text-white`
-                      : 'border-gray-200 hover:border-gray-300'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 text-gray-800 dark:text-gray-200'
                   }`}
                 >
                   <div className="text-2xl mb-1">{t.icon}</div>
@@ -140,14 +140,14 @@ function CreateChallengeDialog({ onClose, onSuccess }: { onClose: () => void; on
           
           {/* 挑战标题 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               挑战标题
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               placeholder="例如：一起跑步30天"
               required
             />
@@ -155,13 +155,13 @@ function CreateChallengeDialog({ onClose, onSuccess }: { onClose: () => void; on
           
           {/* 挑战描述 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               挑战描述
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               rows={3}
               placeholder="描述一下挑战的具体内容..."
               required
@@ -170,14 +170,14 @@ function CreateChallengeDialog({ onClose, onSuccess }: { onClose: () => void; on
           
           {/* 目标值 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               目标值
             </label>
             <input
               type="number"
               value={targetValue}
               onChange={(e) => setTargetValue(Number(e.target.value))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               min="1"
               required
             />
@@ -192,28 +192,28 @@ function CreateChallengeDialog({ onClose, onSuccess }: { onClose: () => void; on
           
           {/* 开始日期 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               开始日期
             </label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               required
             />
           </div>
           
           {/* 结束日期 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               结束日期
             </label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               min={startDate}
               required
             />
@@ -224,7 +224,7 @@ function CreateChallengeDialog({ onClose, onSuccess }: { onClose: () => void; on
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-300 bg-white dark:bg-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
             >
               取消
             </button>
@@ -261,9 +261,9 @@ function UpdateProgressDialog({ challenge, currentProgress, onClose, onUpdate }:
   
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-gray-800">更新进度</h2>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">更新进度</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -274,25 +274,25 @@ function UpdateProgressDialog({ challenge, currentProgress, onClose, onUpdate }:
         
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* 挑战信息 */}
-          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+          <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
             <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${challengeType?.color} flex items-center justify-center text-2xl`}>
               {challengeType?.icon}
             </div>
             <div>
-              <h3 className="font-bold text-gray-800">{challenge.title}</h3>
-              <p className="text-sm text-gray-500">目标: {challenge.targetValue}</p>
+              <h3 className="font-bold text-gray-800 dark:text-white">{challenge.title}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">目标: {challenge.targetValue}</p>
             </div>
           </div>
           
           {/* 当前进度显示 */}
           <div className="text-center">
-            <div className="text-5xl font-bold text-purple-600 mb-2">{progress}</div>
-            <div className="text-sm text-gray-500">当前进度</div>
+            <div className="text-5xl font-bold text-purple-600 dark:text-purple-400 mb-2">{progress}</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">当前进度</div>
           </div>
           
           {/* 滑块 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               拖动滑块调整
             </label>
             <input
@@ -301,9 +301,9 @@ function UpdateProgressDialog({ challenge, currentProgress, onClose, onUpdate }:
               max={challenge.targetValue}
               value={progress}
               onChange={(e) => setProgress(Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-500"
+              className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-purple-500"
             />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
               <span>0</span>
               <span>{challenge.targetValue}</span>
             </div>
@@ -311,21 +311,21 @@ function UpdateProgressDialog({ challenge, currentProgress, onClose, onUpdate }:
           
           {/* 步进器 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               快速调整
             </label>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setProgress(Math.max(0, progress - 10))}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded-lg transition-colors"
               >
                 -10
               </button>
               <button
                 type="button"
                 onClick={() => setProgress(Math.max(0, progress - 1))}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded-lg transition-colors"
               >
                 -1
               </button>
@@ -333,21 +333,21 @@ function UpdateProgressDialog({ challenge, currentProgress, onClose, onUpdate }:
                 type="number"
                 value={progress}
                 onChange={(e) => setProgress(Math.max(0, Math.min(challenge.targetValue, Number(e.target.value))))}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg text-center focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 min="0"
                 max={challenge.targetValue}
               />
               <button
                 type="button"
                 onClick={() => setProgress(Math.min(challenge.targetValue, progress + 1))}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded-lg transition-colors"
               >
                 +1
               </button>
               <button
                 type="button"
                 onClick={() => setProgress(Math.min(challenge.targetValue, progress + 10))}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded-lg transition-colors"
               >
                 +10
               </button>
@@ -355,14 +355,14 @@ function UpdateProgressDialog({ challenge, currentProgress, onClose, onUpdate }:
           </div>
           
           {/* 进度百分比 */}
-          <div className="bg-purple-50 rounded-xl p-4">
-            <div className="flex justify-between text-sm text-gray-600 mb-2">
+          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4">
+            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-2">
               <span>完成度</span>
-              <span className="font-bold text-purple-600">
+              <span className="font-bold text-purple-600 dark:text-purple-400">
                 {Math.round((progress / challenge.targetValue) * 100)}%
               </span>
             </div>
-            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <div
                 className={`h-full bg-gradient-to-r ${challengeType?.color} transition-all duration-300`}
                 style={{ width: `${(progress / challenge.targetValue) * 100}%` }}
@@ -375,7 +375,7 @@ function UpdateProgressDialog({ challenge, currentProgress, onClose, onUpdate }:
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
             >
               取消
             </button>
@@ -446,7 +446,7 @@ function ChallengeCard({ challenge }: { challenge: any }) {
   const daysLeft = Math.ceil((new Date(challenge.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
   
   return (
-    <div className={`bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all`}>
+    <div className={`bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all`}>
       {/* 头部 */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -454,8 +454,8 @@ function ChallengeCard({ challenge }: { challenge: any }) {
             {challengeType?.icon}
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-800">{challenge.title}</h3>
-            <p className="text-sm text-gray-500">{challenge.description}</p>
+            <h3 className="text-lg font-bold text-gray-800 dark:text-white">{challenge.title}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{challenge.description}</p>
           </div>
         </div>
         <span className={`${status.color} text-white text-xs px-3 py-1 rounded-full`}>
@@ -466,11 +466,11 @@ function ChallengeCard({ challenge }: { challenge: any }) {
       {/* 进度 */}
       {challenge.status === 'active' && (
         <div className="mb-4">
-          <div className="flex justify-between text-sm text-gray-600 mb-2">
+          <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-2">
             <span>总进度</span>
             <span>{totalProgress} / {challenge.targetValue * 2}</span>
           </div>
-          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
               className={`h-full bg-gradient-to-r ${challengeType?.color} transition-all duration-300`}
               style={{ width: `${progressPercent}%` }}
@@ -479,26 +479,26 @@ function ChallengeCard({ challenge }: { challenge: any }) {
           
           {/* 双方进度 */}
           <div className="grid grid-cols-2 gap-4 mt-3">
-            <div className="text-center p-2 bg-blue-50 rounded-lg">
-              <div className="text-xs text-gray-600 mb-1">我的进度</div>
-              <div className="text-lg font-bold text-blue-600">{myProgress}</div>
+            <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">我的进度</div>
+              <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{myProgress}</div>
             </div>
-            <div className="text-center p-2 bg-pink-50 rounded-lg">
-              <div className="text-xs text-gray-600 mb-1">TA的进度</div>
-              <div className="text-lg font-bold text-pink-600">{partnerProgress}</div>
+            <div className="text-center p-2 bg-pink-50 dark:bg-pink-900/20 rounded-lg">
+              <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">TA的进度</div>
+              <div className="text-lg font-bold text-pink-600 dark:text-pink-400">{partnerProgress}</div>
             </div>
           </div>
         </div>
       )}
       
       {/* 时间信息 */}
-      <div className="flex justify-between text-xs text-gray-500 mb-4">
+      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
         <span>开始：{new Date(challenge.startDate).toLocaleDateString()}</span>
         <span>结束：{new Date(challenge.endDate).toLocaleDateString()}</span>
       </div>
       
       {daysLeft > 0 && challenge.status === 'active' && (
-        <div className="text-center text-sm text-orange-600 font-medium mb-4">
+        <div className="text-center text-sm text-orange-600 dark:text-orange-400 font-medium mb-4">
           还剩 {daysLeft} 天
         </div>
       )}
@@ -554,10 +554,10 @@ function ChallengeCard({ challenge }: { challenge: any }) {
       </div>
       
       {/* 评论区 */}
-      <div className="mt-4 pt-4 border-t border-gray-200">
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-purple-600 transition-colors"
+          className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
         >
           <span>💬</span>
           <span>评论 ({comments?.length || 0})</span>
@@ -570,21 +570,21 @@ function ChallengeCard({ challenge }: { challenge: any }) {
             {comments && comments.length > 0 && (
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {comments.map((comment: any) => (
-                  <div key={comment.id} className="bg-gray-50 rounded-lg p-3">
+                  <div key={comment.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <div className="text-sm text-gray-600 mb-1">
+                        <div className="text-sm text-gray-600 dark:text-gray-300 mb-1">
                           {comment.userId === challenge.createdBy ? '👦 我' : '👧 TA'}
-                          <span className="text-xs text-gray-400 ml-2">
+                          <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">
                             {new Date(comment.createdAt).toLocaleString()}
                           </span>
                         </div>
-                        <div className="text-gray-800">{comment.content}</div>
+                        <div className="text-gray-800 dark:text-gray-200">{comment.content}</div>
                       </div>
                       {comment.userId === challenge.createdBy && (
                         <button
                           onClick={() => deleteCommentMutation.mutate({ id: comment.id })}
-                          className="text-red-500 hover:text-red-700 text-sm ml-2"
+                          className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm ml-2"
                         >
                           删除
                         </button>
@@ -602,7 +602,7 @@ function ChallengeCard({ challenge }: { challenge: any }) {
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="写下你的鼓励..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 onKeyPress={(e) => {
                   if (e.key === 'Enter' && commentText.trim()) {
                     addCommentMutation.mutate({
@@ -639,7 +639,7 @@ function ChallengeCard({ challenge }: { challenge: any }) {
                       content: text,
                     });
                   }}
-                  className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-full hover:bg-purple-50 hover:border-purple-300 transition-colors"
+                  className="px-3 py-1 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 rounded-full hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-500 transition-colors"
                 >
                   {text}
                 </button>
@@ -669,11 +669,11 @@ export default function Challenges() {
   }) || [];
   
   return (
-    <div className="min-h-screen bg-gray-50 p-6 pb-20">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 pb-20">
       {/* 头部 */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">情侣挑战</h1>
-        <p className="text-gray-600">一起挑战，共同成长</p>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">情侣挑战</h1>
+        <p className="text-gray-600 dark:text-gray-400">一起挑战，共同成长</p>
       </div>
       
       {/* 创建按钮 */}
@@ -699,7 +699,7 @@ export default function Challenges() {
             className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
               filter === f.id
                 ? 'bg-purple-500 text-white shadow-md'
-                : 'bg-white text-gray-600 hover:bg-gray-100'
+                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
             {f.label}
@@ -710,10 +710,10 @@ export default function Challenges() {
       {/* 挑战列表 */}
       <div className="space-y-4">
         {filteredChallenges.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <div className="text-6xl mb-4">🎯</div>
             <p>暂无挑战</p>
-            <p className="text-sm mt-2">创建一个挑战，开始你们的共同目标吧！</p>
+            <p className="text-sm mt-2 text-gray-400 dark:text-gray-500">创建一个挑战，开始你们的共同目标吧！</p>
           </div>
         ) : (
           filteredChallenges.map((challenge: any) => (

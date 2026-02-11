@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { 
   Heart, Camera, BookOpen, Calendar, Star, MessageCircle, 
   Smile, Gift, Clock, MapPin, Film, LogOut, Settings, Moon, Sun,
-  Trophy, Milestone, ListChecks, Wallet, Timer, Handshake
+  Trophy, Milestone, ListChecks, Wallet, Timer, Handshake, UtensilsCrossed, Dumbbell, Target
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
@@ -40,6 +40,9 @@ const navItems = [
   { icon: Timer, title: "倒计时", path: "/countdown", color: "text-fuchsia-500 dark:text-fuchsia-400" },
   { icon: Handshake, title: "承诺", path: "/promises", color: "text-sky-500 dark:text-sky-400" },
   { icon: Heart, title: "经期", path: "/period-tracker", color: "text-pink-600 dark:text-pink-400" },
+  { icon: UtensilsCrossed, title: "菜单板", path: "/menu-board", color: "text-orange-600 dark:text-orange-400" },
+  { icon: Dumbbell, title: "健身", path: "/fitness", color: "text-blue-600 dark:text-blue-400" },
+  { icon: Target, title: "挑战", path: "/challenges", color: "text-purple-600 dark:text-purple-400" },
 ];
 
 export default function Dashboard() {

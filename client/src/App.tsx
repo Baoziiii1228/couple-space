@@ -31,6 +31,9 @@ const Ledger = lazy(() => import("./pages/Ledger"));
 const Countdown = lazy(() => import("./pages/Countdown"));
 const Promises = lazy(() => import("./pages/Promises"));
 const PeriodTracker = lazy(() => import("./pages/PeriodTracker"));
+const MenuBoard = lazy(() => import("./pages/MenuBoard"));
+const Fitness = lazy(() => import("./pages/Fitness"));
+const Challenges = lazy(() => import("./pages/Challenges"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading 组件
@@ -71,6 +74,9 @@ function Router() {
         <Route path="/countdown" component={Countdown} />
         <Route path="/promises" component={Promises} />
         <Route path="/period-tracker" component={PeriodTracker} />
+        <Route path="/menu-board" component={MenuBoard} />
+        <Route path="/fitness" component={Fitness} />
+        <Route path="/challenges" component={Challenges} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
