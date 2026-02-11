@@ -589,6 +589,8 @@ export const appRouter = router({
         title: z.string(),
         description: z.string().optional(),
         category: z.string().optional(),
+        startTime: z.string().optional(),
+        deadline: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const couple = await getUserCouple(ctx.user.id);
@@ -597,6 +599,8 @@ export const appRouter = router({
           title: input.title,
           description: input.description ?? null,
           category: input.category ?? null,
+          startTime: input.startTime ? new Date(input.startTime) : null,
+          deadline: input.deadline ? new Date(input.deadline) : null,
         });
         return { id };
       }),
@@ -1286,8 +1290,118 @@ export const appRouter = router({
         await db.deleteLedgerRecord(input.id, couple.id);
         return { success: true };
       }),
+   }),
+
+  // ==================== 倒计时 ====================
+  countdown: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const couple = await getUserCouple(ctx.user.id);
+      return await db.getCountdownsByCoupleId(couple.id);
+    }),
+
+    create: protectedProcedure
+      .input(z.object({
+        title: z.string(),
+        targetDate: z.string(),
+        type: z.enum(["milestone", "meetup", "custom"]),
+        description: z.string().optional(),
+        emoji: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        const id = await db.createCountdown({
+          coupleId: couple.id,
+          userId: ctx.user.id,
+          title: input.title,
+          targetDate: new Date(input.targetDate),
+          type: input.type,
+          description: input.description ?? null,
+          emoji: input.emoji ?? null,
+        });
+        return { id };
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().optional(),
+        targetDate: z.string().optional(),
+        description: z.string().optional(),
+        emoji: z.string().optional(),
+        isCompleted: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, targetDate, ...rest } = input;
+        await db.updateCountdown(id, {
+          ...rest,
+          targetDate: targetDate ? new Date(targetDate) : undefined,
+        });
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteCountdown(input.id, couple.id);
+        return { success: true };
+      }),
   }),
 
+  // ==================== 承诺 ====================
+  promise: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const couple = await getUserCouple(ctx.user.id);
+      const promises = await db.getPromisesByCoupleId(couple.id);
+      return promises.map(p => ({
+        ...p,
+        isOwn: p.userId === ctx.user.id,
+      }));
+    }),
+
+    create: protectedProcedure
+      .input(z.object({
+        content: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        const id = await db.createPromise({
+          coupleId: couple.id,
+          userId: ctx.user.id,
+          content: input.content,
+        });
+        return { id };
+      }),
+
+    complete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updatePromise(input.id, {
+          status: "completed",
+          completedAt: new Date(),
+        });
+        return { success: true };
+      }),
+
+    confirm: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updatePromise(input.id, {
+          status: "confirmed",
+          confirmedAt: new Date(),
+          confirmedBy: ctx.user.id,
+        });
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deletePromise(input.id, couple.id);
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

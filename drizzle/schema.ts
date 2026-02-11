@@ -139,6 +139,8 @@ export const tasks = mysqlTable("tasks", {
   completedAt: timestamp("completedAt"),
   completedBy: int("completedBy"),
   photoUrl: text("photoUrl"),
+  startTime: timestamp("startTime"),
+  deadline: timestamp("deadline"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -179,6 +181,7 @@ export const moodRecords = mysqlTable("moodRecords", {
   userId: int("userId").notNull(),
   mood: mysqlEnum("mood", ["happy", "excited", "peaceful", "sad", "angry", "anxious", "tired", "loving"]).notNull(),
   note: text("note"),
+  images: json("images").$type<string[]>(),
   date: timestamp("date").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
@@ -248,11 +251,12 @@ export const todoLists = mysqlTable("todoLists", {
   id: int("id").autoincrement().primaryKey(),
   coupleId: int("coupleId").notNull(),
   creatorId: int("creatorId").notNull(),
-  type: mysqlEnum("type", ["movie", "restaurant", "music", "book", "other"]).notNull(),
+  type: mysqlEnum("type", ["movie", "tv", "restaurant", "music", "book", "travel", "activity", "other"]).notNull(),
   title: varchar("title", { length: 200 }).notNull(),
   description: text("description"),
   imageUrl: text("imageUrl"),
   rating: int("rating"),
+  tags: json("tags").$type<string[]>(),
   isCompleted: boolean("isCompleted").default(false).notNull(),
   completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -346,3 +350,40 @@ export const gameRecords = mysqlTable("gameRecords", {
 
 export type GameRecord = typeof gameRecords.$inferSelect;
 export type InsertGameRecord = typeof gameRecords.$inferInsert;
+
+// ==================== 倒计时 ====================
+
+export const countdowns = mysqlTable("countdowns", {
+  id: int("id").autoincrement().primaryKey(),
+  coupleId: int("coupleId").notNull(),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  targetDate: timestamp("targetDate").notNull(),
+  type: mysqlEnum("type", ["milestone", "meetup", "custom"]).notNull(),
+  description: text("description"),
+  emoji: varchar("emoji", { length: 10 }),
+  isCompleted: boolean("isCompleted").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Countdown = typeof countdowns.$inferSelect;
+export type InsertCountdown = typeof countdowns.$inferInsert;
+
+// ==================== 承诺 ====================
+
+export const promises = mysqlTable("promises", {
+  id: int("id").autoincrement().primaryKey(),
+  coupleId: int("coupleId").notNull(),
+  userId: int("userId").notNull(),
+  content: text("content").notNull(),
+  status: mysqlEnum("status", ["pending", "completed", "confirmed"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+  confirmedAt: timestamp("confirmedAt"),
+  confirmedBy: int("confirmedBy"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Promise = typeof promises.$inferSelect;
+export type InsertPromise = typeof promises.$inferInsert;
