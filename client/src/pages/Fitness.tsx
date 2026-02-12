@@ -79,7 +79,7 @@ export default function Fitness() {
     onError: (err) => toast.error(err.message),
   });
 
-  const batchDeleteRecords = trpc.fitness.batchDelete.useMutation({
+  const batchDeleteRecords = trpc.fitness.batchDeleteRecords.useMutation({
     onSuccess: () => {
       toast.success("批量删除成功");
       setDeleteSelectedIds([]);

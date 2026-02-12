@@ -62,7 +62,7 @@ export default function MenuBoard() {
     },
   });
 
-  const batchDeleteItem = trpc.menu.batchDelete.useMutation({
+  const batchDeleteItem = trpc.menu.batchDeleteItems.useMutation({
     onSuccess: () => {
       utils.menu.listItems.invalidate();
       setDeleteSelectedIds([]);
