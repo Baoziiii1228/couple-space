@@ -1,0 +1,182 @@
+-- 创建所有缺失的数据库表
+-- 数据库: B3pbHeGzcLSL2xC6J6Sk9a
+
+-- 1. 倒计时表
+CREATE TABLE IF NOT EXISTS `countdowns` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `coupleId` INT NOT NULL,
+  `userId` INT NOT NULL,
+  `title` VARCHAR(200) NOT NULL,
+  `targetDate` TIMESTAMP NOT NULL,
+  `type` ENUM('milestone', 'meetup', 'custom') NOT NULL,
+  `description` TEXT,
+  `emoji` VARCHAR(10),
+  `isCompleted` BOOLEAN NOT NULL DEFAULT FALSE,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 2. 承诺表
+CREATE TABLE IF NOT EXISTS `promises` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `coupleId` INT NOT NULL,
+  `userId` INT NOT NULL,
+  `content` TEXT NOT NULL,
+  `status` ENUM('pending', 'completed', 'confirmed') NOT NULL DEFAULT 'pending',
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `completedAt` TIMESTAMP NULL,
+  `confirmedAt` TIMESTAMP NULL,
+  `confirmedBy` INT,
+  `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 3. 经期记录表
+CREATE TABLE IF NOT EXISTS `periodRecords` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `userId` INT NOT NULL,
+  `startDate` TIMESTAMP NOT NULL,
+  `endDate` TIMESTAMP NULL,
+  `cycleLength` INT,
+  `periodLength` INT,
+  `symptoms` JSON,
+  `painLevel` INT,
+  `moodLevel` INT,
+  `notes` TEXT,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 4. 健身记录表
+CREATE TABLE IF NOT EXISTS `fitnessRecords` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `userId` INT NOT NULL,
+  `date` TIMESTAMP NOT NULL,
+  `weight` DECIMAL(5, 2),
+  `exerciseType` VARCHAR(50),
+  `duration` INT,
+  `calories` INT,
+  `notes` TEXT,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 5. 健身目标表
+CREATE TABLE IF NOT EXISTS `fitnessGoals` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `userId` INT NOT NULL,
+  `targetWeight` DECIMAL(5, 2),
+  `startWeight` DECIMAL(5, 2),
+  `startDate` TIMESTAMP NOT NULL,
+  `targetDate` TIMESTAMP NULL,
+  `weeklyExerciseGoal` INT,
+  `isActive` BOOLEAN DEFAULT TRUE,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 6. 成就定义表
+CREATE TABLE IF NOT EXISTS `achievementDefinitions` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `category` VARCHAR(50) NOT NULL,
+  `name` VARCHAR(100) NOT NULL,
+  `description` TEXT,
+  `icon` VARCHAR(50),
+  `tier1Target` INT NOT NULL,
+  `tier2Target` INT NOT NULL,
+  `tier3Target` INT NOT NULL,
+  `tier1Reward` VARCHAR(100),
+  `tier2Reward` VARCHAR(100),
+  `tier3Reward` VARCHAR(100),
+  `type` VARCHAR(50) NOT NULL,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 7. 用户成就进度表
+CREATE TABLE IF NOT EXISTS `userAchievementProgress` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `userId` INT NOT NULL,
+  `achievementId` INT NOT NULL,
+  `currentProgress` INT NOT NULL DEFAULT 0,
+  `tier` INT NOT NULL DEFAULT 0,
+  `unlockedAt` TIMESTAMP NULL,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 8. 菜单板 - 菜品表
+CREATE TABLE IF NOT EXISTS `menuItems` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `userId` INT NOT NULL,
+  `name` VARCHAR(100) NOT NULL,
+  `category` VARCHAR(50),
+  `zone` VARCHAR(20) DEFAULT 'other',
+  `rating` INT DEFAULT 3,
+  `imageUrl` TEXT,
+  `notes` TEXT,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 9. 菜单板 - 点菜历史表
+CREATE TABLE IF NOT EXISTS `orderHistory` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `coupleId` INT NOT NULL,
+  `orderedBy` INT NOT NULL,
+  `menuItemIds` JSON,
+  `orderDate` TIMESTAMP NOT NULL,
+  `completed` BOOLEAN DEFAULT FALSE,
+  `rating` INT,
+  `notes` TEXT,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 10. 健身点赞表
+CREATE TABLE IF NOT EXISTS `fitnessLikes` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `recordId` INT NOT NULL,
+  `userId` INT NOT NULL,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 11. 健身评论表
+CREATE TABLE IF NOT EXISTS `fitnessComments` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `recordId` INT NOT NULL,
+  `userId` INT NOT NULL,
+  `content` TEXT NOT NULL,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 12. 情侣挑战表
+CREATE TABLE IF NOT EXISTS `challenges` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `coupleId` INT NOT NULL,
+  `createdBy` INT NOT NULL,
+  `type` VARCHAR(50) NOT NULL,
+  `title` VARCHAR(200) NOT NULL,
+  `description` TEXT,
+  `targetValue` INT NOT NULL,
+  `startDate` TIMESTAMP NOT NULL,
+  `endDate` TIMESTAMP NOT NULL,
+  `status` VARCHAR(20) NOT NULL DEFAULT 'pending',
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 13. 挑战进度表
+CREATE TABLE IF NOT EXISTS `challengeProgress` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `challengeId` INT NOT NULL,
+  `userId` INT NOT NULL,
+  `currentProgress` INT NOT NULL DEFAULT 0,
+  `lastUpdated` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 14. 挑战评论表
+CREATE TABLE IF NOT EXISTS `challengeComments` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `challengeId` INT NOT NULL,
+  `userId` INT NOT NULL,
+  `content` TEXT NOT NULL,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
