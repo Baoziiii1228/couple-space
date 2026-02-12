@@ -665,7 +665,8 @@ export const appRouter = router({
       }),
 
     getDailyQuote: publicProcedure.query(async () => {
-      return await db.getRandomQuote();
+      const quote = await db.getRandomQuote();
+      return quote ?? null;
     }),
   }),
 
@@ -687,7 +688,8 @@ export const appRouter = router({
 
     getTodayMood: protectedProcedure.query(async ({ ctx }) => {
       const couple = await getUserCouple(ctx.user.id);
-      return await db.getTodayMoodByUserId(ctx.user.id, couple.id);
+      const mood = await db.getTodayMoodByUserId(ctx.user.id, couple.id);
+      return mood ?? null;
     }),
 
     record: protectedProcedure
