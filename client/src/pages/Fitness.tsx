@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, TrendingDown, TrendingUp, Dumbbell, Heart, Target, ThumbsUp, MessageCircle } from "lucide-react";
+import { ArrowLeft, Plus, TrendingDown, TrendingUp, Dumbbell, Heart, Target, ThumbsUp, MessageCircle, Trash2, CheckSquare } from "lucide-react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -78,6 +78,41 @@ export default function Fitness() {
     },
     onError: (err) => toast.error(err.message),
   });
+
+  const batchDeleteRecords = trpc.fitness.batchDelete.useMutation({
+    onSuccess: () => {
+      toast.success("批量删除成功");
+      setDeleteSelectedIds([]);
+      setIsDeleteMode(false);
+      refetchRecords();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [deleteSelectedIds, setDeleteSelectedIds] = useState<number[]>([]);
+
+  const toggleDeleteSelect = (id: number) => {
+    setDeleteSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllForDelete = () => {
+    if (!records) return;
+    if (deleteSelectedIds.length === records.length) {
+      setDeleteSelectedIds([]);
+    } else {
+      setDeleteSelectedIds(records.map((r: any) => r.id));
+    }
+  };
+
+  const handleBatchDelete = () => {
+    if (deleteSelectedIds.length === 0) return;
+    if (confirm(`确定要删除选中的 ${deleteSelectedIds.length} 条记录吗？`)) {
+      batchDeleteRecords.mutate({ ids: deleteSelectedIds });
+    }
+  };
 
   const handleCreate = () => {
     if (!date) {
@@ -183,6 +218,19 @@ export default function Fitness() {
             <h1 className="text-xl font-semibold">💪 健身记录</h1>
           </div>
           <div className="flex gap-2">
+            {records && records.length > 0 && (
+              <Button
+                variant={isDeleteMode ? "default" : "ghost"}
+                size="sm"
+                onClick={() => {
+                  setIsDeleteMode(!isDeleteMode);
+                  setDeleteSelectedIds([]);
+                }}
+              >
+                <CheckSquare className="w-4 h-4 mr-1" />
+                {isDeleteMode ? "取消" : "管理"}
+              </Button>
+            )}
             {!goal && (
               <Dialog open={isGoalOpen} onOpenChange={setIsGoalOpen}>
                 <DialogTrigger asChild>
@@ -434,6 +482,29 @@ export default function Fitness() {
           </motion.div>
         )}
 
+        {/* 批量操作栏 */}
+        {isDeleteMode && (
+          <div className="glass rounded-xl p-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" onClick={selectAllForDelete}>
+                {records && deleteSelectedIds.length === records.length ? '取消全选' : '全选'}
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                已选 {deleteSelectedIds.length} 项
+              </span>
+            </div>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBatchDelete}
+              disabled={deleteSelectedIds.length === 0 || batchDeleteRecords.isPending}
+            >
+              <Trash2 className="w-4 h-4 mr-1" />
+              {batchDeleteRecords.isPending ? '删除中...' : `删除 (${deleteSelectedIds.length})`}
+            </Button>
+          </div>
+        )}
+
         {/* 记录列表 */}
         <Card className="glass">
           <CardHeader>
@@ -452,9 +523,22 @@ export default function Fitness() {
                     key={record.id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+                    className={`flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors ${
+                      isDeleteMode && deleteSelectedIds.includes(record.id) ? 'ring-2 ring-primary' : ''
+                    }`}
+                    onClick={isDeleteMode ? () => toggleDeleteSelect(record.id) : undefined}
                   >
-                    <div className="flex-1">
+                    <div className="flex-1 flex items-start gap-2">
+                      {isDeleteMode && (
+                        <div className={`w-5 h-5 mt-1 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                          deleteSelectedIds.includes(record.id)
+                            ? 'bg-primary border-primary text-white'
+                            : 'border-gray-300 dark:border-gray-600'
+                        }`}>
+                          {deleteSelectedIds.includes(record.id) && <span className="text-xs">✓</span>}
+                        </div>
+                      )}
+                      <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-sm text-muted-foreground">
                           {new Date(record.date).toLocaleDateString('zh-CN')}
@@ -487,15 +571,18 @@ export default function Fitness() {
                         <p className="text-sm text-muted-foreground mt-1">{record.notes}</p>
                       )}
                       <FitnessRecordActions recordId={record.id} />
+                      </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteRecord.mutate({ id: record.id })}
-                      disabled={deleteRecord.isPending}
-                    >
-                      删除
-                    </Button>
+                    {!isDeleteMode && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteRecord.mutate({ id: record.id })}
+                        disabled={deleteRecord.isPending}
+                      >
+                        删除
+                      </Button>
+                    )}
                   </motion.div>
                 ))}
               </div>

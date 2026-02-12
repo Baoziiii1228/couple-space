@@ -22,6 +22,8 @@ export default function MenuBoard() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [randomResult, setRandomResult] = useState<any>(null);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [deleteSelectedIds, setDeleteSelectedIds] = useState<number[]>([]);
 
   // Form state
   const [name, setName] = useState("");
@@ -59,6 +61,36 @@ export default function MenuBoard() {
       toast.success("菜品已删除");
     },
   });
+
+  const batchDeleteItem = trpc.menu.batchDelete.useMutation({
+    onSuccess: () => {
+      utils.menu.listItems.invalidate();
+      setDeleteSelectedIds([]);
+      setIsDeleteMode(false);
+      toast.success("批量删除成功");
+    },
+  });
+
+  const toggleDeleteSelect = (id: number) => {
+    setDeleteSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllForDelete = () => {
+    if (deleteSelectedIds.length === myItems.length) {
+      setDeleteSelectedIds([]);
+    } else {
+      setDeleteSelectedIds(myItems.map((i: any) => i.id));
+    }
+  };
+
+  const handleBatchDelete = () => {
+    if (deleteSelectedIds.length === 0) return;
+    if (confirm(`确定要删除选中的 ${deleteSelectedIds.length} 道菜吗？`)) {
+      batchDeleteItem.mutate({ ids: deleteSelectedIds });
+    }
+  };
 
   const createOrder = trpc.menu.createOrder.useMutation({
     onSuccess: () => {
@@ -177,6 +209,22 @@ export default function MenuBoard() {
             <h1 className="text-2xl font-bold text-gray-800 dark:text-white">点菜板</h1>
           </div>
           <div className="flex gap-2">
+            {activeTab === "my" && myItems.length > 0 && (
+              <button
+                onClick={() => {
+                  setIsDeleteMode(!isDeleteMode);
+                  setDeleteSelectedIds([]);
+                }}
+                className={`px-4 py-2 rounded-lg transition flex items-center gap-2 ${
+                  isDeleteMode
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-white/50 dark:bg-white/10 hover:bg-white/70 dark:hover:bg-white/20 text-gray-800 dark:text-white'
+                }`}
+              >
+                <Trash2 className="w-4 h-4" />
+                {isDeleteMode ? '取消' : '管理'}
+              </button>
+            )}
             <button
               onClick={() => setShowHistoryDialog(true)}
               className="px-4 py-2 bg-white/50 dark:bg-white/10 hover:bg-white/70 dark:hover:bg-white/20 rounded-lg transition flex items-center gap-2 text-gray-800 dark:text-white"
@@ -220,8 +268,30 @@ export default function MenuBoard() {
           </button>
         </div>
 
+        {/* 批量操作栏 */}
+        {isDeleteMode && (
+          <div className="glass rounded-xl p-3 flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={selectAllForDelete}
+                className="px-3 py-1 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200"
+              >
+                {deleteSelectedIds.length === myItems.length ? '取消全选' : '全选'}
+              </button>
+              <span className="text-sm text-gray-500 dark:text-gray-400">已选 {deleteSelectedIds.length} 项</span>
+            </div>
+            <button
+              onClick={handleBatchDelete}
+              disabled={deleteSelectedIds.length === 0 || batchDeleteItem.isPending}
+              className="px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition disabled:opacity-50"
+            >
+              {batchDeleteItem.isPending ? '删除中...' : `删除 (${deleteSelectedIds.length})`}
+            </button>
+          </div>
+        )}
+
         {/* 添加菜品按钮 */}
-        {activeTab === "my" && (
+        {activeTab === "my" && !isDeleteMode && (
           <button
             onClick={() => {
               resetForm();
@@ -259,8 +329,22 @@ export default function MenuBoard() {
                       onClick={() => activeTab === "partner" && toggleSelectItem(item.id)}
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-bold text-gray-800 dark:text-white text-lg">{item.name}</h3>
-                        {activeTab === "my" && (
+                        <div className="flex items-center gap-2">
+                          {isDeleteMode && activeTab === "my" && (
+                            <div
+                              onClick={(e) => { e.stopPropagation(); toggleDeleteSelect(item.id); }}
+                              className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${
+                                deleteSelectedIds.includes(item.id)
+                                  ? 'bg-red-500 border-red-500 text-white'
+                                  : 'border-gray-300 dark:border-gray-600'
+                              }`}
+                            >
+                              {deleteSelectedIds.includes(item.id) && <span className="text-xs">✓</span>}
+                            </div>
+                          )}
+                          <h3 className="font-bold text-gray-800 dark:text-white text-lg">{item.name}</h3>
+                        </div>
+                        {activeTab === "my" && !isDeleteMode && (
                           <div className="flex gap-1">
                             <button
                               onClick={() => handleEdit(item)}

@@ -4,7 +4,7 @@ import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Textarea } from "../components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
-import { Plus, Check, CheckCheck, Trash2, Heart, ArrowLeft, TrendingUp } from "lucide-react";
+import { Plus, Check, CheckCheck, Trash2, Heart, ArrowLeft, TrendingUp, CheckSquare } from "lucide-react";
 import { useAuth } from "../_core/hooks/useAuth";
 import { useTheme } from "../contexts/ThemeContext";
 import { useLocation } from "wouter";
@@ -28,14 +28,16 @@ export default function Promises() {
   const [, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [content, setContent] = useState("");
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const { data: promises = [], refetch } = trpc.promise.list.useQuery();
   const createMutation = trpc.promise.create.useMutation();
   const completeMutation = trpc.promise.complete.useMutation();
   const confirmMutation = trpc.promise.confirm.useMutation();
   const deleteMutation = trpc.promise.delete.useMutation();
+  const batchDeleteMutation = trpc.promise.batchDelete.useMutation();
 
-  // React Query v5: 使用 useEffect 替代 onSuccess
   useEffect(() => {
     if (createMutation.isSuccess) {
       refetch();
@@ -54,15 +56,44 @@ export default function Promises() {
     }
   }, [completeMutation.isSuccess, confirmMutation.isSuccess, deleteMutation.isSuccess]);
 
+  useEffect(() => {
+    if (batchDeleteMutation.isSuccess) {
+      refetch();
+      setSelectedIds([]);
+      setIsSelectMode(false);
+      batchDeleteMutation.reset();
+    }
+  }, [batchDeleteMutation.isSuccess]);
+
   const handleCreate = () => {
     if (!content.trim()) return;
     createMutation.mutate({ content });
   };
 
+  const handleBatchDelete = () => {
+    if (selectedIds.length === 0) return;
+    if (confirm(`确定要删除选中的 ${selectedIds.length} 个承诺吗？`)) {
+      batchDeleteMutation.mutate({ ids: selectedIds });
+    }
+  };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const selectAll = () => {
+    if (selectedIds.length === myPromises.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(myPromises.map(p => p.id));
+    }
+  };
+
   const myPromises = promises.filter((p) => p.isOwn);
   const theirPromises = promises.filter((p) => !p.isOwn);
 
-  // 计算承诺统计
   const myStats = useMemo(() => {
     const total = myPromises.length;
     const pending = myPromises.filter(p => p.status === 'pending').length;
@@ -114,58 +145,95 @@ export default function Promises() {
             </div>
           </div>
 
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white">
-                <Plus className="w-4 h-4 mr-2" />
-                许下承诺
+          <div className="flex items-center gap-2">
+            {myPromises.length > 0 && (
+              <Button
+                variant={isSelectMode ? "default" : "ghost"}
+                size="sm"
+                onClick={() => {
+                  setIsSelectMode(!isSelectMode);
+                  setSelectedIds([]);
+                }}
+              >
+                <CheckSquare className="w-4 h-4 mr-1" />
+                {isSelectMode ? "取消" : "管理"}
               </Button>
-            </DialogTrigger>
-            <DialogContent className="dark:bg-gray-800 dark:text-white">
-              <DialogHeader>
-                <DialogTitle className="dark:text-white">许下承诺</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium dark:text-white">快捷标签</label>
-                  <div className="flex flex-wrap gap-2">
-                    {quickPromiseTags.map((tag, index) => (
-                      <Button
-                        key={index}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="text-xs h-7 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
-                        onClick={() => setContent(tag.text)}
-                      >
-                        {tag.label}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                <Textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="写下你对TA的承诺..."
-                  rows={5}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-                />
-                <Button
-                  onClick={handleCreate}
-                  className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white"
-                  disabled={!content.trim() || createMutation.isPending}
-                >
-                  {createMutation.isPending ? "创建中..." : "许下承诺"}
+            )}
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white">
+                  <Plus className="w-4 h-4 mr-2" />
+                  许下承诺
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="dark:bg-gray-800 dark:text-white">
+                <DialogHeader>
+                  <DialogTitle className="dark:text-white">许下承诺</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium dark:text-white">快捷标签</label>
+                    <div className="flex flex-wrap gap-2">
+                      {quickPromiseTags.map((tag, index) => (
+                        <Button
+                          key={index}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-7 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
+                          onClick={() => setContent(tag.text)}
+                        >
+                          {tag.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <Textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="写下你对TA的承诺..."
+                    rows={5}
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                  />
+                  <Button
+                    onClick={handleCreate}
+                    className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white"
+                    disabled={!content.trim() || createMutation.isPending}
+                  >
+                    {createMutation.isPending ? "创建中..." : "许下承诺"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
+
+        {/* 批量操作栏 */}
+        {isSelectMode && (
+          <div className="glass rounded-xl p-3 flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" onClick={selectAll}>
+                {selectedIds.length === myPromises.length ? "取消全选" : "全选"}
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                已选 {selectedIds.length} 项（仅限我的承诺）
+              </span>
+            </div>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBatchDelete}
+              disabled={selectedIds.length === 0 || batchDeleteMutation.isPending}
+            >
+              <Trash2 className="w-4 h-4 mr-1" />
+              {batchDeleteMutation.isPending ? "删除中..." : `删除 (${selectedIds.length})`}
+            </Button>
+          </div>
+        )}
 
         {/* 统计概览 */}
         {promises.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
-            {/* 我的统计 */}
             <Card className="p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-800 dark:text-gray-200">我的承诺进度</h3>
@@ -197,7 +265,6 @@ export default function Promises() {
               </div>
             </Card>
 
-            {/* TA的统计 */}
             <Card className="p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-800 dark:text-gray-200">TA的承诺进度</h3>
@@ -243,24 +310,43 @@ export default function Promises() {
               {myPromises.map((promise) => {
                 const badge = getStatusBadge(promise.status);
                 return (
-                  <Card key={promise.id} className="p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
+                  <Card
+                    key={promise.id}
+                    className={`p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow ${
+                      isSelectMode && selectedIds.includes(promise.id) ? "ring-2 ring-primary" : ""
+                    }`}
+                    onClick={isSelectMode ? () => toggleSelect(promise.id) : undefined}
+                  >
                     <div className="flex justify-between items-start mb-3">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${badge.className}`}>
-                        {badge.text}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteMutation.mutate({ id: promise.id })}
-                        className="hover:bg-red-50 dark:hover:bg-red-900/20"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-500 dark:text-red-400" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        {isSelectMode && (
+                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                            selectedIds.includes(promise.id)
+                              ? "bg-primary border-primary text-white"
+                              : "border-gray-300 dark:border-gray-600"
+                          }`}>
+                            {selectedIds.includes(promise.id) && <span className="text-xs">✓</span>}
+                          </div>
+                        )}
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${badge.className}`}>
+                          {badge.text}
+                        </span>
+                      </div>
+                      {!isSelectMode && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteMutation.mutate({ id: promise.id })}
+                          className="hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500 dark:text-red-400" />
+                        </Button>
+                      )}
                     </div>
                     <p className="text-gray-700 dark:text-gray-300 mb-4">{promise.content}</p>
                     <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-500">
                       <span>{new Date(promise.createdAt).toLocaleDateString("zh-CN")}</span>
-                      {promise.status === "pending" && (
+                      {!isSelectMode && promise.status === "pending" && (
                         <Button
                           size="sm"
                           variant="outline"

@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowLeft, Plus, Calendar as CalendarIcon, Heart, AlertCircle } from "lucide-react";
+import { ArrowLeft, Plus, Calendar as CalendarIcon, Heart, AlertCircle, Trash2, CheckSquare } from "lucide-react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -48,6 +48,8 @@ export default function PeriodTracker() {
   const [painLevel, setPainLevel] = useState<number>(0);
   const [moodLevel, setMoodLevel] = useState<number>(0);
   const [notes, setNotes] = useState("");
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const { data: records, refetch } = trpc.periodTracker.list.useQuery();
 
@@ -65,6 +67,54 @@ export default function PeriodTracker() {
     },
     onError: (err) => toast.error(err.message),
   });
+
+  const deleteRecord = trpc.periodTracker.delete.useMutation({
+    onSuccess: () => {
+      toast.success("记录已删除");
+      refetch();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const batchDeleteRecords = trpc.periodTracker.batchDelete.useMutation({
+    onSuccess: () => {
+      toast.success(`已删除 ${selectedIds.length} 条记录`);
+      setSelectedIds([]);
+      setIsSelectMode(false);
+      refetch();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handleDelete = (id: number) => {
+    if (confirm("确定要删除这条记录吗？")) {
+      deleteRecord.mutate({ id });
+    }
+  };
+
+  const handleBatchDelete = () => {
+    if (selectedIds.length === 0) {
+      toast.error("请先选择要删除的记录");
+      return;
+    }
+    if (confirm(`确定要删除选中的 ${selectedIds.length} 条记录吗？`)) {
+      batchDeleteRecords.mutate({ ids: selectedIds });
+    }
+  };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const selectAll = () => {
+    if (records && selectedIds.length === records.length) {
+      setSelectedIds([]);
+    } else if (records) {
+      setSelectedIds(records.map(r => r.id));
+    }
+  };
 
   const handleCreate = () => {
     if (!startDate) {
@@ -91,7 +141,6 @@ export default function PeriodTracker() {
   const prediction = useMemo(() => {
     if (!records || records.length < 2) return null;
 
-    // 计算平均周期长度
     const cycles: number[] = [];
     for (let i = 1; i < records.length; i++) {
       const prev = new Date(records[i - 1].startDate);
@@ -102,7 +151,6 @@ export default function PeriodTracker() {
 
     const avgCycle = Math.round(cycles.reduce((a, b) => a + b, 0) / cycles.length);
 
-    // 计算平均经期长度
     const periodLengths = records
       .filter(r => r.periodLength)
       .map(r => r.periodLength as number);
@@ -110,7 +158,6 @@ export default function PeriodTracker() {
       ? Math.round(periodLengths.reduce((a, b) => a + b, 0) / periodLengths.length)
       : 5;
 
-    // 预测下次经期
     const lastRecord = records[records.length - 1];
     const lastStartDate = new Date(lastRecord.startDate);
     const nextStartDate = new Date(lastStartDate);
@@ -137,7 +184,6 @@ export default function PeriodTracker() {
     const today = new Date();
     const daysSinceStart = Math.ceil((today.getTime() - lastStartDate.getTime()) / (1000 * 60 * 60 * 24));
 
-    // 如果有结束日期且在经期内
     if (lastRecord.endDate) {
       const lastEndDate = new Date(lastRecord.endDate);
       if (today <= lastEndDate) {
@@ -145,7 +191,6 @@ export default function PeriodTracker() {
       }
     }
 
-    // 根据平均周期判断
     if (prediction) {
       const { avgCycle, avgPeriodLength } = prediction;
       
@@ -175,209 +220,208 @@ export default function PeriodTracker() {
             </Link>
             <h1 className="text-xl font-semibold">💖 经期记录</h1>
           </div>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-1">
-                <Plus className="w-4 h-4" />
-                添加记录
+          <div className="flex items-center gap-2">
+            {records && records.length > 0 && (
+              <Button
+                variant={isSelectMode ? "default" : "ghost"}
+                size="sm"
+                onClick={() => {
+                  setIsSelectMode(!isSelectMode);
+                  setSelectedIds([]);
+                }}
+              >
+                <CheckSquare className="w-4 h-4 mr-1" />
+                {isSelectMode ? "取消" : "管理"}
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>添加经期记录</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>开始日期 *</Label>
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={setStartDate}
-                    className="rounded-md border"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>结束日期（可选）</Label>
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={setEndDate}
-                    className="rounded-md border"
-                    disabled={(date) => startDate ? date < startDate : false}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>痛经程度</Label>
-                  <div className="grid grid-cols-5 gap-2">
-                    {painLevels.map((level) => (
-                      <button
-                        key={level.value}
-                        type="button"
-                        className={`p-2 rounded-lg text-center text-xs transition-all ${
-                          painLevel === level.value
-                            ? "ring-2 ring-primary scale-105"
-                            : "hover:scale-105"
-                        } ${level.color}`}
-                        onClick={() => setPainLevel(level.value)}
-                      >
-                        <div className="text-xl mb-1">{level.emoji}</div>
-                        <div>{level.label}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>情绪状态</Label>
-                  <div className="grid grid-cols-5 gap-2">
-                    {moodLevels.map((level) => (
-                      <button
-                        key={level.value}
-                        type="button"
-                        className={`p-2 rounded-lg text-center text-xs transition-all ${
-                          moodLevel === level.value
-                            ? "ring-2 ring-primary scale-105"
-                            : "hover:scale-105"
-                        } ${level.color}`}
-                        onClick={() => setMoodLevel(level.value)}
-                      >
-                        <div className="text-xl mb-1">{level.emoji}</div>
-                        <div>{level.label}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>症状</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {symptoms.map((symptom) => (
-                      <button
-                        key={symptom.value}
-                        type="button"
-                        className={`px-3 py-2 rounded-lg text-sm transition-all ${
-                          selectedSymptoms.includes(symptom.value)
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary/50 hover:bg-secondary"
-                        }`}
-                        onClick={() => {
-                          if (selectedSymptoms.includes(symptom.value)) {
-                            setSelectedSymptoms(selectedSymptoms.filter(s => s !== symptom.value));
-                          } else {
-                            setSelectedSymptoms([...selectedSymptoms, symptom.value]);
-                          }
-                        }}
-                      >
-                        {symptom.emoji} {symptom.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>备注</Label>
-                  <Textarea
-                    placeholder="记录一些额外的信息..."
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                  />
-                </div>
-                <Button className="w-full" onClick={handleCreate} disabled={createRecord.isPending}>
-                  {createRecord.isPending ? "添加中..." : "添加记录"}
+            )}
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-1">
+                  <Plus className="w-4 h-4" />
+                  添加记录
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>添加经期记录</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>开始日期 *</Label>
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      className="rounded-md border"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>结束日期（可选）</Label>
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      className="rounded-md border"
+                      disabled={(date) => startDate ? date < startDate : false}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>痛经程度</Label>
+                    <div className="grid grid-cols-5 gap-2">
+                      {painLevels.map((level) => (
+                        <button
+                          key={level.value}
+                          type="button"
+                          className={`p-2 rounded-lg text-center text-xs transition-all ${
+                            painLevel === level.value
+                              ? "ring-2 ring-primary scale-105"
+                              : "hover:scale-105"
+                          } ${level.color}`}
+                          onClick={() => setPainLevel(level.value)}
+                        >
+                          <div className="text-xl mb-1">{level.emoji}</div>
+                          <div>{level.label}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>情绪状态</Label>
+                    <div className="grid grid-cols-5 gap-2">
+                      {moodLevels.map((level) => (
+                        <button
+                          key={level.value}
+                          type="button"
+                          className={`p-2 rounded-lg text-center text-xs transition-all ${
+                            moodLevel === level.value
+                              ? "ring-2 ring-primary scale-105"
+                              : "hover:scale-105"
+                          } ${level.color}`}
+                          onClick={() => setMoodLevel(level.value)}
+                        >
+                          <div className="text-xl mb-1">{level.emoji}</div>
+                          <div>{level.label}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>症状</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {symptoms.map((symptom) => (
+                        <button
+                          key={symptom.value}
+                          type="button"
+                          className={`px-3 py-2 rounded-lg text-sm transition-all ${
+                            selectedSymptoms.includes(symptom.value)
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-secondary/50 hover:bg-secondary"
+                          }`}
+                          onClick={() => {
+                            setSelectedSymptoms(prev =>
+                              prev.includes(symptom.value)
+                                ? prev.filter(s => s !== symptom.value)
+                                : [...prev, symptom.value]
+                            );
+                          }}
+                        >
+                          {symptom.emoji} {symptom.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>备注</Label>
+                    <Textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="记录一些备注..."
+                      rows={3}
+                    />
+                  </div>
+                  <Button onClick={handleCreate} className="w-full" disabled={createRecord.isPending}>
+                    {createRecord.isPending ? "保存中..." : "保存记录"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </header>
 
       <main className="container py-6 space-y-6">
-        {/* 当前状态 */}
-        {currentStatus && (
+        {/* 批量操作栏 */}
+        {isSelectMode && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
+            className="glass rounded-xl p-3 flex items-center justify-between"
           >
-            <Card className="glass border-white/40">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">当前状态</p>
-                    <p className={`text-2xl font-bold ${currentStatus.color}`}>
-                      {currentStatus.message}
-                    </p>
-                  </div>
-                  <Heart className={`w-12 h-12 ${currentStatus.color}`} />
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" onClick={selectAll}>
+                {records && selectedIds.length === records.length ? "取消全选" : "全选"}
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                已选 {selectedIds.length} 项
+              </span>
+            </div>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBatchDelete}
+              disabled={selectedIds.length === 0 || batchDeleteRecords.isPending}
+            >
+              <Trash2 className="w-4 h-4 mr-1" />
+              {batchDeleteRecords.isPending ? "删除中..." : `删除 (${selectedIds.length})`}
+            </Button>
           </motion.div>
         )}
 
-        {/* 预测信息 */}
+        {/* 预测卡片 */}
         {prediction && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <Card className="glass border-white/40">
-              <CardHeader>
-                <CardTitle className="text-lg">📅 周期预测</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <Card className="glass border-white/40 overflow-hidden">
+              <div className="bg-gradient-to-r from-pink-500/10 to-purple-500/10 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-lg">周期预测</h3>
+                  {currentStatus && (
+                    <span className={`text-sm font-medium ${currentStatus.color}`}>
+                      {currentStatus.message}
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">平均周期</p>
-                    <p className="text-2xl font-bold text-primary">{prediction.avgCycle} 天</p>
+                    <p className="text-2xl font-bold text-pink-500">{prediction.avgCycle}</p>
+                    <p className="text-xs text-muted-foreground">平均周期(天)</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">平均经期</p>
-                    <p className="text-2xl font-bold text-accent">{prediction.avgPeriodLength} 天</p>
+                    <p className="text-2xl font-bold text-purple-500">{prediction.avgPeriodLength}</p>
+                    <p className="text-xs text-muted-foreground">平均经期(天)</p>
                   </div>
-                </div>
-                <div className="pt-4 border-t">
-                  <p className="text-sm text-muted-foreground mb-1">预计下次经期</p>
-                  <p className="text-lg font-semibold mb-1">
-                    {prediction.nextStartDate.toLocaleDateString('zh-CN', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {prediction.daysUntilNext > 0 
-                      ? `还有 ${prediction.daysUntilNext} 天`
-                      : `已延迟 ${Math.abs(prediction.daysUntilNext)} 天`
-                    }
-                  </p>
-                </div>
-                {/* 关怀建议 */}
-                {prediction.daysUntilNext > 0 && prediction.daysUntilNext <= 3 && (
-                  <div className="pt-4 border-t bg-pink-50 dark:bg-pink-900/10 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
-                    <p className="text-sm font-medium text-pink-600 dark:text-pink-400 mb-2">
-                      💕 给男友的关怀提示
+                  <div>
+                    <p className="text-2xl font-bold text-blue-500">
+                      {prediction.daysUntilNext > 0 ? prediction.daysUntilNext : "今天"}
                     </p>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• 提前准备红糖、暖宝宝、止痛药</li>
-                      <li>• 多关心她的情绪，耐心倾听</li>
-                      <li>• 准备她喜欢的零食和水果</li>
-                      <li>• 帮她做家务，让她多休息</li>
-                    </ul>
+                    <p className="text-xs text-muted-foreground">
+                      {prediction.daysUntilNext > 0 ? "距下次(天)" : "预计今天"}
+                    </p>
                   </div>
-                )}
-              </CardContent>
+                </div>
+                <p className="text-xs text-muted-foreground mt-4 text-center">
+                  预计下次经期：{prediction.nextStartDate.toLocaleDateString('zh-CN')}
+                </p>
+              </div>
             </Card>
           </motion.div>
         )}
 
-        {/* 当前状态关怀建议 */}
+        {/* 关怀提示 */}
         {currentStatus && (currentStatus.status === "period" || currentStatus.status === "pms") && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <Card className="glass border-pink-200 dark:border-pink-800 bg-gradient-to-br from-pink-50/50 to-rose-50/50 dark:from-pink-900/10 dark:to-rose-900/10">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <Card className="glass border-pink-500/30">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
                   <Heart className="w-5 h-5 text-pink-500" />
                   {currentStatus.status === "period" ? "经期关怀" : "经前期关怀"}
                 </CardTitle>
@@ -450,38 +494,66 @@ export default function PeriodTracker() {
           {records && records.length > 0 ? (
             <div className="space-y-3">
               {records.map((record) => (
-                <Card key={record.id} className="glass border-white/40">
+                <Card
+                  key={record.id}
+                  className={`glass border-white/40 transition-all ${
+                    isSelectMode && selectedIds.includes(record.id) ? "ring-2 ring-primary" : ""
+                  }`}
+                  onClick={isSelectMode ? () => toggleSelect(record.id) : undefined}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <CalendarIcon className="w-4 h-4 text-primary" />
-                          <p className="font-medium">
-                            {new Date(record.startDate).toLocaleDateString('zh-CN')}
-                            {record.endDate && ` - ${new Date(record.endDate).toLocaleDateString('zh-CN')}`}
-                          </p>
-                        </div>
-                        {record.periodLength && (
-                          <p className="text-sm text-muted-foreground mb-2">
-                            经期长度：{record.periodLength} 天
-                          </p>
-                        )}
-                        {record.symptoms && record.symptoms.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {record.symptoms.map((symptom) => {
-                              const symptomInfo = symptoms.find(s => s.value === symptom);
-                              return symptomInfo ? (
-                                <span key={symptom} className="text-xs px-2 py-1 rounded-full bg-secondary/50">
-                                  {symptomInfo.emoji} {symptomInfo.label}
-                                </span>
-                              ) : null;
-                            })}
+                      <div className="flex items-start gap-3 flex-1">
+                        {isSelectMode && (
+                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center mt-0.5 ${
+                            selectedIds.includes(record.id)
+                              ? "bg-primary border-primary text-white"
+                              : "border-gray-300 dark:border-gray-600"
+                          }`}>
+                            {selectedIds.includes(record.id) && <span className="text-xs">✓</span>}
                           </div>
                         )}
-                        {record.notes && (
-                          <p className="text-sm text-muted-foreground">{record.notes}</p>
-                        )}
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <CalendarIcon className="w-4 h-4 text-primary" />
+                            <p className="font-medium">
+                              {new Date(record.startDate).toLocaleDateString('zh-CN')}
+                              {record.endDate && ` - ${new Date(record.endDate).toLocaleDateString('zh-CN')}`}
+                            </p>
+                          </div>
+                          {record.periodLength && (
+                            <p className="text-sm text-muted-foreground mb-2">
+                              经期长度：{record.periodLength} 天
+                            </p>
+                          )}
+                          {record.symptoms && record.symptoms.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              {record.symptoms.map((symptom) => {
+                                const symptomInfo = symptoms.find(s => s.value === symptom);
+                                return symptomInfo ? (
+                                  <span key={symptom} className="text-xs px-2 py-1 rounded-full bg-secondary/50">
+                                    {symptomInfo.emoji} {symptomInfo.label}
+                                  </span>
+                                ) : null;
+                              })}
+                            </div>
+                          )}
+                          {record.notes && (
+                            <p className="text-sm text-muted-foreground">{record.notes}</p>
+                          )}
+                        </div>
                       </div>
+                      {!isSelectMode && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          onClick={() => handleDelete(record.id)}
+                          disabled={deleteRecord.isPending}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

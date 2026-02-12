@@ -6,7 +6,7 @@ import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Plus, Calendar, Clock, Trash2, ArrowLeft, Heart } from "lucide-react";
+import { Plus, Calendar, Clock, Trash2, ArrowLeft, Heart, CheckSquare } from "lucide-react";
 import { useAuth } from "../_core/hooks/useAuth";
 import { useTheme } from "../contexts/ThemeContext";
 import { useLocation } from "wouter";
@@ -21,12 +21,14 @@ export default function Countdown() {
   const [type, setType] = useState<"milestone" | "meetup" | "custom">("meetup");
   const [description, setDescription] = useState("");
   const [emoji, setEmoji] = useState("❤️");
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const { data: countdowns = [], refetch } = trpc.countdown.list.useQuery();
   const createMutation = trpc.countdown.create.useMutation();
   const deleteMutation = trpc.countdown.delete.useMutation();
+  const batchDeleteMutation = trpc.countdown.batchDelete.useMutation();
 
-  // React Query v5: 使用 useEffect 替代 onSuccess
   useEffect(() => {
     if (createMutation.isSuccess) {
       refetch();
@@ -42,6 +44,15 @@ export default function Countdown() {
       deleteMutation.reset();
     }
   }, [deleteMutation.isSuccess]);
+
+  useEffect(() => {
+    if (batchDeleteMutation.isSuccess) {
+      refetch();
+      setSelectedIds([]);
+      setIsSelectMode(false);
+      batchDeleteMutation.reset();
+    }
+  }, [batchDeleteMutation.isSuccess]);
 
   const resetForm = () => {
     setTitle("");
@@ -68,7 +79,27 @@ export default function Countdown() {
     }
   };
 
-  // 计算剩余天数
+  const handleBatchDelete = () => {
+    if (selectedIds.length === 0) return;
+    if (confirm(`确定要删除选中的 ${selectedIds.length} 个倒计时吗？`)) {
+      batchDeleteMutation.mutate({ ids: selectedIds });
+    }
+  };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const selectAll = () => {
+    if (selectedIds.length === countdowns.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(countdowns.map(c => c.id));
+    }
+  };
+
   const calculateDaysLeft = (targetDate: string | Date) => {
     const target = new Date(targetDate);
     const now = new Date();
@@ -76,7 +107,6 @@ export default function Countdown() {
     return diff;
   };
 
-  // 按类型分组
   const groupedCountdowns = useMemo(() => {
     const groups: Record<string, typeof countdowns> = {
       milestone: [],
@@ -125,83 +155,121 @@ export default function Countdown() {
             </div>
           </div>
 
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white">
-                <Plus className="mr-2 h-4 w-4" />
-                添加倒计时
+          <div className="flex items-center gap-2">
+            {countdowns.length > 0 && (
+              <Button
+                variant={isSelectMode ? "default" : "ghost"}
+                size="sm"
+                onClick={() => {
+                  setIsSelectMode(!isSelectMode);
+                  setSelectedIds([]);
+                }}
+              >
+                <CheckSquare className="w-4 h-4 mr-1" />
+                {isSelectMode ? "取消" : "管理"}
               </Button>
-            </DialogTrigger>
-            <DialogContent className="dark:bg-gray-800 dark:text-white">
-              <DialogHeader>
-                <DialogTitle className="dark:text-white">创建新倒计时</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium dark:text-gray-200">类型</label>
-                  <Select value={type} onValueChange={(v: any) => setType(v)}>
-                    <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
-                      <SelectItem value="milestone" className="dark:text-white dark:focus:bg-gray-600">在一起里程碑</SelectItem>
-                      <SelectItem value="meetup" className="dark:text-white dark:focus:bg-gray-600">见面倒计时</SelectItem>
-                      <SelectItem value="custom" className="dark:text-white dark:focus:bg-gray-600">自定义事件</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium dark:text-gray-200">标题</label>
-                  <Input
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="例如：下次见面"
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium dark:text-gray-200">目标日期</label>
-                  <Input
-                    type="date"
-                    value={targetDate}
-                    onChange={(e) => setTargetDate(e.target.value)}
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium dark:text-gray-200">表情</label>
-                  <Input
-                    value={emoji}
-                    onChange={(e) => setEmoji(e.target.value)}
-                    placeholder="❤️"
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium dark:text-gray-200">描述（可选）</label>
-                  <Textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="添加一些备注..."
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-                  />
-                </div>
-
-                <Button
-                  onClick={handleCreate}
-                  disabled={!title || !targetDate || createMutation.isPending}
-                  className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white"
-                >
-                  {createMutation.isPending ? "创建中..." : "创建"}
+            )}
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white">
+                  <Plus className="mr-2 h-4 w-4" />
+                  添加倒计时
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="dark:bg-gray-800 dark:text-white">
+                <DialogHeader>
+                  <DialogTitle className="dark:text-white">创建新倒计时</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium dark:text-gray-200">类型</label>
+                    <Select value={type} onValueChange={(v: any) => setType(v)}>
+                      <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
+                        <SelectItem value="milestone" className="dark:text-white dark:focus:bg-gray-600">在一起里程碑</SelectItem>
+                        <SelectItem value="meetup" className="dark:text-white dark:focus:bg-gray-600">见面倒计时</SelectItem>
+                        <SelectItem value="custom" className="dark:text-white dark:focus:bg-gray-600">自定义事件</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium dark:text-gray-200">标题</label>
+                    <Input
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="例如：下次见面"
+                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium dark:text-gray-200">目标日期</label>
+                    <Input
+                      type="date"
+                      value={targetDate}
+                      onChange={(e) => setTargetDate(e.target.value)}
+                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium dark:text-gray-200">表情</label>
+                    <Input
+                      value={emoji}
+                      onChange={(e) => setEmoji(e.target.value)}
+                      placeholder="❤️"
+                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium dark:text-gray-200">描述（可选）</label>
+                    <Textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="添加一些备注..."
+                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleCreate}
+                    disabled={!title || !targetDate || createMutation.isPending}
+                    className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white"
+                  >
+                    {createMutation.isPending ? "创建中..." : "创建"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
+
+        {/* 批量操作栏 */}
+        {isSelectMode && (
+          <div className="glass rounded-xl p-3 flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" onClick={selectAll}>
+                {selectedIds.length === countdowns.length ? "取消全选" : "全选"}
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                已选 {selectedIds.length} 项
+              </span>
+            </div>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBatchDelete}
+              disabled={selectedIds.length === 0 || batchDeleteMutation.isPending}
+            >
+              <Trash2 className="w-4 h-4 mr-1" />
+              {batchDeleteMutation.isPending ? "删除中..." : `删除 (${selectedIds.length})`}
+            </Button>
+          </div>
+        )}
 
         {/* Countdown List */}
         <div className="space-y-8">
@@ -220,10 +288,22 @@ export default function Countdown() {
                     return (
                       <Card
                         key={countdown.id}
-                        className={`p-6 bg-gradient-to-br ${typeColors[countdown.type as keyof typeof typeColors]} text-white shadow-lg hover:shadow-xl transition-shadow dark:shadow-gray-900/50`}
+                        className={`p-6 bg-gradient-to-br ${typeColors[countdown.type as keyof typeof typeColors]} text-white shadow-lg hover:shadow-xl transition-shadow dark:shadow-gray-900/50 ${
+                          isSelectMode && selectedIds.includes(countdown.id) ? "ring-4 ring-white/60" : ""
+                        }`}
+                        onClick={isSelectMode ? () => toggleSelect(countdown.id) : undefined}
                       >
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex items-center gap-2">
+                            {isSelectMode && (
+                              <div className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
+                                selectedIds.includes(countdown.id)
+                                  ? "bg-white border-white text-purple-600"
+                                  : "border-white/60"
+                              }`}>
+                                {selectedIds.includes(countdown.id) && <span className="text-sm font-bold">✓</span>}
+                              </div>
+                            )}
                             <span className="text-3xl">{countdown.emoji}</span>
                             <div>
                               <h3 className="font-semibold text-lg">{countdown.title}</h3>
@@ -233,14 +313,16 @@ export default function Countdown() {
                               </p>
                             </div>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(countdown.id)}
-                            className="hover:bg-white/20 text-white"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {!isSelectMode && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(countdown.id)}
+                              className="hover:bg-white/20 text-white"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
 
                         <div className="text-center py-4">

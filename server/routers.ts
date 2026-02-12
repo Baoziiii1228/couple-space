@@ -1349,6 +1349,14 @@ export const appRouter = router({
         await db.deleteCountdown(input.id, couple.id);
         return { success: true };
       }),
+
+    batchDelete: protectedProcedure
+      .input(z.object({ ids: z.array(z.number()) }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        await db.batchDeleteCountdowns(input.ids, couple.id);
+        return { success: true };
+      }),
   }),
 
   // ==================== 承诺 ====================
@@ -1404,6 +1412,14 @@ export const appRouter = router({
         await db.deletePromise(input.id, couple.id);
         return { success: true };
       }),
+
+    batchDelete: protectedProcedure
+      .input(z.object({ ids: z.array(z.number()) }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        await db.batchDeletePromises(input.ids, couple.id);
+        return { success: true };
+      }),
   }),
 
   // 统计数据
@@ -1449,6 +1465,13 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         await db.deletePeriodRecord(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    batchDelete: protectedProcedure
+      .input(z.object({ ids: z.array(z.number()) }))
+      .mutation(async ({ ctx, input }) => {
+        await db.batchDeletePeriodRecords(input.ids, ctx.user.id);
         return { success: true };
       }),
   }),
@@ -1583,6 +1606,13 @@ export const appRouter = router({
         await db.deleteFitnessComment(input.id, ctx.user.id);
         return { success: true };
       }),
+
+    batchDeleteRecords: protectedProcedure
+      .input(z.object({ ids: z.array(z.number()) }))
+      .mutation(async ({ ctx, input }) => {
+        await db.batchDeleteFitnessRecords(input.ids, ctx.user.id);
+        return { success: true };
+      }),
   }),
 
   // 点菜板
@@ -1638,6 +1668,13 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         await db.deleteMenuItem(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    batchDeleteItems: protectedProcedure
+      .input(z.object({ ids: z.array(z.number()) }))
+      .mutation(async ({ ctx, input }) => {
+        await db.batchDeleteMenuItems(input.ids, ctx.user.id);
         return { success: true };
       }),
 
@@ -1810,6 +1847,24 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         await db.deleteChallengeComment(input.id);
+        return { success: true };
+      }),
+
+    // 删除挑战
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        await db.deleteChallenge(input.id, couple.id);
+        return { success: true };
+      }),
+
+    // 批量删除挑战
+    batchDelete: protectedProcedure
+      .input(z.object({ ids: z.array(z.number()) }))
+      .mutation(async ({ ctx, input }) => {
+        const couple = await getUserCouple(ctx.user.id);
+        await db.batchDeleteChallenges(input.ids, couple.id);
         return { success: true };
       }),
   }),

@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, gte, lte, or } from "drizzle-orm";
+import { eq, and, desc, asc, gte, lte, or, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users, 
@@ -1199,4 +1199,61 @@ export async function deleteChallengeComment(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(challengeComments).where(eq(challengeComments.id, id));
+}
+
+// ==================== 删除与批量删除 ====================
+
+// 挑战删除
+export async function deleteChallenge(id: number, coupleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // 先删除相关的进度和评论
+  await db.delete(challengeProgress).where(eq(challengeProgress.challengeId, id));
+  await db.delete(challengeComments).where(eq(challengeComments.challengeId, id));
+  await db.delete(challenges).where(and(eq(challenges.id, id), eq(challenges.coupleId, coupleId)));
+}
+
+// 批量删除 - 倒计时
+export async function batchDeleteCountdowns(ids: number[], coupleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(countdowns).where(and(inArray(countdowns.id, ids), eq(countdowns.coupleId, coupleId)));
+}
+
+// 批量删除 - 承诺
+export async function batchDeletePromises(ids: number[], coupleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(promises).where(and(inArray(promises.id, ids), eq(promises.coupleId, coupleId)));
+}
+
+// 批量删除 - 经期记录
+export async function batchDeletePeriodRecords(ids: number[], userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(periodRecords).where(and(inArray(periodRecords.id, ids), eq(periodRecords.userId, userId)));
+}
+
+// 批量删除 - 健身记录
+export async function batchDeleteFitnessRecords(ids: number[], userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(fitnessRecords).where(and(inArray(fitnessRecords.id, ids), eq(fitnessRecords.userId, userId)));
+}
+
+// 批量删除 - 菜单板菜品
+export async function batchDeleteMenuItems(ids: number[], userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(menuItems).where(and(inArray(menuItems.id, ids), eq(menuItems.userId, userId)));
+}
+
+// 批量删除 - 挑战
+export async function batchDeleteChallenges(ids: number[], coupleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // 先删除相关的进度和评论
+  await db.delete(challengeProgress).where(inArray(challengeProgress.challengeId, ids));
+  await db.delete(challengeComments).where(inArray(challengeComments.challengeId, ids));
+  await db.delete(challenges).where(and(inArray(challenges.id, ids), eq(challenges.coupleId, coupleId)));
 }

@@ -663,7 +663,42 @@ function ChallengeCard({ challenge }: { challenge: any }) {
 export default function Challenges() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [filter, setFilter] = useState<string>('all');
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const { data: challenges, refetch } = trpc.challenges.list.useQuery();
+
+  const deleteMutation = trpc.challenges.delete.useMutation({
+    onSuccess: () => refetch(),
+  });
+
+  const batchDeleteMutation = trpc.challenges.batchDelete.useMutation({
+    onSuccess: () => {
+      setSelectedIds([]);
+      setIsSelectMode(false);
+      refetch();
+    },
+  });
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const selectAll = () => {
+    if (filteredChallenges && selectedIds.length === filteredChallenges.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredChallenges.map((c: any) => c.id));
+    }
+  };
+
+  const handleBatchDelete = () => {
+    if (selectedIds.length === 0) return;
+    if (confirm(`确定要删除选中的 ${selectedIds.length} 个挑战吗？`)) {
+      batchDeleteMutation.mutate({ ids: selectedIds });
+    }
+  };
   
   const filteredChallenges = challenges?.filter((c: any) => {
     if (filter === 'all') return true;
@@ -725,6 +760,44 @@ export default function Challenges() {
         ))}
       </div>
       
+      {/* 管理按钮 */}
+      {challenges && challenges.length > 0 && (
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => { setIsSelectMode(!isSelectMode); setSelectedIds([]); }}
+            className={`px-4 py-2 rounded-lg text-sm transition-all ${
+              isSelectMode
+                ? 'bg-purple-500 text-white'
+                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            {isSelectMode ? '取消' : '管理'}
+          </button>
+        </div>
+      )}
+
+      {/* 批量操作栏 */}
+      {isSelectMode && (
+        <div className="glass rounded-xl p-3 flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={selectAll}
+              className="px-3 py-1 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200"
+            >
+              {selectedIds.length === filteredChallenges.length ? '取消全选' : '全选'}
+            </button>
+            <span className="text-sm text-gray-500 dark:text-gray-400">已选 {selectedIds.length} 项</span>
+          </div>
+          <button
+            onClick={handleBatchDelete}
+            disabled={selectedIds.length === 0 || batchDeleteMutation.isPending}
+            className="px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+          >
+            {batchDeleteMutation.isPending ? '删除中...' : `删除 (${selectedIds.length})`}
+          </button>
+        </div>
+      )}
+
       {/* 挑战列表 */}
       <div className="space-y-4">
         {filteredChallenges.length === 0 ? (
@@ -735,7 +808,38 @@ export default function Challenges() {
           </div>
         ) : (
           filteredChallenges.map((challenge: any) => (
-            <ChallengeCard key={challenge.id} challenge={challenge} />
+            <div key={challenge.id} className="relative">
+              {isSelectMode && (
+                <div
+                  className="absolute top-4 right-4 z-10 cursor-pointer"
+                  onClick={() => toggleSelect(challenge.id)}
+                >
+                  <div className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
+                    selectedIds.includes(challenge.id)
+                      ? 'bg-purple-500 border-purple-500 text-white'
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}>
+                    {selectedIds.includes(challenge.id) && <span className="text-sm">✓</span>}
+                  </div>
+                </div>
+              )}
+              {!isSelectMode && (
+                <div className="absolute top-4 right-16 z-10">
+                  <button
+                    onClick={() => {
+                      if (confirm('确定要删除这个挑战吗？')) {
+                        deleteMutation.mutate({ id: challenge.id });
+                      }
+                    }}
+                    className="p-1 text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors"
+                    title="删除挑战"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              )}
+              <ChallengeCard challenge={challenge} />
+            </div>
           ))
         )}
       </div>
