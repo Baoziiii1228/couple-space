@@ -1447,6 +1447,11 @@ export const appRouter = router({
         symptoms: z.array(z.string()).optional(),
         painLevel: z.number().min(1).max(5).optional(),
         moodLevel: z.number().min(1).max(5).optional(),
+        flowLevel: z.number().min(1).max(4).optional(),
+        temperature: z.string().optional(),
+        weight: z.string().optional(),
+        discharge: z.string().optional(),
+        medication: z.array(z.string()).optional(),
         notes: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
@@ -1458,6 +1463,11 @@ export const appRouter = router({
           symptoms: input.symptoms ?? null,
           painLevel: input.painLevel ?? null,
           moodLevel: input.moodLevel ?? null,
+          flowLevel: input.flowLevel ?? null,
+          temperature: input.temperature ?? null,
+          weight: input.weight ?? null,
+          discharge: input.discharge ?? null,
+          medication: input.medication ?? null,
           notes: input.notes ?? null,
         });
         return { id };
