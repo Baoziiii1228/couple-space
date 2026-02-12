@@ -71,6 +71,13 @@
       "when": 1770843041494,
       "tag": "0009_giant_bloodstorm",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1770888437120,
+      "tag": "0010_lush_forge",
+      "breakpoints": true
     }
   ]
 }
