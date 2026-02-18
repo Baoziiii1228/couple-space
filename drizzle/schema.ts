@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, decimal, date } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, decimal } from "drizzle-orm/mysql-core";
 
 // ==================== 用户系统 ====================
 
@@ -112,7 +112,7 @@ export const anniversaries = mysqlTable("anniversaries", {
   id: int("id").autoincrement().primaryKey(),
   coupleId: int("coupleId").notNull(),
   title: varchar("title", { length: 100 }).notNull(),
-  date: date("date").notNull(),
+  date: timestamp("date").notNull(),
   isLunar: boolean("isLunar").default(false).notNull(),
   repeatType: mysqlEnum("repeatType", ["none", "yearly", "monthly"]).default("yearly").notNull(),
   reminderDays: int("reminderDays").default(3),
@@ -401,11 +401,6 @@ export const periodRecords = mysqlTable("periodRecords", {
   symptoms: json("symptoms").$type<string[]>(), // 症状列表
   painLevel: int("painLevel"), // 痛经程度 1-5
   moodLevel: int("moodLevel"), // 情绪状态 1-5
-  flowLevel: int("flowLevel"), // 流量 1-4 (轻/中/重/极重)
-  temperature: varchar("temperature", { length: 10 }), // 基础体温
-  weight: varchar("weight", { length: 10 }), // 体重
-  discharge: varchar("discharge", { length: 32 }), // 分泌物类型
-  medication: json("medication").$type<string[]>(), // 用药记录
   notes: text("notes"), // 备注
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

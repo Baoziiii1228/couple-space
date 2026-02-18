@@ -1,1 +1,0 @@
-ALTER TABLE `anniversaries` MODIFY COLUMN `date` date NOT NULL;

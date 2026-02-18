@@ -126,8 +126,6 @@ export default function Anniversary() {
       isLunar: formData.isLunar,
       bgImage: formData.bgImage || undefined,
       bgColor: formData.bgColor || undefined,
-      reminderDays: 3,
-      repeatType: "yearly",
     });
   };
 
@@ -416,7 +414,7 @@ export default function Anniversary() {
                 添加
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-h-[90vh] overflow-y-auto bg-background text-foreground dark:bg-slate-950 dark:text-slate-50">
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>添加纪念日</DialogTitle>
               </DialogHeader>
@@ -434,7 +432,7 @@ export default function Anniversary() {
           setFormData(defaultForm);
         }
       }}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto bg-background text-foreground dark:bg-slate-950 dark:text-slate-50">
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>编辑纪念日</DialogTitle>
           </DialogHeader>
