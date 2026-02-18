@@ -78,6 +78,13 @@
       "when": 1770888437120,
       "tag": "0010_lush_forge",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1771427028881,
+      "tag": "0011_elite_strong_guy",
+      "breakpoints": true
     }
   ]
 }

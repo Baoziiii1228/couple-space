@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, decimal } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, json, decimal, date } from "drizzle-orm/mysql-core";
 
 // ==================== 用户系统 ====================
 
@@ -112,7 +112,7 @@ export const anniversaries = mysqlTable("anniversaries", {
   id: int("id").autoincrement().primaryKey(),
   coupleId: int("coupleId").notNull(),
   title: varchar("title", { length: 100 }).notNull(),
-  date: timestamp("date").notNull(),
+  date: date("date").notNull(),
   isLunar: boolean("isLunar").default(false).notNull(),
   repeatType: mysqlEnum("repeatType", ["none", "yearly", "monthly"]).default("yearly").notNull(),
   reminderDays: int("reminderDays").default(3),

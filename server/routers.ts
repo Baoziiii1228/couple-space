@@ -537,7 +537,7 @@ export const appRouter = router({
         const id = await db.createAnniversary({
           coupleId: couple.id,
           title: input.title,
-          date: new Date(input.date),
+          date: input.date as any,
           isLunar: input.isLunar ?? false,
           repeatType: input.repeatType ?? "yearly",
           reminderDays: input.reminderDays ?? 3,
